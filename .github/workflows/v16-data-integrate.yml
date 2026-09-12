@@ -1,4 +1,4 @@
-name: ED DU V36 application integration
+name: ED DU V37 application integration
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html'); s=p.read_text(encoding='utf-8')
-          scripts=('./v16-data.js','./v16-clinical.js','./v16-clinical-ui.js','./v16-finance.js','./v16-storage.js','./v17-finalize.js','./v17-client-payment.js','./v18-real-payment.js','./v20-auth-profile.js','./v21-production-data.js','./v22-operational-sync.js','./v23-reconciliation.js','./v24-financial-center.js','./v25-pix-reconciliation.js','./v26-pagbank-checkout.js','./v27-pagbank-ui.js','./v28-auth-fix.js','./v29-command-save.js','./v30-command-persist.js','./v31-runtime-recovery.js','./v32-command-render-guard.js','./v33-command-list-sync.js','./v35-command-view-stability.js','./v36-command-authoritative-view.js')
+          scripts=('./v16-data.js','./v16-clinical.js','./v16-clinical-ui.js','./v16-finance.js','./v16-storage.js','./v17-finalize.js','./v17-client-payment.js','./v18-real-payment.js','./v20-auth-profile.js','./v21-production-data.js','./v22-operational-sync.js','./v23-reconciliation.js','./v24-financial-center.js','./v25-pix-reconciliation.js','./v26-pagbank-checkout.js','./v27-pagbank-ui.js','./v28-auth-fix.js','./v29-command-save.js','./v30-command-persist.js','./v31-runtime-recovery.js','./v32-command-render-guard.js','./v33-command-list-sync.js','./v35-command-view-stability.js','./v36-command-authoritative-view.js','./v37-command-runtime-repair.js')
           for src in scripts:
               tag=f'<script src="{src}"></script>\n'
               if src not in s:
@@ -32,7 +32,7 @@ jobs:
         shell: bash
         run: |
           test -f index.html
-          for f in v16-data.js v16-clinical.js v16-clinical-ui.js v16-finance.js v16-storage.js v17-finalize.js v17-client-payment.js v18-real-payment.js v20-auth-profile.js v21-production-data.js v22-operational-sync.js v23-reconciliation.js v24-financial-center.js v25-pix-reconciliation.js v26-pagbank-checkout.js v27-pagbank-ui.js v28-auth-fix.js v29-command-save.js v30-command-persist.js v31-runtime-recovery.js v32-command-render-guard.js v33-command-list-sync.js v35-command-view-stability.js v36-command-authoritative-view.js; do
+          for f in v16-data.js v16-clinical.js v16-clinical-ui.js v16-finance.js v16-storage.js v17-finalize.js v17-client-payment.js v18-real-payment.js v20-auth-profile.js v21-production-data.js v22-operational-sync.js v23-reconciliation.js v24-financial-center.js v25-pix-reconciliation.js v26-pagbank-checkout.js v27-pagbank-ui.js v28-auth-fix.js v29-command-save.js v30-command-persist.js v31-runtime-recovery.js v32-command-render-guard.js v33-command-list-sync.js v35-command-view-stability.js v36-command-authoritative-view.js v37-command-runtime-repair.js; do
             test -f "$f"
             grep -q "$f" index.html
             node --check "$f"
@@ -44,5 +44,5 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "V36: corrigir visualizacao autoritativa de comandas"
+          git commit -m "V37: reparar runtime da lista de comandas"
           git push
