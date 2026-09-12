@@ -1,4 +1,4 @@
-name: ED DU V16 data integration
+name: ED DU V17 data integration
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html'); s=p.read_text(encoding='utf-8')
-          for src in ('./v16-data.js','./v16-clinical.js','./v16-clinical-ui.js','./v16-finance.js','./v16-storage.js'):
+          for src in ('./v16-data.js','./v16-clinical.js','./v16-clinical-ui.js','./v16-finance.js','./v16-storage.js','./v17-finalize.js'):
               tag=f'<script src="{src}"></script>\n'
               if src not in s:
                   if '</body>' not in s: raise SystemExit('index.html sem </body>')
@@ -31,16 +31,7 @@ jobs:
         shell: bash
         run: |
           test -f index.html
-          test -f v16-data.js
-          test -f v16-clinical.js
-          test -f v16-clinical-ui.js
-          test -f v16-finance.js
-          test -f v16-storage.js
-          grep -q 'v16-data.js' index.html
-          grep -q 'v16-clinical.js' index.html
-          grep -q 'v16-clinical-ui.js' index.html
-          grep -q 'v16-finance.js' index.html
-          grep -q 'v16-storage.js' index.html
+          for f in v16-data.js v16-clinical.js v16-clinical-ui.js v16-finance.js v16-storage.js v17-finalize.js; do test -f "$f"; grep -q "$f" index.html; done
       - name: Commit integration
         shell: bash
         run: |
@@ -48,5 +39,5 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "V16.8: integrar armazenamento clinico"
+          git commit -m "V17: integrar fechamento transacional"
           git push
