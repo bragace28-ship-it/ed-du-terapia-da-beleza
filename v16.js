@@ -1,0 +1,68 @@
+/* V16.1 — Supabase production bridge. Visual skeleton V13.1 is intentionally preserved. */
+(function(){
+  const SUPABASE_URL='https://cwdpwfzsasdsetthmpoa.supabase.co';
+  const SUPABASE_KEY='sb_publishable_sPtr9cgaWgTAK4ooUkNpxg_5qI2erGj';
+  let sbReady=false, sbUser=null, sbProfile=null;
+  function authCss(){
+    if(document.getElementById('v16-auth-css')) return;
+    const st=document.createElement('style'); st.id='v16-auth-css';
+    st.textContent='.v16-auth-back{position:fixed;inset:0;z-index:99999;background:rgba(244,242,238,.96);display:grid;place-items:center;padding:20px}.v16-auth-card{width:min(430px,100%);background:#fff;border:1px solid #e5e1da;border-radius:22px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.12)}.v16-auth-card h1{margin:0 0 6px;font-size:24px}.v16-auth-card p{color:#777;margin:0 0 20px}.v16-auth-card input{width:100%;box-sizing:border-box;padding:13px 14px;border:1px solid #ddd6ce;border-radius:10px;margin:6px 0 12px;font-size:16px}.v16-auth-card button{width:100%;padding:13px;border:0;border-radius:10px;background:#171717;color:#fff;font-weight:700;font-size:15px;margin-top:4px}.v16-auth-card .secondary{background:#f1efeb;color:#222;margin-top:10px}.v16-auth-msg{min-height:22px;margin-top:12px;font-size:13px;color:#8a5b00}.v16-badge{display:inline-block;font-size:11px;background:#f1efeb;padding:5px 8px;border-radius:99px;margin-bottom:12px}';
+    document.head.appendChild(st);
+  }
+  function authOverlay(){
+    authCss();
+    let el=document.getElementById('v16-auth');
+    if(el) return el;
+    el=document.createElement('div');el.id='v16-auth';el.className='v16-auth-back';
+    el.innerHTML='<div class="v16-auth-card"><span class="v16-badge">ED & DU • ACESSO SEGURO</span><h1>Entrar no aplicativo</h1><p>Acesse sua conta profissional ou de cliente.</p><input id="v16-email" type="email" autocomplete="email" placeholder="E-mail"><input id="v16-pass" type="password" autocomplete="current-password" placeholder="Senha"><button id="v16-login">Entrar</button><button id="v16-signup" class="secondary">Criar conta de cliente</button><div id="v16-msg" class="v16-auth-msg"></div></div>';
+    document.body.appendChild(el);
+    document.getElementById('v16-login').onclick=()=>login(false);
+    document.getElementById('v16-signup').onclick=()=>login(true);
+    return el;
+  }
+  function msg(t){const x=document.getElementById('v16-msg');if(x)x.textContent=t}
+  async function login(signup){
+    if(!sbReady)return;
+    const email=document.getElementById('v16-email').value.trim(), password=document.getElementById('v16-pass').value;
+    if(!email||password.length<6){msg('Informe e-mail e senha (mínimo de 6 caracteres).');return}
+    msg(signup?'Criando sua conta...':'Entrando...');
+    const r=signup?await window.__EDDU_SB.auth.signUp({email,password,options:{data:{full_name:email.split('@')[0]}}}):await window.__EDDU_SB.auth.signInWithPassword({email,password});
+    if(r.error){msg(r.error.message);return}
+    if(signup && !r.data.session){msg('Conta criada. Verifique seu e-mail para confirmar o acesso.');return}
+    await bootUser();
+  }
+  async function bootUser(){
+    const sb=window.__EDDU_SB;
+    const u=(await sb.auth.getUser()).data.user;
+    if(!u){authOverlay();return}
+    sbUser=u;
+    const pr=await sb.from('profiles').select('*').eq('id',u.id).single();
+    sbProfile=pr.data||null;
+    if(sbProfile){app.role=sbProfile.role==='client'?'client':'pro';app.page=app.role==='pro'?'dashboard':'home'}
+    const [cr,sr,pm]=await Promise.all([
+      sb.from('clients').select('*').order('name'),
+      sb.from('services').select('*').order('id'),
+      sb.from('payment_methods').select('name').eq('active',true).order('name')
+    ]);
+    if(!cr.error && Array.isArray(cr.data) && cr.data.length){
+      db.clients=cr.data.map(c=>({id:c.id,name:c.name,phone:c.phone||'',email:c.email||'',points:c.loyalty_points||0,term:false,anam:c.notes||'',history:[],anams:[]}));
+      if(!db.clients.some(c=>String(c.id)===String(app.selectedClient)))app.selectedClient=db.clients[0]?.id||null;
+    }
+    if(!sr.error && Array.isArray(sr.data) && sr.data.length){
+      sr.data.forEach(x=>{const local=SERVICES.find(s=>s.n.toLowerCase()===x.name.toLowerCase()||s.n.replace('Fem','').toLowerCase()===x.name.replace('Fem','').toLowerCase());if(local){local.base=Number(x.price_base);local.long=Number(x.price_long);local.cost=Number(x.service_cost);local.time=Number(x.duration_minutes)}});
+    }
+    if(!pm.error && pm.data?.length) db.settings.paymentMethods=pm.data.map(x=>x.name);
+    save();
+    const gate=document.getElementById('v16-auth');if(gate)gate.remove();
+    if(typeof safeRender==='function')safeRender();
+  }
+  async function init(){
+    if(!window.supabase?.createClient){setTimeout(init,100);return}
+    window.__EDDU_SB=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);sbReady=true;
+    window.EDDU_AUTH={getUser:()=>sbUser,getProfile:()=>sbProfile,signOut:async()=>{await window.__EDDU_SB.auth.signOut();location.reload()}};
+    window.__EDDU_SB.auth.onAuthStateChange((_e,s)=>{if(s?.user){bootUser()}else{authOverlay()}});
+    const s=await window.__EDDU_SB.auth.getSession();
+    if(s.data.session) await bootUser(); else authOverlay();
+  }
+  init();
+})();
