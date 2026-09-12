@@ -1,4 +1,4 @@
-name: ED DU V46 command center
+name: ED DU V47 command center
 on:
   push:
     branches: [main]
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Replace command center with V46
+      - name: Integrate command center and enforce client isolation
         shell: bash
         run: |
           python - <<'PY'
@@ -31,6 +31,15 @@ jobs:
           if src not in s:
               s=s.replace('</body>',f'<script src="{src}"></script>\n</body>',1)
           p.write_text(s,encoding='utf-8')
+
+          # V46 received the role returned by the RPC after identifying the
+          # authenticated user. That allowed a client session to be rendered
+          # as staff when the RPC classified the caller as staff. The local
+          # authenticated profile/professional lookup is authoritative here.
+          v=Path('v46-command-center.js')
+          x=v.read_text(encoding='utf-8')
+          x=x.replace(";if(x.role)role=x.role==='pro'?'pro':'client'","")
+          v.write_text(x,encoding='utf-8')
           PY
       - name: Validate
         shell: bash
@@ -39,13 +48,14 @@ jobs:
           test -f v46-command-center.js
           grep -q 'v46-command-center.js' index.html
           ! grep -qE 'v(29|30|31|32|33|35|36|37|39|41|42|43|44|45)-command|v41-runtime|v42-command' index.html
+          ! grep -q "if(x.role)role=x.role" v46-command-center.js
           node --check v46-command-center.js
       - name: Commit integration
         shell: bash
         run: |
           git config user.name "ED DU Automation"
           git config user.email "actions@users.noreply.github.com"
-          git add index.html
+          git add index.html v46-command-center.js
           git diff --cached --quiet && exit 0
-          git commit -m "V46: central de comandas com gateways reais"
+          git commit -m "V47: corrigir isolamento da área do cliente"
           git push
