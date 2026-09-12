@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ED & DU | Teste de pagamento</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f2ee;color:#242321;font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh;display:grid;place-items:center;padding:20px}.card{width:min(520px,100%);background:#fff;border:1px solid #e6e1d9;border-radius:22px;padding:28px;box-shadow:0 15px 45px #231e1912}.brand{font-weight:800;letter-spacing:1px}.muted{color:#77736c}.amount{font-size:42px;font-weight:800;margin:12px 0 4px}.ok{background:#e5f1e9;color:#356448;border-radius:12px;padding:12px;margin:18px 0}.warn{background:#f4ecd9;color:#705723;border-radius:12px;padding:12px;margin:18px 0}.err{background:#f6e3e3;color:#7e3737;border-radius:12px;padding:12px;margin:18px 0}.btn{width:100%;border:0;border-radius:12px;padding:14px 16px;background:#242321;color:#fff;font-weight:800;font-size:15px;cursor:pointer}.btn:disabled{opacity:.55;cursor:wait}.secondary{display:block;text-align:center;margin-top:14px;color:#555;text-decoration:none}.small{font-size:12px}.hidden{display:none}</style>
+</head>
+<body>
+<main class="card">
+<div class="brand">ED & DU | TERAPIA DA BELEZA</div>
+<h1>Teste de pagamento</h1>
+<p class="muted">Esta página abre diretamente a comanda de teste criada para validar o checkout.</p>
+<div class="amount" id="amount">R$ 2,00</div>
+<div id="status" class="ok">Verificando sua sessão…</div>
+<button id="pay" class="btn" disabled>Abrir Stripe — R$ 2,00</button>
+<a class="secondary" href="/">Voltar para o aplicativo</a>
+<p class="muted small" style="margin-top:20px">Comanda de teste: b0d04c36-d935-4029-baee-4c5a70f6aa69</p>
+</main>
+<script>
+const SUPABASE_URL='https://cwdpwfzsasdsetthmpoa.supabase.co';
+const SUPABASE_KEY='sb_publishable_sPtr9cgaWgTAK4ooUkNpxg_5qI2erGj';
+const COMMAND_ID='b0d04c36-d935-4029-baee-4c5a70f6aa69';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const statusEl=document.getElementById('status');
+const payBtn=document.getElementById('pay');
+function setStatus(text,kind='ok'){statusEl.className=kind;statusEl.textContent=text}
+async function init(){
+ try{
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){setStatus('Você precisa entrar no aplicativo primeiro. Abra o aplicativo, faça login e volte a esta página.','warn');return}
+  const {data:cmd,error}=await sb.from('commands').select('id,total,status,client_id').eq('id',COMMAND_ID).maybeSingle();
+  if(error)throw error;
+  if(!cmd){setStatus('A comanda de teste não foi encontrada.','err');return}
+  if(Number(cmd.total)!==2){setStatus('A comanda encontrada não está com o valor esperado de R$ 2,00.','err');return}
+  setStatus('Sessão ativa. A comanda de R$ 2,00 está pronta para abrir o Stripe.','ok');
+  payBtn.disabled=false;
+ }catch(e){setStatus(e.message||'Não foi possível verificar a comanda.','err')}
+}
+payBtn.onclick=async()=>{
+ payBtn.disabled=true;payBtn.textContent='Abrindo Stripe…';setStatus('Criando checkout seguro…','warn');
+ try{
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session)throw new Error('Sessão expirada. Entre novamente no aplicativo.');
+  const r=await fetch(SUPABASE_URL+'/functions/v1/create-stripe-checkout',{method:'POST',headers:{Authorization:'Bearer '+session.access_token,apikey:SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({command_id:COMMAND_ID})});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.error||j.message||'O Stripe recusou a criação do checkout.');
+  if(!j.checkout_url)throw new Error('O Stripe não retornou a URL do checkout.');
+  location.href=j.checkout_url;
+ }catch(e){setStatus(e.message||'Não foi possível iniciar o pagamento.','err');payBtn.disabled=false;payBtn.textContent='Tentar novamente — R$ 2,00'}
+};
+init();
+</script>
+</body>
+</html>
