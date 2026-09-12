@@ -1,56 +1,31 @@
-name: ED DU V16 integration
-
+name: ED DU Production validation
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  integrate:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Normalize production bridge and payment stack
+      - name: Validate canonical production stack
         shell: bash
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-          if '</body>' not in s:
-              raise SystemExit('index.html sem </body>')
-          script_urls = [
-              'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-              './v16.js',
-              './v46-command-center.js',
-              './v50-smart-gateway.js',
-              './v53-production-authority.js',
-              './v54-command-gateway-bridge.js',
-              './v55-production-hardening.js',
-              './v56-role-safety.js',
-          ]
-          for url in script_urls:
-              s = re.sub(r'<script\s+src=["\']' + re.escape(url) + r'["\']\s*></script>\s*', '', s)
-          boot_css = '<style id="eddu-production-boot">#root{visibility:hidden}</style>\n'
-          s = re.sub(r'<style id="eddu-production-boot">.*?</style>\s*', '', s, flags=re.S)
-          s = s.replace('</head>', boot_css + '</head>', 1)
-          tags = ''.join(f'<script src="{url}"></script>\n' for url in script_urls)
-          s = s.replace('</body>', tags + '</body>', 1)
-          p.write_text(s, encoding='utf-8')
-          PY
-
-      - name: Commit normalized integration
-        shell: bash
-        run: |
-          git config user.name "ED DU Automation"
-          git config user.email "actions@users.noreply.github.com"
-          git add index.html
-          git diff --cached --quiet && exit 0
-          git commit -m "V56: enforce role isolation in production stack"
-          git push
+          set -euo pipefail
+          test -f index.html
+          test -f v16.js
+          test -f v46-command-center.js
+          test -f v50-smart-gateway.js
+          test -f v53-production-authority.js
+          test -f v54-command-gateway-bridge.js
+          test -f v55-production-hardening.js
+          test -f v56-role-safety.js
+          grep -q 'v46-command-center.js' index.html
+          grep -q 'v50-smart-gateway.js' index.html
+          grep -q 'v53-production-authority.js' index.html
+          grep -q 'v54-command-gateway-bridge.js' index.html
+          grep -q 'v55-production-hardening.js' index.html
+          grep -q 'v56-role-safety.js' index.html
