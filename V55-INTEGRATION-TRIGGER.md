@@ -1,0 +1,1 @@
+Production integration trigger for V55 hardening. The GitHub workflow normalizes the script stack and boot gate in index.html.
