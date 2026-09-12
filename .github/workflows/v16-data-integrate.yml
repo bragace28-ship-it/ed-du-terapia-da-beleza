@@ -1,4 +1,4 @@
-name: ED DU V45 command center
+name: ED DU V46 command center
 on:
   push:
     branches: [main]
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Replace command center with V45
+      - name: Replace command center with V46
         shell: bash
         run: |
           python - <<'PY'
@@ -22,11 +22,12 @@ jobs:
             'v29-command-save.js','v30-command-persist.js','v31-runtime-recovery.js','v32-command-render-guard.js',
             'v33-command-list-sync.js','v35-command-view-stability.js','v36-command-authoritative-view.js',
             'v37-command-runtime-repair.js','v39-command-stable-render.js','v41-command-bypass.js',
-            'v41-command-standalone.js','v42-command-rebuild.js','v43-command-portal.js','v44-command-center.js'
+            'v41-command-standalone.js','v42-command-rebuild.js','v43-command-portal.js','v44-command-center.js',
+            'v45-command-center.js'
           ]
           for name in legacy:
               s=re.sub(r'<script[^>]+src=["\'](?:\./)?'+re.escape(name)+r'["\'][^>]*></script>','',s)
-          src='./v45-command-center.js'
+          src='./v46-command-center.js'
           if src not in s:
               s=s.replace('</body>',f'<script src="{src}"></script>\n</body>',1)
           p.write_text(s,encoding='utf-8')
@@ -35,10 +36,10 @@ jobs:
         shell: bash
         run: |
           test -f index.html
-          test -f v45-command-center.js
-          grep -q 'v45-command-center.js' index.html
-          ! grep -qE 'v(29|30|31|32|33|35|36|37|39|41|42|43|44)-command|v41-runtime|v42-command' index.html
-          node --check v45-command-center.js
+          test -f v46-command-center.js
+          grep -q 'v46-command-center.js' index.html
+          ! grep -qE 'v(29|30|31|32|33|35|36|37|39|41|42|43|44|45)-command|v41-runtime|v42-command' index.html
+          node --check v46-command-center.js
       - name: Commit integration
         shell: bash
         run: |
@@ -46,5 +47,5 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "V45: central de comandas com RPC seguro"
+          git commit -m "V46: central de comandas com gateways reais"
           git push
