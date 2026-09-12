@@ -1,47 +1,37 @@
-name: ED DU V42 command rebuild
-
+name: ED DU V43 command portal
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: write
-
 jobs:
   integrate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Inject V42 command rebuild
-        shell: bash
+      - uses: actions/checkout@v4
+      - name: Inject V43
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          src='./v42-command-rebuild.js'
+          src='./v43-command-portal.js'
           tag=f'<script src="{src}"></script>\n'
           if src not in s:
-              if '</body>' not in s:
-                  raise SystemExit('index.html sem </body>')
               s=s.replace('</body>',tag+'</body>',1)
           p.write_text(s,encoding='utf-8')
           PY
-      - name: Validate V42
-        shell: bash
+      - name: Validate
         run: |
-          test -f index.html
-          test -f v42-command-rebuild.js
-          grep -q 'v42-command-rebuild.js' index.html
-          node --check v42-command-rebuild.js
-      - name: Commit integration
-        shell: bash
+          test -f v43-command-portal.js
+          grep -q 'v43-command-portal.js' index.html
+          node --check v43-command-portal.js
+      - name: Commit
         run: |
           git config user.name "ED DU Automation"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "V42: reconstruir comandas com fluxo independente"
+          git commit -m "V43: portal independente"
           git push
