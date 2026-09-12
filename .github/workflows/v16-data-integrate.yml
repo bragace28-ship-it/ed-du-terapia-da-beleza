@@ -1,4 +1,4 @@
-name: ED DU V50 command center
+name: ED DU Production stack validator
 on:
   workflow_dispatch:
 
@@ -10,20 +10,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate production stack
+      - name: Validate stack order and modules
         shell: bash
         run: |
           set -euo pipefail
           test -f index.html
-          test -f v46-command-center.js
-          test -f v50-smart-gateway.js
-          test -f v53-production-authority.js
-          test -f v54-command-gateway-bridge.js
-          test -f v55-production-hardening.js
-          test -f v56-role-safety.js
-          grep -q 'v46-command-center.js' index.html
-          grep -q 'v50-smart-gateway.js' index.html
-          grep -q 'v53-production-authority.js' index.html
-          grep -q 'v54-command-gateway-bridge.js' index.html
-          grep -q 'v55-production-hardening.js' index.html
-          grep -q 'v56-role-safety.js' index.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          expected=[
+            'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+            './v16.js','./v46-command-center.js','./v50-smart-gateway.js',
+            './v53-production-authority.js','./v54-command-gateway-bridge.js',
+            './v55-production-hardening.js','./v56-role-safety.js'
+          ]
+          pos=[]
+          for x in expected:
+            i=s.find(f'<script src="{x}"></script>')
+            if i<0: raise SystemExit(f'missing {x}')
+            pos.append(i)
+          if pos != sorted(pos): raise SystemExit('production script order invalid')
+          for x in ['v16-clinical.js','v16-finance.js','v16-storage.js']:
+            if x not in s: raise SystemExit(f'missing {x}')
+          if '<style id="eddu-production-boot">#root{visibility:hidden}</style>' not in s:
+            raise SystemExit('production boot guard missing')
+          PY
