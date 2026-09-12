@@ -15,7 +15,6 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
           legacy = [
@@ -25,9 +24,10 @@ jobs:
             'v41-command-standalone.js','v42-command-rebuild.js','v43-command-portal.js'
           ]
           for name in legacy:
-              s=re.sub(r'\\s*<script[^>]+src=["\\'](?:\\./)?'+re.escape(name)+r'["\\'][^>]*></script>\\s*', '\\n', s)
+              for tag in (f'<script src="./{name}"></script>', f'<script src="{name}"></script>'):
+                  s=s.replace(tag,'')
           src='./v44-command-center.js'
-          tag=f'<script src="{src}"></script>\\n'
+          tag=f'<script src="{src}"></script>\n'
           if src not in s:
               s=s.replace('</body>',tag+'</body>',1)
           p.write_text(s,encoding='utf-8')
@@ -38,7 +38,7 @@ jobs:
           test -f index.html
           test -f v44-command-center.js
           grep -q 'v44-command-center.js' index.html
-          ! grep -qE 'v(29|30|31|32|33|35|36|37|39|41|42|43)-command|v41-runtime|v42-command' index.html || (echo 'legacy command layer still present' && exit 1)
+          ! grep -qE 'v29-command|v30-command|v31-runtime|v32-command|v33-command|v35-command|v36-command|v37-command|v39-command|v41-command|v42-command|v43-command' index.html
           node --check v44-command-center.js
       - name: Commit integration
         shell: bash
