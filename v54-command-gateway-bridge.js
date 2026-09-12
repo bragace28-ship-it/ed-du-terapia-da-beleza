@@ -1,35 +1,37 @@
-/* V54 — Command bridge: main comanda MUST use Smart Gateway after V50 is ready. */
+/* V54 — Final bridge for the MAIN comanda close button. */
 (function(){
 'use strict';
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
-async function init(){
-  for(let i=0;i<180;i++){
+function hasItems(o){return !!o && Array.isArray(o.items) && o.items.length>0}
+async function install(){
+  for(let i=0;i<240;i++){
     const v46=window.EDDU_V46;
     const smartReady=typeof window.EDDU_V50Pay==='function';
     if(v46&&typeof v46.closeCommand==='function'&&smartReady){
       const smartClose=v46.closeCommand;
-      const current=window.closeOrder;
-      if(typeof current==='function'&&!current.__v54){
+      const existing=window.closeOrder;
+      if(typeof existing==='function'&&!existing.__edduSmartClose){
         const f=function(id){
           const o=typeof db!=='undefined'?(db.orders||[]).find(x=>String(x.id)===String(id)):null;
-          if(o&&!Array.isArray(o.items)||o&&!o.items.length){
+          if(o&&!hasItems(o)){
             if(typeof toast==='function')toast('Adicione pelo menos um serviço antes de fechar.');
             if(typeof openOrder==='function')openOrder(id);
             return;
           }
           return smartClose(id);
         };
-        f.__v54=true;
-        f.__legacy=current;
+        f.__edduSmartClose=true;
+        f.__legacy=existing;
         window.closeOrder=f;
         try{closeOrder=f}catch(e){}
       }
       window.__EDDU_V54_READY=true;
-      return;
+      return true;
     }
     await wait(250);
   }
-  console.error('[V54] Smart Gateway não inicializou a tempo.');
+  console.error('[EDDU V54] Smart Gateway não ficou disponível.');
+  return false;
 }
-init();
+install();
 })();
