@@ -1,63 +1,29 @@
 name: ED DU V50 command center
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+
 permissions:
-  contents: write
+  contents: read
+
 jobs:
-  integrate:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Integrate command center safely
+      - name: Validate production stack
         shell: bash
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
-          for name in [
-            'v29-command-save.js','v30-command-persist.js','v31-runtime-recovery.js','v32-command-render-guard.js',
-            'v33-command-list-sync.js','v35-command-view-stability.js','v36-command-authoritative-view.js',
-            'v37-command-runtime-repair.js','v39-command-stable-render.js','v41-command-bypass.js',
-            'v41-command-standalone.js','v42-command-rebuild.js','v43-command-portal.js','v44-command-center.js',
-            'v45-command-center.js'
-          ]:
-            s=s.replace(f'<script src="./{name}"></script>\n','')
-            s=s.replace(f'<script src="{name}"></script>\n','')
-          for tag in [
-            '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n',
-            '<script src="./v16.js"></script>\n',
-            '<script src="./v46-command-center.js"></script>\n',
-            '<script src="./v50-smart-gateway.js"></script>\n'
-          ]:
-            s=s.replace(tag,'')
-          if '</body>' not in s:
-            raise SystemExit('index.html sem </body>')
-          tags=''.join([
-            '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n',
-            '<script src="./v16.js"></script>\n',
-            '<script src="./v46-command-center.js"></script>\n',
-            '<script src="./v50-smart-gateway.js"></script>\n'
-          ])
-          s=s.replace('</body>',tags+'</body>',1)
-          p.write_text(s,encoding='utf-8')
-          PY
-      - name: Validate files
-        shell: bash
-        run: |
+          set -euo pipefail
           test -f index.html
           test -f v46-command-center.js
           test -f v50-smart-gateway.js
+          test -f v53-production-authority.js
+          test -f v54-command-gateway-bridge.js
+          test -f v55-production-hardening.js
+          test -f v56-role-safety.js
           grep -q 'v46-command-center.js' index.html
           grep -q 'v50-smart-gateway.js' index.html
-      - name: Commit integration
-        shell: bash
-        run: |
-          git config user.name "ED DU Automation"
-          git config user.email "actions@users.noreply.github.com"
-          git add index.html v50-smart-gateway.js .github/workflows/v16-data-integrate.yml
-          git diff --cached --quiet && exit 0
-          git commit -m "V51: estabilizar command center e Smart Gateway"
-          git push
+          grep -q 'v53-production-authority.js' index.html
+          grep -q 'v54-command-gateway-bridge.js' index.html
+          grep -q 'v55-production-hardening.js' index.html
+          grep -q 'v56-role-safety.js' index.html
