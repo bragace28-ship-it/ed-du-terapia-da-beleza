@@ -1,4 +1,4 @@
-name: ED DU V43 command portal
+name: ED DU V44 command center
 on:
   push:
     branches: [main]
@@ -10,28 +10,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inject V43
+      - name: Replace legacy command layers with V44
+        shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          src='./v43-command-portal.js'
-          tag=f'<script src="{src}"></script>\n'
+          legacy = [
+            'v29-command-save.js','v30-command-persist.js','v31-runtime-recovery.js','v32-command-render-guard.js',
+            'v33-command-list-sync.js','v35-command-view-stability.js','v36-command-authoritative-view.js',
+            'v37-command-runtime-repair.js','v39-command-stable-render.js','v41-command-bypass.js',
+            'v41-command-standalone.js','v42-command-rebuild.js','v43-command-portal.js'
+          ]
+          for name in legacy:
+              s=re.sub(r'\\s*<script[^>]+src=["\\'](?:\\./)?'+re.escape(name)+r'["\\'][^>]*></script>\\s*', '\\n', s)
+          src='./v44-command-center.js'
+          tag=f'<script src="{src}"></script>\\n'
           if src not in s:
               s=s.replace('</body>',tag+'</body>',1)
           p.write_text(s,encoding='utf-8')
           PY
       - name: Validate
+        shell: bash
         run: |
-          test -f v43-command-portal.js
-          grep -q 'v43-command-portal.js' index.html
-          node --check v43-command-portal.js
-      - name: Commit
+          test -f index.html
+          test -f v44-command-center.js
+          grep -q 'v44-command-center.js' index.html
+          ! grep -qE 'v(29|30|31|32|33|35|36|37|39|41|42|43)-command|v41-runtime|v42-command' index.html || (echo 'legacy command layer still present' && exit 1)
+          node --check v44-command-center.js
+      - name: Commit integration
+        shell: bash
         run: |
           git config user.name "ED DU Automation"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "V43: portal independente"
+          git commit -m "V44: central de comandas autoritativa"
           git push
