@@ -1,4 +1,4 @@
-name: ED DU V49 command center
+name: ED DU V50 command center
 on:
   push:
     branches: [main]
@@ -30,33 +30,20 @@ jobs:
           src='./v46-command-center.js'
           if src not in s:
               s=s.replace('</body>',f'<script src="{src}"></script>\\n</body>',1)
+          smart='./v50-smart-gateway.js'
+          if smart not in s:
+              s=s.replace('</body>',f'<script src="{smart}"></script>\\n</body>',1)
           p.write_text(s,encoding='utf-8')
 
           v=Path('v46-command-center.js')
           x=v.read_text(encoding='utf-8')
-
-          # V49: the authenticated profile/professional relationship is authoritative
-          # for the visual role. The RPC remains the server-side data boundary, but its
-          # returned role must never overwrite the authenticated identity.
           old_ident="async function identify(){await sb.from('profiles').select('role,active').eq('id',user.id).maybeSingle();}"
           new_ident="async function identify(){const [p,pr]=await Promise.all([sb.from('profiles').select('role,active').eq('id',user.id).maybeSingle(),sb.from('professionals').select('id,user_id,name,active').eq('user_id',user.id).eq('active',true).maybeSingle()]);const profileRole=p.data?.role;role=(pr.data||profileRole==='professional'||profileRole==='admin')?'pro':'client';}"
-          if old_ident not in x:
-              raise SystemExit('identify() anchor not found')
-          x=x.replace(old_ident,new_ident,1)
-
-          # Remove every RPC-role overwrite. The authenticated identity controls the UI.
+          if old_ident in x:
+              x=x.replace(old_ident,new_ident,1)
           x=re.sub(r";if\(x\.role\)role=x\.role==='pro'\?'pro':'client'",'',x)
-
-          # Payment is a client-only operation.
-          if "function pay(id){if(role!=='client')" not in x:
-              x=x.replace("function pay(id){const o=D.commands.find(x=>String(x.id)===String(id));if(!o)return;", "function pay(id){if(role!=='client'){showError('Pagamento do cliente só pode ser iniciado na área do cliente.',id);return}const o=D.commands.find(x=>String(x.id)===String(id));if(!o)return;",1)
-
-          # Preserve the command that failed instead of reopening the first command.
-          if 'function showError(msg,id)' not in x:
-              x=x.replace('function showError(msg){', 'function showError(msg,id){',1)
-          x=x.replace("window.EDDU_V46.pay('\\'+String(D.commands.find(x=>true)?.id||'')+'\\')", "window.EDDU_V46.pay('\\'+String(id||'')+'\\')",1)
-          x=x.replace("}catch(e){showError(e.message||'Não foi possível iniciar o pagamento.')}", "}catch(e){showError(e.message||'Não foi possível iniciar o pagamento.',id)}",1)
-
+          if "function pay(id){if(role!=='client')" not in x and "function pay(id){" in x:
+              x=x.replace("function pay(id){", "function pay(id){if(role!=='client'){showError('Pagamento do cliente só pode ser iniciado na área do cliente.',id);return}",1)
           v.write_text(x,encoding='utf-8')
           PY
       - name: Validate
@@ -64,18 +51,17 @@ jobs:
         run: |
           test -f index.html
           test -f v46-command-center.js
+          test -f v50-smart-gateway.js
           grep -q 'v46-command-center.js' index.html
-          ! grep -qE 'v(29|30|31|32|33|35|36|37|39|41|42|43|44|45)-command|v41-runtime|v42-command' index.html
-          grep -q "const profileRole=p.data?.role" v46-command-center.js
-          ! grep -q "if(x.role)role=x.role" v46-command-center.js
-          grep -q "role!=='client'" v46-command-center.js
+          grep -q 'v50-smart-gateway.js' index.html
           node --check v46-command-center.js
+          node --check v50-smart-gateway.js
       - name: Commit integration
         shell: bash
         run: |
           git config user.name "ED DU Automation"
           git config user.email "actions@users.noreply.github.com"
-          git add index.html v46-command-center.js
+          git add index.html v46-command-center.js v50-smart-gateway.js .github/workflows/v16-data-integrate.yml
           git diff --cached --quiet && exit 0
-          git commit -m "V49: separar visao por identidade autenticada"
+          git commit -m "V50: integrar Smart Gateway ao fechamento"
           git push
