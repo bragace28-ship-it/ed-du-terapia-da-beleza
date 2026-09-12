@@ -10,41 +10,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Integrate command center with strict identity isolation
+      - name: Integrate command center safely
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          legacy = [
+          for name in [
             'v29-command-save.js','v30-command-persist.js','v31-runtime-recovery.js','v32-command-render-guard.js',
             'v33-command-list-sync.js','v35-command-view-stability.js','v36-command-authoritative-view.js',
             'v37-command-runtime-repair.js','v39-command-stable-render.js','v41-command-bypass.js',
             'v41-command-standalone.js','v42-command-rebuild.js','v43-command-portal.js','v44-command-center.js',
             'v45-command-center.js'
-          ]
-          for name in legacy:
-              s=re.sub(r'<script[^>]+src=["\\'](?:\\./)?'+re.escape(name)+r'["\\'][^>]*></script>','',s)
-          src='./v46-command-center.js'
-          if src not in s:
-              s=s.replace('</body>',f'<script src="{src}"></script>\\n</body>',1)
-          smart='./v50-smart-gateway.js'
-          if smart not in s:
-              s=s.replace('</body>',f'<script src="{smart}"></script>\\n</body>',1)
+          ]:
+            s=s.replace(f'<script src="./{name}"></script>\n','')
+            s=s.replace(f'<script src="{name}"></script>\n','')
+          for tag in [
+            '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n',
+            '<script src="./v16.js"></script>\n',
+            '<script src="./v46-command-center.js"></script>\n',
+            '<script src="./v50-smart-gateway.js"></script>\n'
+          ]:
+            s=s.replace(tag,'')
+          if '</body>' not in s:
+            raise SystemExit('index.html sem </body>')
+          tags=''.join([
+            '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n',
+            '<script src="./v16.js"></script>\n',
+            '<script src="./v46-command-center.js"></script>\n',
+            '<script src="./v50-smart-gateway.js"></script>\n'
+          ])
+          s=s.replace('</body>',tags+'</body>',1)
           p.write_text(s,encoding='utf-8')
-
-          v=Path('v46-command-center.js')
-          x=v.read_text(encoding='utf-8')
-          old_ident="async function identify(){await sb.from('profiles').select('role,active').eq('id',user.id).maybeSingle();}"
-          new_ident="async function identify(){const [p,pr]=await Promise.all([sb.from('profiles').select('role,active').eq('id',user.id).maybeSingle(),sb.from('professionals').select('id,user_id,name,active').eq('user_id',user.id).eq('active',true).maybeSingle()]);const profileRole=p.data?.role;role=(pr.data||profileRole==='professional'||profileRole==='admin')?'pro':'client';}"
-          if old_ident in x:
-              x=x.replace(old_ident,new_ident,1)
-          x=re.sub(r";if\(x\.role\)role=x\.role==='pro'\?'pro':'client'",'',x)
-          if "function pay(id){if(role!=='client')" not in x and "function pay(id){" in x:
-              x=x.replace("function pay(id){", "function pay(id){if(role!=='client'){showError('Pagamento do cliente só pode ser iniciado na área do cliente.',id);return}",1)
-          v.write_text(x,encoding='utf-8')
           PY
       - name: Validate
         shell: bash
@@ -61,7 +59,7 @@ jobs:
         run: |
           git config user.name "ED DU Automation"
           git config user.email "actions@users.noreply.github.com"
-          git add index.html v46-command-center.js v50-smart-gateway.js .github/workflows/v16-data-integrate.yml
+          git add index.html v50-smart-gateway.js .github/workflows/v16-data-integrate.yml
           git diff --cached --quiet && exit 0
-          git commit -m "V50: integrar Smart Gateway ao fechamento"
+          git commit -m "V51: estabilizar command center e Smart Gateway"
           git push
