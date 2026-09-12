@@ -1,4 +1,4 @@
-/* V37 — runtime repair for Comandas and client Payments. */
+/* V37.2 — runtime repair for Comandas + automatic staff identity bridge. */
 (function(){
  const wait=(fn,n=0)=>{if(window.__EDDU_SB&&typeof db!=='undefined'&&typeof app!=='undefined')fn();else if(n<240)setTimeout(()=>wait(fn,n+1),250)};
  const esc0=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -7,8 +7,10 @@
  const svcName=i=>{const id=String(i?.dbServiceId||i?.serviceId||'');const s=(window.SERVICES||[]).find(x=>String(x.dbId||'')===id||String(x.id||'')===id);return i?.description||s?.n||s?.name||'Serviço'};
  async function loadDirect(){
   const sb=window.__EDDU_SB;if(!sb)return false;const sess=await sb.auth.getSession();const u=sess?.data?.session?.user;if(!u)return false;
-  const [cmd,ci,sv,cl,pr,cp,pm]=await Promise.all([sb.from('commands').select('*').order('created_at',{ascending:false}),sb.from('command_items').select('*'),sb.from('services').select('id,name,price_base,price_long,service_cost,duration_minutes').eq('active',true),sb.from('clients').select('id,user_id,name,email,phone'),sb.from('professionals').select('id,name').eq('active',true).in('name',['ED','DU']),sb.from('command_payments').select('*').order('paid_at',{ascending:false}),sb.from('payment_methods').select('id,name').eq('active',true)]);
-  if(cmd.error)throw cmd.error;const clients=cl.data||[],pros=pr.data||[],services=sv.data||[],items=ci.data||[],pays=cp.data||[];
+  const [cmd,ci,sv,cl,pr,cp,pm,me]=await Promise.all([sb.from('commands').select('*').order('created_at',{ascending:false}),sb.from('command_items').select('*'),sb.from('services').select('id,name,price_base,price_long,service_cost,duration_minutes').eq('active',true),sb.from('clients').select('id,user_id,name,email,phone'),sb.from('professionals').select('id,user_id,name').eq('active',true).in('name',['ED','DU']),sb.from('command_payments').select('*').order('paid_at',{ascending:false}),sb.from('payment_methods').select('id,name').eq('active',true),sb.from('professionals').select('id,user_id,name').eq('user_id',u.id).eq('active',true).maybeSingle()]);
+  if(cmd.error)throw cmd.error;
+  if(me?.data){app.role='pro';app.page=app.page==='home'||app.page==='payments'? 'dashboard':app.page;window.EDDU_STAFF_IDENTITY=me.data;}
+  const clients=cl.data||[],pros=pr.data||[],services=sv.data||[],items=ci.data||[],pays=cp.data||[];
   db.orders=(cmd.data||[]).map(o=>{const lines=items.filter(x=>String(x.command_id)===String(o.id));const paid=pays.filter(x=>String(x.command_id)===String(o.id));return{id:o.id,clientId:o.client_id,client:clients.find(c=>String(c.id)===String(o.client_id))?.name||'Cliente',professionalId:o.professional_id,prof:pros.find(p=>String(p.id)===String(o.professional_id))?.name||'',status:o.status,open:o.status==='open',openedAt:o.opened_at,closedAt:o.closed_at,discount:Number(o.discount||0),payment:paid.length?'paid':'pending',paymentMethod:paid[0]?((pm.data||[]).find(m=>String(m.id)===String(paid[0].payment_method_id))?.name||''):'',items:lines.map(x=>{const s=services.find(z=>String(z.id)===String(x.service_id));return{serviceId:s?.id||x.service_id,dbServiceId:x.service_id,length:s&&Number(x.unit_price)===Number(s.price_long)?'long':'base',qty:Number(x.quantity||1),unitPrice:Number(x.unit_price||0),unitCost:Number(x.unit_cost||0),description:x.description||s?.name||'Serviço'}}),subtotal:Number(o.subtotal||0),total:Number(o.total||0),cost:Number(o.total_cost||0),commission:Number(o.commission||0),profit:Number(o.profit||0),__real:true,__dbItemsSynced:true}});
   app.__edduV37Loaded=true;window.__EDDU_V37_LAST_USER=u.id;if(typeof window.safeRender==='function')window.safeRender();return true;
  }
