@@ -27,9 +27,11 @@ async function install(){
       bridge.__edduSmartClose=true;
       bridge.__v54=true;
       bridge.__smartTarget=smartClose;
-      // Always replace the legacy global, including an older bridge.
       window.closeOrder=bridge;
       try{closeOrder=bridge}catch(e){}
+      // V46 buttons call this property directly, so patch it too.
+      v46.closeCommand=bridge;
+      v46.closeCommand.__edduSmartClose=true;
       window.__EDDU_V54_READY=true;
       window.__EDDU_MAIN_CLOSE_USES_SMART=true;
       return true;
