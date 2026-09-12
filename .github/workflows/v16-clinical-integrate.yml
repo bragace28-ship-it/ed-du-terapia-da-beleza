@@ -22,15 +22,13 @@ jobs:
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
           if '</body>' not in s: raise SystemExit('index.html sem </body>')
-          for url in ['./v16-clinical.js','./v16-finance.js','./v16-storage.js']:
-              s=re.sub(r'<script\\s+src=["\\']'+re.escape(url)+r'["\\']\\s*></script>\\s*','',s)
-          scripts=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2','./v16.js','./v46-command-center.js','./v50-smart-gateway.js','./v53-production-authority.js','./v54-command-gateway-bridge.js','./v55-production-hardening.js','./v16-clinical.js','./v16-finance.js','./v16-storage.js']
+          scripts=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2','./v16.js','./v46-command-center.js','./v50-smart-gateway.js','./v53-production-authority.js','./v54-command-gateway-bridge.js','./v55-production-hardening.js','./v56-role-safety.js','./v16-clinical.js','./v16-finance.js','./v16-storage.js']
           for url in scripts:
-              s=re.sub(r'<script\\s+src=["\\']'+re.escape(url)+r'["\\']\\s*></script>\\s*','',s)
-          boot='<style id="eddu-production-boot">#root{visibility:hidden}</style>\\n'
-          s=re.sub(r'<style id="eddu-production-boot">.*?</style>\\s*','',s,flags=re.S)
+              s=re.sub(r'<script\s+src=["\']'+re.escape(url)+r'["\']\s*></script>\s*','',s)
+          boot='<style id="eddu-production-boot">#root{visibility:hidden}</style>\n'
+          s=re.sub(r'<style id="eddu-production-boot">.*?</style>\s*','',s,flags=re.S)
           s=s.replace('</head>',boot+'</head>',1)
-          tags=''.join(f'<script src="{u}"></script>\\n' for u in scripts)
+          tags=''.join(f'<script src="{u}"></script>\n' for u in scripts)
           s=s.replace('</body>',tags+'</body>',1)
           p.write_text(s,encoding='utf-8')
           PY
@@ -40,6 +38,8 @@ jobs:
           test -f v16-clinical.js
           test -f v16-finance.js
           test -f v16-storage.js
+          test -f v56-role-safety.js
+          grep -q 'v56-role-safety.js' index.html
           grep -q 'v55-production-hardening.js' index.html
           grep -q 'eddu-production-boot' index.html
       - name: Commit integration
@@ -49,5 +49,5 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "V55.3: preserve production stack and clinical modules"
+          git commit -m "V56: preserve role safety and clinical modules"
           git push

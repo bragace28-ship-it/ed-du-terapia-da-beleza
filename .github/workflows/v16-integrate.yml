@@ -33,6 +33,7 @@ jobs:
               './v53-production-authority.js',
               './v54-command-gateway-bridge.js',
               './v55-production-hardening.js',
+              './v56-role-safety.js',
           ]
           for url in script_urls:
               s = re.sub(r'<script\s+src=["\']' + re.escape(url) + r'["\']\s*></script>\s*', '', s)
@@ -51,5 +52,5 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "V55.2: normalize production script stack"
+          git commit -m "V56: enforce role isolation in production stack"
           git push
