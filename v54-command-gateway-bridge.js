@@ -8,9 +8,11 @@ async function install(){
     const v46=window.EDDU_V46;
     const smartReady=typeof window.EDDU_V50Pay==='function';
     if(v46&&typeof v46.closeCommand==='function'&&smartReady){
+      // IMPORTANT: resolve the close handler only AFTER V50 is ready.
+      // Earlier bridges may have captured the legacy closeCommand.
       const smartClose=v46.closeCommand;
       const existing=window.closeOrder;
-      if(typeof existing==='function'&&!existing.__edduSmartClose){
+      if(typeof existing!=='function'||existing.__edduSmartClose!==true){
         const f=function(id){
           const o=typeof db!=='undefined'?(db.orders||[]).find(x=>String(x.id)===String(id)):null;
           if(o&&!hasItems(o)){
@@ -21,6 +23,7 @@ async function install(){
           return smartClose(id);
         };
         f.__edduSmartClose=true;
+        f.__v54=true;
         f.__legacy=existing;
         window.closeOrder=f;
         try{closeOrder=f}catch(e){}
