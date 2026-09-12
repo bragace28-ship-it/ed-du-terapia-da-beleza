@@ -15,19 +15,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Inject V16 bridge
+      - name: Inject V16 bridge and Smart Gateway
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          tag = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n<script src="./v16.js"></script>\n'
-          if './v16.js' not in s:
-              if '</body>' not in s:
-                  raise SystemExit('index.html sem </body>')
-              s = s.replace('</body>', tag + '</body>', 1)
-              p.write_text(s, encoding='utf-8')
+          if '</body>' not in s:
+              raise SystemExit('index.html sem </body>')
+          tags = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n<script src="./v16.js"></script>\n<script src="./v46-command-center.js"></script>\n<script src="./v50-smart-gateway.js"></script>\n'
+          for tag in ['<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>', '<script src="./v16.js"></script>', '<script src="./v46-command-center.js"></script>', '<script src="./v50-smart-gateway.js"></script>']:
+              s = s.replace(tag, '')
+          s = s.replace('</body>', tags + '</body>', 1)
+          p.write_text(s, encoding='utf-8')
           PY
 
       - name: Commit integration
@@ -37,5 +38,5 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "V16.1: conectar app ao Supabase"
+          git commit -m "V51.1: carregar bridge e Smart Gateway"
           git push
