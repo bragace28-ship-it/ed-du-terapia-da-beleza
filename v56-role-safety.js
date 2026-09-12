@@ -1,0 +1,81 @@
+/* V56 — final runtime guard: no profile, no app; client never falls back to another client. */
+(function(){
+  'use strict';
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  const profile=()=>window.EDDU_AUTH?.getProfile?.();
+  const role=()=>{const p=profile(); if(!p||p.active===false)return null; return p.role==='client'?'client':(['professional','admin','manager','staff'].includes(p.role)?'pro':null)};
+  const userId=()=>window.EDDU_AUTH?.getUser?.()?.id||null;
+  const toast=m=>window.toast?.(m);
+  const blockNoProfile=async()=>{
+    for(let i=0;i<30;i++){
+      const p=profile();
+      if(p) return;
+      await wait(250);
+    }
+    if(!role()){
+      document.getElementById('eddu-production-boot')?.remove();
+      window.__EDDU_SB?.auth?.signOut?.().finally(()=>location.reload());
+    }
+  };
+  function hardRole(){
+    const r=role();
+    if(!r)return;
+    window.app.role=r;
+    const oldSet=window.setRole;
+    window.setRole=function(requested){
+      const real=role();
+      if(!real)return toast('Sessão sem perfil válido. Faça login novamente.');
+      if(requested!==real)return toast('Esta conta não pode trocar de área.');
+      window.app.role=real;
+      window.app.page=real==='pro'?'dashboard':'home';
+      window.render?.();
+    };
+    window.setRole.__edduV56=true;
+    const oldGo=window.go;
+    window.go=function(page){
+      const real=role();
+      if(real==='client' && !['home','book','appointments','payments','docs'].includes(page))return toast('Área exclusiva para profissionais.');
+      if(real==='pro' && !['dashboard','requests','agenda','clients','orders','finance'].includes(page))return toast('Área exclusiva para clientes.');
+      if(real)window.app.role=real;
+      return oldGo?.(page);
+    };
+  }
+  function hardClientHome(){
+    if(role()!=='client'||!window.clientHome)return;
+    const uid=userId();
+    const original=window.clientHome;
+    window.clientHome=function(){
+      const own=(window.db?.clients||[]).find(c=>String(c.user_id||'')===String(uid));
+      if(!own){
+        return '<main><div class="client-shell"><div class="card"><h2>Cadastro não localizado</h2><p>Esta conta está autenticada, mas não possui um cadastro de cliente vinculado. Nenhum outro cliente será exibido.</p><button class="btn primary" onclick="EDDU_AUTH.signOut()">Sair</button></div></div></main>';
+      }
+      window.db.clients=[own];
+      window.app.selectedClient=own.id;
+      return original();
+    };
+  }
+  function guardRender(){
+    const r=role();
+    if(!r)return;
+    const original=window.render;
+    if(typeof original!=='function'||original.__edduV56)return;
+    const wrapped=function(){
+      const real=role();
+      if(!real)return;
+      window.app.role=real;
+      if(real==='client' && !['home','book','appointments','payments','docs'].includes(window.app.page))window.app.page='home';
+      if(real==='pro' && !['dashboard','requests','agenda','clients','orders','finance'].includes(window.app.page))window.app.page='dashboard';
+      return original.apply(this,arguments);
+    };
+    wrapped.__edduV56=true;
+    window.render=wrapped;
+  }
+  async function boot(){
+    await blockNoProfile();
+    if(!role())return;
+    hardRole();
+    hardClientHome();
+    guardRender();
+  }
+  boot();
+})();
