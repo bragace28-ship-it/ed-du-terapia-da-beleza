@@ -1,8 +1,8 @@
-/* V16.1 — Supabase production bridge. Visual skeleton V13.1 is intentionally preserved. */
+/* V16.2 — Supabase production bridge. Visual skeleton V13.1 is intentionally preserved. */
 (function(){
   const SUPABASE_URL='https://cwdpwfzsasdsetthmpoa.supabase.co';
   const SUPABASE_KEY='sb_publishable_sPtr9cgaWgTAK4ooUkNpxg_5qI2erGj';
-  let sbReady=false, sbUser=null, sbProfile=null;
+  let sbReady=false, sbUser=null, sbProfile=null, hydrated=false, syncing=false;
   function authCss(){
     if(document.getElementById('v16-auth-css')) return;
     const st=document.createElement('style'); st.id='v16-auth-css';
@@ -10,59 +10,82 @@
     document.head.appendChild(st);
   }
   function authOverlay(){
-    authCss();
-    let el=document.getElementById('v16-auth');
-    if(el) return el;
+    authCss(); let el=document.getElementById('v16-auth'); if(el)return el;
     el=document.createElement('div');el.id='v16-auth';el.className='v16-auth-back';
     el.innerHTML='<div class="v16-auth-card"><span class="v16-badge">ED & DU • ACESSO SEGURO</span><h1>Entrar no aplicativo</h1><p>Acesse sua conta profissional ou de cliente.</p><input id="v16-email" type="email" autocomplete="email" placeholder="E-mail"><input id="v16-pass" type="password" autocomplete="current-password" placeholder="Senha"><button id="v16-login">Entrar</button><button id="v16-signup" class="secondary">Criar conta de cliente</button><div id="v16-msg" class="v16-auth-msg"></div></div>';
-    document.body.appendChild(el);
-    document.getElementById('v16-login').onclick=()=>login(false);
-    document.getElementById('v16-signup').onclick=()=>login(true);
-    return el;
+    document.body.appendChild(el); document.getElementById('v16-login').onclick=()=>login(false); document.getElementById('v16-signup').onclick=()=>login(true); return el;
   }
   function msg(t){const x=document.getElementById('v16-msg');if(x)x.textContent=t}
   async function login(signup){
-    if(!sbReady)return;
-    const email=document.getElementById('v16-email').value.trim(), password=document.getElementById('v16-pass').value;
+    if(!sbReady)return; const email=document.getElementById('v16-email').value.trim(), password=document.getElementById('v16-pass').value;
     if(!email||password.length<6){msg('Informe e-mail e senha (mínimo de 6 caracteres).');return}
     msg(signup?'Criando sua conta...':'Entrando...');
     const r=signup?await window.__EDDU_SB.auth.signUp({email,password,options:{data:{full_name:email.split('@')[0]}}}):await window.__EDDU_SB.auth.signInWithPassword({email,password});
     if(r.error){msg(r.error.message);return}
-    if(signup && !r.data.session){msg('Conta criada. Verifique seu e-mail para confirmar o acesso.');return}
+    if(signup&&!r.data.session){msg('Conta criada. Verifique seu e-mail para confirmar o acesso.');return}
     await bootUser();
   }
   async function bootUser(){
-    const sb=window.__EDDU_SB;
-    const u=(await sb.auth.getUser()).data.user;
-    if(!u){authOverlay();return}
-    sbUser=u;
-    const pr=await sb.from('profiles').select('*').eq('id',u.id).single();
-    sbProfile=pr.data||null;
+    const sb=window.__EDDU_SB, u=(await sb.auth.getUser()).data.user; if(!u){authOverlay();return} sbUser=u;
+    const pr=await sb.from('profiles').select('*').eq('id',u.id).single(); sbProfile=pr.data||null;
     if(sbProfile){app.role=sbProfile.role==='client'?'client':'pro';app.page=app.role==='pro'?'dashboard':'home'}
-    const [cr,sr,pm]=await Promise.all([
-      sb.from('clients').select('*').order('name'),
-      sb.from('services').select('*').order('id'),
-      sb.from('payment_methods').select('name').eq('active',true).order('name')
-    ]);
-    if(!cr.error && Array.isArray(cr.data) && cr.data.length){
-      db.clients=cr.data.map(c=>({id:c.id,name:c.name,phone:c.phone||'',email:c.email||'',points:c.loyalty_points||0,term:false,anam:c.notes||'',history:[],anams:[]}));
-      if(!db.clients.some(c=>String(c.id)===String(app.selectedClient)))app.selectedClient=db.clients[0]?.id||null;
+    const [cr,sr,pm]=await Promise.all([sb.from('clients').select('*').order('name'),sb.from('services').select('*').order('id'),sb.from('payment_methods').select('name').eq('active',true).order('name')]);
+    if(!cr.error&&Array.isArray(cr.data)&&cr.data.length){db.clients=cr.data.map(c=>({id:c.id,user_id:c.user_id,name:c.name,phone:c.phone||'',email:c.email||'',points:c.loyalty_points||0,term:false,anam:c.notes||'',history:[],anams:[]}));app.selectedClient=db.clients.find(c=>c.user_id===u.id)?.id||db.clients[0]?.id||null}
+    if(!sr.error&&Array.isArray(sr.data)&&sr.data.length){sr.data.forEach(x=>{const local=SERVICES.find(s=>s.n.toLowerCase()===x.name.toLowerCase()||s.n.replace('Fem','').toLowerCase()===x.name.replace('Fem','').toLowerCase());if(local){local.dbId=x.id;local.base=Number(x.price_base);local.long=Number(x.price_long);local.cost=Number(x.service_cost);local.time=Number(x.duration_minutes)}})}
+    if(!pm.error&&pm.data?.length)db.settings.paymentMethods=pm.data.map(x=>x.name);
+    hydrated=true; const gate=document.getElementById('v16-auth');if(gate)gate.remove(); if(typeof safeRender==='function')safeRender();
+  }
+  const localServiceDbId=id=>{const s=typeof svc==='function'?svc(id):null;return s?.dbId||null};
+  async function myClient(){if(!sbUser)return null;const r=await window.__EDDU_SB.from('clients').select('*').eq('user_id',sbUser.id).maybeSingle();return r.data||null}
+  async function syncClient(c){
+    if(!sbReady||!sbUser||!c||syncing)return; syncing=true;
+    try{
+      const payload={name:c.name,email:c.email||null,phone:c.phone||null,notes:c.anam||null,loyalty_points:Number(c.points||0),active:true};
+      let r=c.id&&String(c.id).includes('-')?await window.__EDDU_SB.from('clients').update(payload).eq('id',c.id).select('*').maybeSingle():await window.__EDDU_SB.from('clients').insert({...payload,user_id:sbUser.id}).select('*').single();
+      if(!r.error&&r.data){c.id=r.data.id;c.points=r.data.loyalty_points||0}
+    }finally{syncing=false}
+  }
+  async function syncAppointment(req){
+    if(!sbUser||!req)return;
+    const client=await myClient(); if(!client)return;
+    const start=new Date(req.date+'T'+req.time+':00'); const mins=(req.services||[]).reduce((a,i)=>a+Number((svc(i.serviceId)||{}).time||60),0)||60; const end=new Date(start.getTime()+mins*60000);
+    const row={client_id:client.id,professional_id:null,starts_at:start.toISOString(),ends_at:end.toISOString(),status:(req.status||'Pendente').toLowerCase().replace(' ','_'),notes:null,created_by:sbUser.id};
+    const ins=await window.__EDDU_SB.from('appointments').insert(row).select('id').single(); if(!ins.error&&ins.data)req.id=ins.data.id;
+    if(!ins.error&&ins.data){const lines=(req.services||[{serviceId:req.serviceId,length:'base'}]).map(i=>{const s=svc(i.serviceId)||{};return{appointment_id:ins.data.id,service_id:localServiceDbId(i.serviceId),price:Number(i.length==='long'?s.long:s.base||0),duration_minutes:Number(s.time||60)}}).filter(x=>x.service_id);if(lines.length)await window.__EDDU_SB.from('appointment_services').insert(lines)}
+  }
+  async function syncOrder(o){
+    if(!sbUser||!o)return; const clientId=(db.clients.find(c=>String(c.id)===String(o.clientId))||{}).id; if(!clientId)return;
+    let profId=null; const pr=await window.__EDDU_SB.from('professionals').select('id').eq('user_id',sbUser.id).maybeSingle(); if(!pr.error&&pr.data)profId=pr.data.id;
+    const calc=typeof orderCalc==='function'?orderCalc(o):{sub:0,discount:0,net:0,cost:0,commission:0,profit:0};
+    const row={client_id:clientId,appointment_id:null,professional_id:profId,status:o.open?'open':(o.payment==='paid'?'paid':'closed'),subtotal:Number(calc.sub||0),discount:Number(calc.discount||0),total:Number(calc.net||0),total_cost:Number(calc.cost||0),commission:Number(calc.commission||0),profit:Number(calc.profit||0),opened_at:o.openedAt?new Date(o.openedAt).toISOString():new Date().toISOString(),closed_at:o.open?null:new Date().toISOString(),created_by:sbUser.id};
+    const q=o.id&&String(o.id).includes('-')?await window.__EDDU_SB.from('commands').update(row).eq('id',o.id).select('id').maybeSingle():await window.__EDDU_SB.from('commands').insert(row).select('id').single();
+    if(!q.error&&q.data){o.id=q.data.id; if(!o.__dbItemsSynced){const lines=(o.items||[]).map(i=>{const s=svc(i.serviceId)||{};return{command_id:q.data.id,service_id:localServiceDbId(i.serviceId),professional_id:profId,description:s.n||'',quantity:1,unit_price:Number(i.length==='long'?s.long:s.base||0),unit_cost:Number(s.cost||0),commission_percent:30}}).filter(x=>x.service_id);if(lines.length)await window.__EDDU_SB.from('command_items').insert(lines);o.__dbItemsSynced=true}}
+  }
+  async function syncPayment(o){
+    if(!sbUser||!o||!o.id||!String(o.id).includes('-')||!o.paymentMethod)return;
+    const pm=await window.__EDDU_SB.from('payment_methods').select('id').eq('name',o.paymentMethod).maybeSingle(); if(pm.error||!pm.data)return;
+    await window.__EDDU_SB.from('command_payments').upsert({command_id:o.id,payment_method_id:pm.data.id,amount:Number(orderCalc(o).net||0),paid_at:new Date().toISOString()},{onConflict:'command_id,payment_method_id'});
+  }
+  function installHooks(){
+    const originalSave=window.save;
+    if(typeof originalSave==='function'&&!window.__EDDU_SAVE_HOOK){
+      window.__EDDU_SAVE_HOOK=true;
+      window.save=function(){originalSave(); if(hydrated&&!syncing&&app.role==='client'){const c=db.clients[0];syncClient(c)}};
     }
-    if(!sr.error && Array.isArray(sr.data) && sr.data.length){
-      sr.data.forEach(x=>{const local=SERVICES.find(s=>s.n.toLowerCase()===x.name.toLowerCase()||s.n.replace('Fem','').toLowerCase()===x.name.replace('Fem','').toLowerCase());if(local){local.base=Number(x.price_base);local.long=Number(x.price_long);local.cost=Number(x.service_cost);local.time=Number(x.duration_minutes)}});
-    }
-    if(!pm.error && pm.data?.length) db.settings.paymentMethods=pm.data.map(x=>x.name);
-    save();
-    const gate=document.getElementById('v16-auth');if(gate)gate.remove();
-    if(typeof safeRender==='function')safeRender();
+    const wrap=(name,fn)=>{const orig=window[name];if(typeof orig!=='function'||orig.__edduWrapped)return;const w=function(){const r=orig.apply(this,arguments);Promise.resolve(r).then(()=>fn.apply(this,arguments)).catch(e=>console.warn('EDDU sync',name,e));return r};w.__edduWrapped=true;window[name]=w};
+    wrap('submitBooking',async()=>{if(hydrated&&app.role==='client'){const r=db.requests[0];if(r&&!r.__dbSynced){await syncAppointment(r);r.__dbSynced=true;originalSave?.()}}});
+    wrap('startReq',async()=>{if(hydrated&&app.role==='pro'){const o=db.orders[0];if(o&&!o.__dbSynced){await syncOrder(o);o.__dbSynced=true;originalSave?.()}}});
+    wrap('startFromAgenda',async()=>{if(hydrated&&app.role==='pro'){const o=db.orders[0];if(o&&!o.__dbSynced){await syncOrder(o);o.__dbSynced=true;originalSave?.()}}});
+    wrap('closeOrder',async()=>{if(hydrated&&app.role==='pro'){const o=db.orders.find(x=>x.id===app.editingOrder)||db.orders[0];if(o)await syncOrder(o)}});
+    wrap('confirmOrderPayment',async()=>{if(hydrated&&app.role==='pro'){const o=db.orders.find(x=>x.id===app.editingOrder)||db.orders.find(x=>x.payment==='paid');if(o)await syncPayment(o)}});
+    wrap('finishClientPayment',async()=>{if(hydrated&&app.role==='client'){const o=db.orders.find(x=>x.id===app.editingOrder)||db.orders.find(x=>x.payment==='paid');if(o)await syncPayment(o)}});
   }
   async function init(){
     if(!window.supabase?.createClient){setTimeout(init,100);return}
     window.__EDDU_SB=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);sbReady=true;
     window.EDDU_AUTH={getUser:()=>sbUser,getProfile:()=>sbProfile,signOut:async()=>{await window.__EDDU_SB.auth.signOut();location.reload()}};
-    window.__EDDU_SB.auth.onAuthStateChange((_e,s)=>{if(s?.user){bootUser()}else{authOverlay()}});
-    const s=await window.__EDDU_SB.auth.getSession();
-    if(s.data.session) await bootUser(); else authOverlay();
+    installHooks(); window.__EDDU_SB.auth.onAuthStateChange((_e,s)=>{if(s?.user){bootUser()}else{hydrated=false;authOverlay()}});
+    const s=await window.__EDDU_SB.auth.getSession(); if(s.data.session)await bootUser();else authOverlay();
   }
   init();
 })();
