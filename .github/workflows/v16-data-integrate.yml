@@ -1,4 +1,4 @@
-name: ED DU V48 command center
+name: ED DU V49 command center
 on:
   push:
     branches: [main]
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Integrate command center with authoritative role isolation
+      - name: Integrate command center with strict identity isolation
         shell: bash
         run: |
           python - <<'PY'
@@ -26,41 +26,36 @@ jobs:
             'v45-command-center.js'
           ]
           for name in legacy:
-              s=re.sub(r'<script[^>]+src=["\'](?:\./)?'+re.escape(name)+r'["\'][^>]*></script>','',s)
+              s=re.sub(r'<script[^>]+src=["\\'](?:\\./)?'+re.escape(name)+r'["\\'][^>]*></script>','',s)
           src='./v46-command-center.js'
           if src not in s:
-              s=s.replace('</body>',f'<script src="{src}"></script>\n</body>',1)
+              s=s.replace('</body>',f'<script src="{src}"></script>\\n</body>',1)
           p.write_text(s,encoding='utf-8')
 
           v=Path('v46-command-center.js')
           x=v.read_text(encoding='utf-8')
 
-          # The RPC is SECURITY DEFINER and is the authoritative role/data boundary:
-          # it returns role=pro only after validating the authenticated user as staff,
-          # and it filters commands/items/payments to the authenticated client otherwise.
-          old="D.payment_methods=Array.isArray(x.payment_methods)?x.payment_methods:[]}"
-          new="D.payment_methods=Array.isArray(x.payment_methods)?x.payment_methods:[];if(x.role)role=x.role==='pro'?'pro':'client'}"
-          if old not in x:
-              raise SystemExit('load() anchor not found')
-          x=x.replace(old,new,1)
+          # V49: the authenticated profile/professional relationship is authoritative
+          # for the visual role. The RPC remains the server-side data boundary, but its
+          # returned role must never overwrite the authenticated identity.
+          old_ident="async function identify(){await sb.from('profiles').select('role,active').eq('id',user.id).maybeSingle();}"
+          new_ident="async function identify(){const [p,pr]=await Promise.all([sb.from('profiles').select('role,active').eq('id',user.id).maybeSingle(),sb.from('professionals').select('id,user_id,name,active').eq('user_id',user.id).eq('active',true).maybeSingle()]);const profileRole=p.data?.role;role=(pr.data||profileRole==='professional'||profileRole==='admin')?'pro':'client';}"
+          if old_ident not in x:
+              raise SystemExit('identify() anchor not found')
+          x=x.replace(old_ident,new_ident,1)
 
-          # Do not allow the local profile lookup to override the server-authoritative RPC role.
-          old_ident="async function identify(){const [p,pr]=await Promise.all([sb.from('profiles').select('role,active').eq('id',user.id).maybeSingle(),sb.from('professionals').select('id,user_id,name,active').eq('user_id',user.id).eq('active',true).maybeSingle()]);role=(pr.data||p.data?.role==='professional'||p.data?.role==='admin')?'pro':'client'}"
-          new_ident="async function identify(){await sb.from('profiles').select('role,active').eq('id',user.id).maybeSingle();}"
-          if old_ident in x:
-              x=x.replace(old_ident,new_ident,1)
+          # Remove every RPC-role overwrite. The authenticated identity controls the UI.
+          x=re.sub(r";if\(x\.role\)role=x\.role==='pro'\?'pro':'client'",'',x)
 
-          # Keep payment actions strictly client-side; staff can inspect/close but never initiate a client checkout.
-          x=x.replace("function pay(id){const o=D.commands.find(x=>String(x.id)===String(id));if(!o)return;", "function pay(id){if(role!=='client'){showError('Pagamento do cliente só pode ser iniciado na área do cliente.');return}const o=D.commands.find(x=>String(x.id)===String(id));if(!o)return;",1)
+          # Payment is a client-only operation.
+          if "function pay(id){if(role!=='client')" not in x:
+              x=x.replace("function pay(id){const o=D.commands.find(x=>String(x.id)===String(id));if(!o)return;", "function pay(id){if(role!=='client'){showError('Pagamento do cliente só pode ser iniciado na área do cliente.',id);return}const o=D.commands.find(x=>String(x.id)===String(id));if(!o)return;",1)
 
-          # Preserve the selected command when a gateway fails, instead of reopening the first command.
-          x=x.replace("function showError(msg){$('#v46modalbox').innerHTML='<h2>Não foi possível iniciar</h2><div class=\"v46notice\">'+esc(msg)+'", "function showError(msg,id){$('#v46modalbox').innerHTML='<h2>Não foi possível iniciar</h2><div class=\"v46notice\">'+esc(msg)+'",1)
-          x=x.replace("onclick=\"window.EDDU_V46.pay('\\'+String(D.commands.find(x=>true)?.id||'')+'\\')\"", "onclick=\"window.EDDU_V46.pay('\\'+String(id||'')+'\\')\"",1)
+          # Preserve the command that failed instead of reopening the first command.
+          if 'function showError(msg,id)' not in x:
+              x=x.replace('function showError(msg){', 'function showError(msg,id){',1)
+          x=x.replace("window.EDDU_V46.pay('\\'+String(D.commands.find(x=>true)?.id||'')+'\\')", "window.EDDU_V46.pay('\\'+String(id||'')+'\\')",1)
           x=x.replace("}catch(e){showError(e.message||'Não foi possível iniciar o pagamento.')}", "}catch(e){showError(e.message||'Não foi possível iniciar o pagamento.',id)}",1)
-          x=x.replace("if(r.error){showError(r.error.message);return}", "if(r.error){showError(r.error.message,id);return}",1)
-
-          # Make gateway configuration errors actionable without exposing secrets.
-          x=x.replace("if(!r.ok)throw new Error(j.error||j.message||'O gateway recusou a operação.');", "if(!r.ok){const msg=j.error||j.message||'O gateway recusou a operação.';throw new Error(msg)}",1)
 
           v.write_text(x,encoding='utf-8')
           PY
@@ -71,7 +66,8 @@ jobs:
           test -f v46-command-center.js
           grep -q 'v46-command-center.js' index.html
           ! grep -qE 'v(29|30|31|32|33|35|36|37|39|41|42|43|44|45)-command|v41-runtime|v42-command' index.html
-          grep -q "if(x.role)role=x.role==='pro'?'pro':'client'" v46-command-center.js
+          grep -q "const profileRole=p.data?.role" v46-command-center.js
+          ! grep -q "if(x.role)role=x.role" v46-command-center.js
           grep -q "role!=='client'" v46-command-center.js
           node --check v46-command-center.js
       - name: Commit integration
@@ -81,5 +77,5 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add index.html v46-command-center.js
           git diff --cached --quiet && exit 0
-          git commit -m "V48: isolamento autoritativo e fluxo de pagamento"
+          git commit -m "V49: separar visao por identidade autenticada"
           git push
