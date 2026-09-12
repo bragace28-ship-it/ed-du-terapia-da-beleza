@@ -1,4 +1,4 @@
-name: ED DU V41 application integration
+name: ED DU V42 command rebuild
 
 on:
   push:
@@ -14,26 +14,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Inject V41 standalone command center
+      - name: Inject V42 command rebuild
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          src='./v41-command-standalone.js'
+          src='./v42-command-rebuild.js'
           tag=f'<script src="{src}"></script>\n'
           if src not in s:
+              if '</body>' not in s:
+                  raise SystemExit('index.html sem </body>')
               s=s.replace('</body>',tag+'</body>',1)
           p.write_text(s,encoding='utf-8')
           PY
-      - name: Validate
+      - name: Validate V42
         shell: bash
         run: |
           test -f index.html
-          test -f v41-command-standalone.js
-          grep -q 'v41-command-standalone.js' index.html
-          node --check v41-command-standalone.js
+          test -f v42-command-rebuild.js
+          grep -q 'v42-command-rebuild.js' index.html
+          node --check v42-command-rebuild.js
       - name: Commit integration
         shell: bash
         run: |
@@ -41,5 +43,5 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "V41: integrar central standalone de comandas"
+          git commit -m "V42: reconstruir comandas com fluxo independente"
           git push
