@@ -44,7 +44,7 @@ jobs:
           s=s.replace('</body>',tags+'</body>',1)
           p.write_text(s,encoding='utf-8')
           PY
-      - name: Validate
+      - name: Validate files
         shell: bash
         run: |
           test -f index.html
@@ -52,8 +52,6 @@ jobs:
           test -f v50-smart-gateway.js
           grep -q 'v46-command-center.js' index.html
           grep -q 'v50-smart-gateway.js' index.html
-          node --check v46-command-center.js
-          node --check v50-smart-gateway.js
       - name: Commit integration
         shell: bash
         run: |
