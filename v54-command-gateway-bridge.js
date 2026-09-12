@@ -15,10 +15,6 @@ async function init(){
     };
     f.__v54=true;f.__legacy=legacyClose;window.closeOrder=f;closeOrder=f;
    }
-   if(typeof window.sendPayment==='function'&&!window.sendPayment.__v54){
-    const f=function(id){return typeof window.EDDU_V46.open==='function'?window.EDDU_V46.open():undefined};
-    f.__v54=true;window.sendPayment=f;sendPayment=f;
-   }
    return;
   }
   await wait(100);
