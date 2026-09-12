@@ -24,8 +24,8 @@ jobs:
           s = p.read_text(encoding='utf-8')
           if '</body>' not in s:
               raise SystemExit('index.html sem </body>')
-          tags = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n<script src="./v16.js"></script>\n<script src="./v46-command-center.js"></script>\n<script src="./v50-smart-gateway.js"></script>\n<script src="./v53-production-authority.js"></script>\n'
-          for tag in ['<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>', '<script src="./v16.js"></script>', '<script src="./v46-command-center.js"></script>', '<script src="./v50-smart-gateway.js"></script>', '<script src="./v53-production-authority.js"></script>']:
+          tags = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n<script src="./v16.js"></script>\n<script src="./v46-command-center.js"></script>\n<script src="./v50-smart-gateway.js"></script>\n<script src="./v53-production-authority.js"></script>\n<script src="./v54-command-gateway-bridge.js"></script>\n'
+          for tag in ['<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>', '<script src="./v16.js"></script>', '<script src="./v46-command-center.js"></script>', '<script src="./v50-smart-gateway.js"></script>', '<script src="./v53-production-authority.js"></script>', '<script src="./v54-command-gateway-bridge.js"></script>']:
               s = s.replace(tag, '')
           s = s.replace('</body>', tags + '</body>', 1)
           p.write_text(s, encoding='utf-8')
@@ -38,5 +38,5 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "V53.1: carregar autoridade de dados de produção"
+          git commit -m "V54.1: fechar comanda pelo Smart Gateway"
           git push
