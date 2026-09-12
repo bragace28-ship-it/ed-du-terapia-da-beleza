@@ -1,4 +1,4 @@
-name: ED DU V44 command center
+name: ED DU V45 command center
 on:
   push:
     branches: [main]
@@ -10,36 +10,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Replace legacy command layers with V44
+      - name: Replace command center with V45
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
           legacy = [
             'v29-command-save.js','v30-command-persist.js','v31-runtime-recovery.js','v32-command-render-guard.js',
             'v33-command-list-sync.js','v35-command-view-stability.js','v36-command-authoritative-view.js',
             'v37-command-runtime-repair.js','v39-command-stable-render.js','v41-command-bypass.js',
-            'v41-command-standalone.js','v42-command-rebuild.js','v43-command-portal.js'
+            'v41-command-standalone.js','v42-command-rebuild.js','v43-command-portal.js','v44-command-center.js'
           ]
           for name in legacy:
-              for tag in (f'<script src="./{name}"></script>', f'<script src="{name}"></script>'):
-                  s=s.replace(tag,'')
-          src='./v44-command-center.js'
-          tag=f'<script src="{src}"></script>\n'
+              s=re.sub(r'<script[^>]+src=["\'](?:\./)?'+re.escape(name)+r'["\'][^>]*></script>','',s)
+          src='./v45-command-center.js'
           if src not in s:
-              s=s.replace('</body>',tag+'</body>',1)
+              s=s.replace('</body>',f'<script src="{src}"></script>\n</body>',1)
           p.write_text(s,encoding='utf-8')
           PY
       - name: Validate
         shell: bash
         run: |
           test -f index.html
-          test -f v44-command-center.js
-          grep -q 'v44-command-center.js' index.html
-          ! grep -qE 'v29-command|v30-command|v31-runtime|v32-command|v33-command|v35-command|v36-command|v37-command|v39-command|v41-command|v42-command|v43-command' index.html
-          node --check v44-command-center.js
+          test -f v45-command-center.js
+          grep -q 'v45-command-center.js' index.html
+          ! grep -qE 'v(29|30|31|32|33|35|36|37|39|41|42|43|44)-command|v41-runtime|v42-command' index.html
+          node --check v45-command-center.js
       - name: Commit integration
         shell: bash
         run: |
@@ -47,5 +46,5 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "V44: central de comandas autoritativa"
+          git commit -m "V45: central de comandas com RPC seguro"
           git push
