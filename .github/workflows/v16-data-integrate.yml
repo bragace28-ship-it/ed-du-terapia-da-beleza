@@ -1,4 +1,4 @@
-name: ED DU V26 data integration
+name: ED DU V27 data integration
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html'); s=p.read_text(encoding='utf-8')
-          for src in ('./v16-data.js','./v16-clinical.js','./v16-clinical-ui.js','./v16-finance.js','./v16-storage.js','./v17-finalize.js','./v17-client-payment.js','./v18-real-payment.js','./v20-auth-profile.js','./v21-production-data.js','./v22-operational-sync.js','./v23-reconciliation.js','./v24-financial-center.js','./v25-pix-reconciliation.js','./v26-pagbank-checkout.js'):
+          for src in ('./v16-data.js','./v16-clinical.js','./v16-clinical-ui.js','./v16-finance.js','./v16-storage.js','./v17-finalize.js','./v17-client-payment.js','./v18-real-payment.js','./v20-auth-profile.js','./v21-production-data.js','./v22-operational-sync.js','./v23-reconciliation.js','./v24-financial-center.js','./v25-pix-reconciliation.js','./v26-pagbank-checkout.js','./v27-pagbank-ui.js'):
               tag=f'<script src="{src}"></script>\n'
               if src not in s:
                   if '</body>' not in s: raise SystemExit('index.html sem </body>')
@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           test -f index.html
-          for f in v16-data.js v16-clinical.js v16-clinical-ui.js v16-finance.js v16-storage.js v17-finalize.js v17-client-payment.js v18-real-payment.js v20-auth-profile.js v21-production-data.js v22-operational-sync.js v23-reconciliation.js v24-financial-center.js v25-pix-reconciliation.js v26-pagbank-checkout.js; do
+          for f in v16-data.js v16-clinical.js v16-clinical-ui.js v16-finance.js v16-storage.js v17-finalize.js v17-client-payment.js v18-real-payment.js v20-auth-profile.js v21-production-data.js v22-operational-sync.js v23-reconciliation.js v24-financial-center.js v25-pix-reconciliation.js v26-pagbank-checkout.js v27-pagbank-ui.js; do
             test -f "$f"
             grep -q "$f" index.html
             node --check "$f"
@@ -43,5 +43,5 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "V26: integrar PagBank Checkout"
+          git commit -m "V27: integrar PagBank Checkout no pagamento do cliente"
           git push
