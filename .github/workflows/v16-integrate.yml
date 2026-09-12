@@ -15,31 +15,41 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Inject production bridge and payment stack
+      - name: Normalize production bridge and payment stack
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
           if '</body>' not in s:
               raise SystemExit('index.html sem </body>')
+          script_urls = [
+              'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+              './v16.js',
+              './v46-command-center.js',
+              './v50-smart-gateway.js',
+              './v53-production-authority.js',
+              './v54-command-gateway-bridge.js',
+              './v55-production-hardening.js',
+          ]
+          for url in script_urls:
+              s = re.sub(r'<script\s+src=["\']' + re.escape(url) + r'["\']\s*></script>\s*', '', s)
           boot_css = '<style id="eddu-production-boot">#root{visibility:hidden}</style>\n'
-          if 'id="eddu-production-boot"' not in s:
-              s = s.replace('</head>', boot_css + '</head>', 1)
-          tags = '<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n<script src="./v16.js"></script>\n<script src="./v46-command-center.js"></script>\n<script src="./v50-smart-gateway.js"></script>\n<script src="./v53-production-authority.js"></script>\n<script src="./v54-command-gateway-bridge.js"></script>\n<script src="./v55-production-hardening.js"></script>\n'
-          for tag in ['<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>', '<script src="./v16.js"></script>', '<script src="./v46-command-center.js"></script>', '<script src="./v50-smart-gateway.js"></script>', '<script src="./v53-production-authority.js"></script>', '<script src="./v54-command-gateway-bridge.js"></script>', '<script src="./v55-production-hardening.js"></script>']:
-              s = s.replace(tag, '')
+          s = re.sub(r'<style id="eddu-production-boot">.*?</style>\s*', '', s, flags=re.S)
+          s = s.replace('</head>', boot_css + '</head>', 1)
+          tags = ''.join(f'<script src="{url}"></script>\n' for url in script_urls)
           s = s.replace('</body>', tags + '</body>', 1)
           p.write_text(s, encoding='utf-8')
           PY
 
-      - name: Commit integration
+      - name: Commit normalized integration
         shell: bash
         run: |
           git config user.name "ED DU Automation"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "V55.1: hide demo render until production data is ready"
+          git commit -m "V55.2: normalize production script stack"
           git push
