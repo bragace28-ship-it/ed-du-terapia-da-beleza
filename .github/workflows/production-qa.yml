@@ -34,7 +34,7 @@ jobs:
           test "$found" -eq 1
 
       - name: Production stack integrity
-        shell: python
+        shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
