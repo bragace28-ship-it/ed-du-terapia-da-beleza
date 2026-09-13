@@ -1,0 +1,38 @@
+project_id = "eddu-local"
+
+[api]
+enabled = true
+
+[db]
+port = 54322
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+
+[storage]
+enabled = true
+
+[functions.create-stripe-checkout]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.create-pix-charge]
+verify_jwt = true
+
+[functions.pagbank-webhook]
+verify_jwt = false
+
+[functions.picpay-webhook]
+verify_jwt = false
+
+[functions.create-asaas-checkout]
+verify_jwt = true
+
+[functions.asaas-webhook]
+verify_jwt = false
