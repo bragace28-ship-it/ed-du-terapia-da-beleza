@@ -32,8 +32,8 @@ jobs:
 
           # Remove stale/duplicate production modules before rebuilding the canonical block.
           for name in required:
-              s = re.sub(r'<script[^>]+src=[\"\\'](?:\\./)?' + re.escape(name) + r'[\"\\'][^>]*>\\s*</script>\\s*', '', s, flags=re.I)
-              s = re.sub(r'<script[^>]+src=[\"\\'](?:\\./)?' + re.escape(name) + r'[\"\\'][^>]*>\\s*</script>', '', s, flags=re.I)
+              pattern = r"<script[^>]+src=[\"'](?:\./)?" + re.escape(name) + r"[\"'][^>]*>\s*</script>\s*"
+              s = re.sub(pattern, '', s, flags=re.I)
 
           # Keep production data hidden until the real Supabase state is hydrated.
           boot = '<style id="eddu-production-boot">#root{visibility:hidden}</style>'
