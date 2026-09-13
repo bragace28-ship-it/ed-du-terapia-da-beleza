@@ -28,14 +28,13 @@ jobs:
               'v54-command-gateway-bridge.js',
               'v55-production-hardening.js',
               'v56-role-safety.js',
+              'v58-production-runtime-guard.js',
           ]
 
-          # Remove stale/duplicate production modules before rebuilding the canonical block.
           for name in required:
               pattern = r"<script[^>]+src=[\"'](?:\./)?" + re.escape(name) + r"[\"'][^>]*>\s*</script>\s*"
               s = re.sub(pattern, '', s, flags=re.I)
 
-          # Keep production data hidden until the real Supabase state is hydrated.
           boot = '<style id="eddu-production-boot">#root{visibility:hidden}</style>'
           if 'id="eddu-production-boot"' not in s:
               s = s.replace('</head>', boot + '\n</head>', 1)
@@ -54,13 +53,14 @@ jobs:
         run: |
           set -euo pipefail
           test -f index.html
-          for f in v16.js v46-command-center.js v50-smart-gateway.js v53-production-authority.js v54-command-gateway-bridge.js v55-production-hardening.js v56-role-safety.js; do test -f "$f"; done
+          for f in v16.js v46-command-center.js v50-smart-gateway.js v53-production-authority.js v54-command-gateway-bridge.js v55-production-hardening.js v56-role-safety.js v58-production-runtime-guard.js; do test -f "$f"; done
           grep -q 'v46-command-center.js' index.html
           grep -q 'v50-smart-gateway.js' index.html
           grep -q 'v53-production-authority.js' index.html
           grep -q 'v54-command-gateway-bridge.js' index.html
           grep -q 'v55-production-hardening.js' index.html
           grep -q 'v56-role-safety.js' index.html
+          grep -q 'v58-production-runtime-guard.js' index.html
           grep -q 'eddu-production-boot' index.html
 
       - name: Commit normalized index
