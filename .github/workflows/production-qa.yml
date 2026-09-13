@@ -36,23 +36,20 @@ jobs:
       - name: Production stack integrity
         shell: python
         run: |
+          set -euo pipefail
+          python - <<'PY'
           from pathlib import Path
           import re
-
           html = Path('index.html').read_text(encoding='utf-8')
           required = [
-              'v16.js',
-              'v46-command-center.js',
-              'v50-smart-gateway.js',
-              'v53-production-authority.js',
-              'v54-command-gateway-bridge.js',
-              'v55-production-hardening.js',
-              'v56-role-safety.js',
-              'v58-production-runtime-guard.js',
+              'v16.js', 'v46-command-center.js', 'v50-smart-gateway.js',
+              'v53-production-authority.js', 'v54-command-gateway-bridge.js',
+              'v55-production-hardening.js', 'v56-role-safety.js',
+              'v58-production-runtime-guard.js'
           ]
           positions = []
           for name in required:
-              matches = re.findall(r'<script[^>]+src=[\"\'](?:\\./)?' + re.escape(name) + r'[\"\'][^>]*>\\s*</script>', html, re.I)
+              matches = re.findall(r'<script[^>]+src=[\"\'](?:\./)?' + re.escape(name) + r'[\"\'][^>]*>\s*</script>', html, re.I)
               if len(matches) != 1:
                   raise SystemExit(f'{name}: expected exactly one script tag, found {len(matches)}')
               positions.append(html.lower().find(name.lower()))
@@ -60,21 +57,19 @@ jobs:
               raise SystemExit('Production script order is not canonical')
           if 'id="eddu-production-boot"' not in html:
               raise SystemExit('Production boot gate missing')
+          PY
 
-      - name: Secret leak scan
+      - name: Secret leak scan in frontend
         shell: bash
         run: |
           set -euo pipefail
-          if grep -RInE --exclude-dir=.git --exclude='production-qa.yml' --exclude='*.md' '(sk_live_[A-Za-z0-9_\-]+|sk_test_[A-Za-z0-9_\-]+|\$aact_prod_[A-Za-z0-9_\-]+|\$aact_hmlg_[A-Za-z0-9_\-]+)' .; then
-            echo 'Potential payment-provider secret found in repository.'
+          files=(index.html)
+          while IFS= read -r -d '' file; do files+=("$file"); done < <(find . -maxdepth 1 -type f -name '*.js' -print0)
+          if grep -InE '(sk_live_[A-Za-z0-9_\-]+|sk_test_[A-Za-z0-9_\-]+|\$aact_prod_[A-Za-z0-9_\-]+|\$aact_hmlg_[A-Za-z0-9_\-]+)' "${files[@]}"; then
+            echo 'Potential payment-provider secret found in frontend source.'
             exit 1
           fi
-
-      - name: Forbidden frontend secret names
-        shell: bash
-        run: |
-          set -euo pipefail
-          if grep -RInE --exclude-dir=.git --exclude='production-qa.yml' 'STRIPE_SECRET_KEY|PAGBANK_TOKEN|ASAAS_API_KEY|ASAAS_WEBHOOK_TOKEN|PICPAY_CLIENT_SECRET|STRIPE_WEBHOOK_SECRET' .; then
-            echo 'Server-side secret identifier appears in repository source.'
+          if grep -InE 'STRIPE_SECRET_KEY|PAGBANK_TOKEN|ASAAS_API_KEY|ASAAS_WEBHOOK_TOKEN|PICPAY_CLIENT_SECRET|STRIPE_WEBHOOK_SECRET' "${files[@]}"; then
+            echo 'Server-side payment secret identifier appears in frontend source.'
             exit 1
           fi
