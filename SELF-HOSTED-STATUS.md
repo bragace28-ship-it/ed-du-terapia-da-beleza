@@ -45,7 +45,7 @@ A próxima ação exige acesso ao ambiente que possui Docker + credenciais do pr
 
 ### Comando de entrada
 ```powershell
-..\u\scripts\cloud-export.ps1
+.\scripts\cloud-export.ps1
 ```
 
 Depois do export, o fluxo será:
