@@ -1,6 +1,8 @@
 name: ED DU Self-Hosted Build
 
 on:
+  push:
+    branches: [self-hosted-foundation]
   pull_request:
     branches: [main]
   workflow_dispatch:
