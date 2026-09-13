@@ -1,0 +1,80 @@
+name: ED DU Production QA
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: JavaScript syntax check
+        shell: bash
+        run: |
+          set -euo pipefail
+          found=0
+          while IFS= read -r -d '' file; do
+            found=1
+            echo "Checking $file"
+            node --check "$file"
+          done < <(find . -type f -name '*.js' -not -path './.git/*' -print0)
+          test "$found" -eq 1
+
+      - name: Production stack integrity
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          html = Path('index.html').read_text(encoding='utf-8')
+          required = [
+              'v16.js',
+              'v46-command-center.js',
+              'v50-smart-gateway.js',
+              'v53-production-authority.js',
+              'v54-command-gateway-bridge.js',
+              'v55-production-hardening.js',
+              'v56-role-safety.js',
+              'v58-production-runtime-guard.js',
+          ]
+          positions = []
+          for name in required:
+              matches = re.findall(r'<script[^>]+src=[\"\'](?:\\./)?' + re.escape(name) + r'[\"\'][^>]*>\\s*</script>', html, re.I)
+              if len(matches) != 1:
+                  raise SystemExit(f'{name}: expected exactly one script tag, found {len(matches)}')
+              positions.append(html.lower().find(name.lower()))
+          if positions != sorted(positions):
+              raise SystemExit('Production script order is not canonical')
+          if 'id="eddu-production-boot"' not in html:
+              raise SystemExit('Production boot gate missing')
+
+      - name: Secret leak scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE --exclude-dir=.git --exclude='production-qa.yml' --exclude='*.md' '(sk_live_[A-Za-z0-9_\-]+|sk_test_[A-Za-z0-9_\-]+|\$aact_prod_[A-Za-z0-9_\-]+|\$aact_hmlg_[A-Za-z0-9_\-]+)' .; then
+            echo 'Potential payment-provider secret found in repository.'
+            exit 1
+          fi
+
+      - name: Forbidden frontend secret names
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE --exclude-dir=.git --exclude='production-qa.yml' 'STRIPE_SECRET_KEY|PAGBANK_TOKEN|ASAAS_API_KEY|ASAAS_WEBHOOK_TOKEN|PICPAY_CLIENT_SECRET|STRIPE_WEBHOOK_SECRET' .; then
+            echo 'Server-side secret identifier appears in repository source.'
+            exit 1
+          fi
