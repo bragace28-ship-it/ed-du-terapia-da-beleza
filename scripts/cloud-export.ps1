@@ -11,7 +11,6 @@ Write-Host 'This script exports data/schema/functions. It does NOT reset or dele
 
 if (!(Get-Command npx -ErrorAction SilentlyContinue)) { throw 'Node/npm não encontrado.' }
 New-Item -ItemType Directory -Force -Path $BackupDir | Out-Null
-New-Item -ItemType Directory -Force -Path "$BackupDir/functions" | Out-Null
 
 npx supabase --version
 npx supabase link --project-ref $ProjectRef
@@ -31,7 +30,8 @@ $functions = @(
   'pagbank-webhook','picpay-webhook','create-asaas-checkout','asaas-webhook'
 )
 foreach ($fn in $functions) {
-  npx supabase functions download $fn --project-ref $ProjectRef --output-dir "supabase/functions/$fn"
+  npx supabase functions download $fn --project-ref $ProjectRef
+  if (!(Test-Path "supabase/functions/$fn")) { throw "Function não encontrada após download: $fn" }
 }
 
 Write-Host '[5/5] Backup verification...' -ForegroundColor Cyan
