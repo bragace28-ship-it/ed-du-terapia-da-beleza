@@ -1,4 +1,4 @@
-/* V58 — Final production runtime guard: real-data gate, no demo fallback, safe runtime recovery. */
+/* V59 — Production runtime guard: never hijack application clicks; only gates initial rendering. */
 (function(){
   'use strict';
   const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -9,7 +9,6 @@
   const realReady=()=>window.__EDDU_PRODUCTION_AUTHORITY===true && !!window.db && !!user() && !!profile() && profile()?.active!==false;
   let released=false;
   let observer=null;
-  let bootFinished=false;
   function hide(){const r=root();if(!r)return;r.style.visibility='hidden';r.style.opacity='0';r.dataset.edduRuntime='blocked'}
   function release(){const r=root();if(!r)return;r.style.visibility='visible';r.style.opacity='1';r.dataset.edduRuntime='ready';released=true}
   function errorScreen(message){
@@ -25,28 +24,19 @@
       if(typeof window.safeRender==='function')window.safeRender();
       else if(typeof window.render==='function')window.render();
       else return false;
-    }catch(e){console.error('[EDDU V58] render',e);errorScreen('Falha ao renderizar os dados reais.');return false}
+    }catch(e){console.error('[EDDU V59] render',e);errorScreen('Falha ao renderizar os dados reais.');return false}
     release();return true;
   }
-  function installClickGuard(){
-    document.addEventListener('click',function(e){
-      const el=e.target?.closest?.('button,a');if(!el)return;
-      if(el.dataset?.edduRuntimeSafe==='1')return;
-      if(!realReady()&&!el.closest('#v16-auth')){e.preventDefault();e.stopPropagation();hide();}
-    },true);
-  }
   async function boot(){
-    hide();installClickGuard();
-    for(let i=0;i<160;i++){
-      if(!user()&&!profile()){await wait(100);continue}
-      if(realReady()){safeRender();bootFinished=true;return}
+    hide();
+    for(let i=0;i<180;i++){
+      if(realReady()){safeRender();return}
       await wait(100);
     }
-    bootFinished=true;
     if(!realReady()){
       const p=profile();
       if(!p||p.active===false){
-        if(!document.getElementById('v16-auth')){try{await auth()?.signOut?.()}catch(e){console.error('[EDDU V58] signout',e)}}
+        if(!document.getElementById('v16-auth')){try{await auth()?.signOut?.()}catch(e){console.error('[EDDU V59] signout',e)}}
       }else errorScreen('O Supabase não confirmou a carga de produção dentro do tempo esperado.');
     }
   }
@@ -55,8 +45,8 @@
     else if(!realReady()&&released){released=false;hide()}
   });
   observer.observe(document.documentElement,{subtree:true,childList:true});
-  window.addEventListener('error',e=>console.error('[EDDU V58]',e.error||e.message));
-  window.addEventListener('unhandledrejection',e=>console.error('[EDDU V58] unhandled rejection',e.reason));
-  window.addEventListener('pagehide',()=>{if(observer){observer.disconnect();observer=null}} ,{once:true});
+  window.addEventListener('error',e=>console.error('[EDDU V59]',e.error||e.message));
+  window.addEventListener('unhandledrejection',e=>console.error('[EDDU V59] unhandled rejection',e.reason));
+  window.addEventListener('pagehide',()=>{if(observer){observer.disconnect();observer=null}},{once:true});
   boot();
 })();
