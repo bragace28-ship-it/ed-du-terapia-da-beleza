@@ -1,0 +1,78 @@
+name: ED DU Canonical Production Normalizer
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Normalize production script stack
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          required = [
+              'v53-production-authority.js',
+              'v54-command-gateway-bridge.js',
+              'v55-production-hardening.js',
+              'v56-role-safety.js',
+          ]
+
+          # Remove stale/duplicate production modules before rebuilding the canonical block.
+          for name in required:
+              s = re.sub(r'<script[^>]+src=[\"\\'](?:\\./)?' + re.escape(name) + r'[\"\\'][^>]*>\\s*</script>\\s*', '', s, flags=re.I)
+              s = re.sub(r'<script[^>]+src=[\"\\'](?:\\./)?' + re.escape(name) + r'[\"\\'][^>]*>\\s*</script>', '', s, flags=re.I)
+
+          # Keep production data hidden until the real Supabase state is hydrated.
+          boot = '<style id="eddu-production-boot">#root{visibility:hidden}</style>'
+          if 'id="eddu-production-boot"' not in s:
+              s = s.replace('</head>', boot + '\n</head>', 1)
+
+          block = ''.join(f'<script src="./{name}"></script>\n' for name in required)
+          anchor = '<script src="./v50-smart-gateway.js"></script>'
+          if anchor in s:
+              s = s.replace(anchor, anchor + '\n' + block, 1)
+          else:
+              s = s.replace('</head>', block + '</head>', 1)
+
+          p.write_text(s, encoding='utf-8')
+
+      - name: Verify canonical stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f index.html
+          for f in v16.js v46-command-center.js v50-smart-gateway.js v53-production-authority.js v54-command-gateway-bridge.js v55-production-hardening.js v56-role-safety.js; do test -f "$f"; done
+          grep -q 'v46-command-center.js' index.html
+          grep -q 'v50-smart-gateway.js' index.html
+          grep -q 'v53-production-authority.js' index.html
+          grep -q 'v54-command-gateway-bridge.js' index.html
+          grep -q 'v55-production-hardening.js' index.html
+          grep -q 'v56-role-safety.js' index.html
+          grep -q 'eddu-production-boot' index.html
+
+      - name: Commit normalized index
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- index.html; then
+            echo 'Canonical production stack already installed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'chore: normalize canonical production stack [skip ci]'
+          git push
