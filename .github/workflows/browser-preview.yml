@@ -1,0 +1,44 @@
+name: ED DU Browser Preview
+
+on:
+  push:
+    branches: [security-hardening]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build
+        run: npm run build
+
+      - name: Prepare GitHub Pages
+        run: |
+          touch dist/.nojekyll
+          cat > dist/README-TESTE.md <<'EOF'
+          ED & DU — Browser Preview
+          This is a static browser preview generated from the security-hardening branch.
+          Real payment credentials are intentionally not included.
+          EOF
+
+      - name: Publish preview
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./dist
+          force_orphan: true
