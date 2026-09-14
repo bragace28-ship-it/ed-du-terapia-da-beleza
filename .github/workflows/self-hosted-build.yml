@@ -2,7 +2,7 @@ name: ED DU Self-Hosted Build
 
 on:
   push:
-    branches: [self-hosted-foundation]
+    branches: [self-hosted-foundation, security-hardening]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  security-and-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -24,6 +24,18 @@ jobs:
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+      - name: Secret pattern scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -nEI '(sk_(live|test)_[A-Za-z0-9_-]{12,}|AKIA[0-9A-Z]{16}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|STRIPE_SECRET_KEY\s*[:=]|PAGBANK_TOKEN\s*[:=]\s*[^[:space:]#]+|ASAAS_API_KEY\s*[:=]\s*[^[:space:]#]+)' -- ':!*.md' ':!*.example' ':!backup/**'; then
+            echo 'Potential secret detected in tracked source.'
+            exit 1
+          fi
 
       - name: Build frontend
         run: npm run build
