@@ -15,12 +15,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-
       - name: JavaScript syntax check
         shell: bash
         run: |
@@ -32,7 +30,6 @@ jobs:
             node --check "$file"
           done < <(find . -type f -name '*.js' -not -path './.git/*' -print0)
           test "$found" -eq 1
-
       - name: Production stack integrity
         shell: bash
         run: |
@@ -41,24 +38,28 @@ jobs:
           from pathlib import Path
           import re
           html = Path('index.html').read_text(encoding='utf-8')
-          required = [
-              'v16.js', 'v46-command-center.js', 'v50-smart-gateway.js',
-              'v53-production-authority.js', 'v54-command-gateway-bridge.js',
-              'v55-production-hardening.js', 'v56-role-safety.js',
-              'v58-production-runtime-guard.js'
-          ]
-          positions = []
+          required = ['v16.js','v46-command-center.js','v50-smart-gateway.js','v53-production-authority.js','v54-command-gateway-bridge.js','v55-production-hardening.js','v56-role-safety.js','v58-production-runtime-guard.js']
+          positions=[]
           for name in required:
-              matches = re.findall(r'<script[^>]+src=[\"\'](?:\./)?' + re.escape(name) + r'[\"\'][^>]*>\s*</script>', html, re.I)
-              if len(matches) != 1:
-                  raise SystemExit(f'{name}: expected exactly one script tag, found {len(matches)}')
+              matches=re.findall(r'<script[^>]+src=[\"\'](?:\./)?'+re.escape(name)+r'[\"\'][^>]*>\s*</script>',html,re.I)
+              if len(matches)!=1: raise SystemExit(f'{name}: expected exactly one script tag, found {len(matches)}')
               positions.append(html.lower().find(name.lower()))
-          if positions != sorted(positions):
-              raise SystemExit('Production script order is not canonical')
-          if 'id="eddu-production-boot"' not in html:
-              raise SystemExit('Production boot gate missing')
+          if positions!=sorted(positions): raise SystemExit('Production script order is not canonical')
+          if 'id="eddu-production-boot"' not in html: raise SystemExit('Production boot gate missing')
+          guard=Path('v58-production-runtime-guard.js').read_text(encoding='utf-8')
+          for module in ('v60-pdv-caixa.js','v62-pdv-production-fixes.js','v64-picpay-transparent.js','v65-picpay-config.js'):
+              if module not in guard: raise SystemExit(f'{module}: missing from production runtime loader')
           PY
-
+      - name: Frontend must not contain Vercel publication URLs
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=(index.html)
+          while IFS= read -r -d '' file; do files+=("$file"); done < <(find . -maxdepth 1 -type f -name '*.js' -print0)
+          if grep -InE 'https?://[^[:space:]"'"'"']*\.vercel\.app' "${files[@]}"; then
+            echo 'Vercel URL found in frontend source.'
+            exit 1
+          fi
       - name: Secret leak scan in frontend
         shell: bash
         run: |
