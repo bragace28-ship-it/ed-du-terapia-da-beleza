@@ -8,7 +8,7 @@ const esc=v=>String(v??'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const money=v=>'R$ '+Number(v||0).toFixed(2).replace('.',',');
 async function sb(){for(let i=0;i<60;i++){if(window.__EDDU_SB?.auth)return window.__EDDU_SB;await wait(200)}throw Error('Conexão indisponível.');}
 async function token(){const S=await sb();const x=await S.auth.getSession();const t=x?.data?.session?.access_token;if(!t)throw Error('Sessão expirada.');return t;}
-async function invoke(body){const t=await token();const r=await fetch(URL+'/functions/v1/create-picpay-checkout',{method:'POST',headers:{Authorization:'Bearer '+t,apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.error||j.message||'PicPay recusou o pagamento.');return j;}
+async function invoke(body){const t=await token();const r=await fetch(URL+'/functions/v1/create-picpay-checkout-v2',{method:'POST',headers:{Authorization:'Bearer '+t,apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.error||j.message||'PicPay recusou o pagamento.');return j;}
 function loadSDK(){return new Promise((resolve,reject)=>{if(window.CheckoutTransparent)return resolve(window.CheckoutTransparent);const s=document.createElement('script');s.src='https://checkout.picpay.com/cdn/pp-transparent-v1.0.0.js';s.onload=()=>window.CheckoutTransparent?resolve(window.CheckoutTransparent):reject(Error('SDK PicPay não carregou.'));s.onerror=()=>reject(Error('Não foi possível carregar o SDK PicPay.'));document.head.appendChild(s);});}
 function modal(){return document.getElementById('v46modalbox')}
 function open(){document.getElementById('v46modal')?.classList.add('on')}
