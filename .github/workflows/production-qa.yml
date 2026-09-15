@@ -47,7 +47,7 @@ jobs:
           if positions!=sorted(positions): raise SystemExit('Production script order is not canonical')
           if 'id="eddu-production-boot"' not in html: raise SystemExit('Production boot gate missing')
           guard=Path('v58-production-runtime-guard.js').read_text(encoding='utf-8')
-          for module in ('v60-pdv-caixa.js','v62-pdv-production-fixes.js','v64-picpay-transparent.js','v65-picpay-config.js','v67-pdv-split.js'):
+          for module in ('v60-pdv-caixa.js','v62-pdv-production-fixes.js','v64-picpay-transparent.js','v65-picpay-config.js','v67-pdv-split-ui.js'):
               if module not in guard: raise SystemExit(f'{module}: missing from production runtime loader')
           PY
       - name: No legacy demo payment engine
