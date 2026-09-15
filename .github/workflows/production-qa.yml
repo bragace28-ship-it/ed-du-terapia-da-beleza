@@ -50,12 +50,16 @@ jobs:
           for module in ('v60-pdv-caixa.js','v62-pdv-production-fixes.js','v64-picpay-transparent.js','v65-picpay-config.js','v67-pdv-split-ui.js'):
               if module not in guard: raise SystemExit(f'{module}: missing from production runtime loader')
           PY
-      - name: No legacy demo payment engine
+      - name: No legacy demo engine or seeded demo content
         shell: bash
         run: |
           set -euo pipefail
-          if grep -RInE --exclude-dir=.git --exclude='ED_DU_V33_PAINEL_FINANCEIRO_COMPLETO_BASE.html' 'Aprovar pagamento de teste|Pagamento em modo de teste|approvePaymentV31' .; then
-            echo 'Legacy demo payment engine detected.'
+          if grep -RInE --exclude-dir=.git --exclude='ED_DU_V33_PAINEL_FINANCEIRO_COMPLETO_BASE.html' 'Aprovar pagamento de teste|Pagamento em modo de teste|approvePaymentV31|Atendimento iniciado no modo de teste|8 Atendimentos hoje|4 Confirmados' .; then
+            echo 'Legacy/demo content detected.'
+            exit 1
+          fi
+          if grep -RIn --exclude-dir=.git --exclude='ED_DU_V33_PAINEL_FINANCEIRO_COMPLETO_BASE.html' 'localStorage' index.html ./*.js; then
+            echo 'Client localStorage persistence detected in production frontend.'
             exit 1
           fi
       - name: Frontend must not contain Vercel publication URLs
@@ -82,3 +86,15 @@ jobs:
             echo 'Server-side payment secret identifier appears in frontend source.'
             exit 1
           fi
+      - name: Payment integration contract checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "create-stripe-checkout" v46-command-center.js v50-smart-gateway.js
+          grep -q "create-pix-charge" v50-smart-gateway.js
+          grep -q "create-picpay-checkout-v2" v64-picpay-transparent.js
+          grep -q "CheckoutTransparent" v64-picpay-transparent.js
+          grep -q "eddu_register_pdv_sale" v62-pdv-production-fixes.js
+          grep -q "eddu_close_pdv_register" v62-pdv-production-fixes.js
+          grep -q "eddu_register_pdv_sale_split" v67-pdv-split-ui.js
+          grep -q "nubank_nupay" v50-smart-gateway.js
