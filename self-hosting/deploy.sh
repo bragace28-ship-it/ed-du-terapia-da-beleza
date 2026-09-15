@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${APP_DIR:-/opt/eddu/app}"
+REPO_URL="${REPO_URL:-https://github.com/bragace28-ship-it/ed-du-terapia-da-beleza.git}"
+BRANCH="${BRANCH:-main}"
+
+mkdir -p "$(dirname "$APP_DIR")"
+if [ ! -d "$APP_DIR/.git" ]; then
+  git clone --branch "$BRANCH" "$REPO_URL" "$APP_DIR"
+else
+  git -C "$APP_DIR" fetch origin "$BRANCH"
+  git -C "$APP_DIR" checkout "$BRANCH"
+  git -C "$APP_DIR" reset --hard "origin/$BRANCH"
+fi
+
+cd "$APP_DIR"
+
+# Deployment-only wiring: the approved index.html is not redesigned or rewritten in Git.
+# The self-host preload is inserted into the checked-out deployment immediately after
+# the Supabase CDN script so the existing UI can run against self-hosted Supabase.
+python3 - <<'PY'
+from pathlib import Path
+p=Path('index.html')
+s=p.read_text(encoding='utf-8')
+marker='<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>'
+preload='<script src="./eddu-selfhost-preload.js"></script>'
+if preload not in s:
+    if marker not in s:
+        raise SystemExit('Supabase CDN marker not found; refusing deployment mutation')
+    s=s.replace(marker, marker+'\n'+preload, 1)
+    p.write_text(s,encoding='utf-8')
+PY
+
+# Build the static frontend. The server can serve the resulting dist directory.
+npm ci --omit=optional 2>/dev/null || npm install --omit=optional
+npm run build
+
+mkdir -p /opt/eddu/config
+cp eddu-selfhost-config.json /opt/eddu/config/eddu-selfhost-config.json
+cp eddu-selfhost-preload.js /opt/eddu/config/eddu-selfhost-preload.js
+
+printf '\nED & DU frontend build completed at %s/dist\n' "$APP_DIR"
+printf 'Set the real self-hosted publishable key in /opt/eddu/config/eddu-selfhost-config.json before serving production.\n'
