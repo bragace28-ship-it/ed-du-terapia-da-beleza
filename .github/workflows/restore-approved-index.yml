@@ -1,0 +1,26 @@
+name: Restore approved visual index
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  restore:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Restore exact approved index
+        run: |
+          git checkout e97f80255a551bf39531020c6456135e5f649a92 -- index.html
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --quiet -- index.html; then
+            echo 'index already matches approved visual base'
+            exit 0
+          fi
+          git add index.html
+          git commit -m 'Restore exact approved V13 visual layout'
+          git push origin HEAD:main
