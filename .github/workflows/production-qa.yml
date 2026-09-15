@@ -47,9 +47,17 @@ jobs:
           if positions!=sorted(positions): raise SystemExit('Production script order is not canonical')
           if 'id="eddu-production-boot"' not in html: raise SystemExit('Production boot gate missing')
           guard=Path('v58-production-runtime-guard.js').read_text(encoding='utf-8')
-          for module in ('v60-pdv-caixa.js','v62-pdv-production-fixes.js','v64-picpay-transparent.js','v65-picpay-config.js'):
+          for module in ('v60-pdv-caixa.js','v62-pdv-production-fixes.js','v64-picpay-transparent.js','v65-picpay-config.js','v67-pdv-split.js'):
               if module not in guard: raise SystemExit(f'{module}: missing from production runtime loader')
           PY
+      - name: No legacy demo payment engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE --exclude-dir=.git --exclude='ED_DU_V33_PAINEL_FINANCEIRO_COMPLETO_BASE.html' 'Aprovar pagamento de teste|Pagamento em modo de teste|approvePaymentV31' .; then
+            echo 'Legacy demo payment engine detected.'
+            exit 1
+          fi
       - name: Frontend must not contain Vercel publication URLs
         shell: bash
         run: |
