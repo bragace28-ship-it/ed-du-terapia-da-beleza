@@ -7,7 +7,7 @@ const jwks = createRemoteJWKSet(new URL(JWKS_URL));
 export async function requireUser(request: Request, sql: any) {
   const token = bearer(request);
   if (!token) throw new Error('Sessão não encontrada.');
-  const { payload } = await jwtVerify(token, jwks, { algorithms: ['RS256'] });
+  const { payload } = await jwtVerify(token, jwks);
   const userId = String(payload.sub || '');
   if (!userId) throw new Error('Token sem usuário.');
   const rows = await sql`select id, full_name, role, active from public.profiles where id = ${userId} limit 1`;
