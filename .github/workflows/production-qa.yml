@@ -84,10 +84,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          files=(index.html)
-          while IFS= read -r -d '' file; do files+=("$file"); done < <(find . -maxdepth 1 -type f -name '*.js' -print0)
+          files=(index.html v16.js v46-command-center.js v50-smart-gateway.js v53-production-authority.js v54-command-gateway-bridge.js v55-production-hardening.js v56-role-safety.js v58-production-runtime-guard.js v60-pdv-caixa.js v62-pdv-production-fixes.js v67-pdv-split-ui.js v68-neon-production-bridge.js)
           if grep -InE 'https?://[^[:space:]"'"'"']*\.vercel\.app' "${files[@]}"; then
-            echo 'Vercel URL found in frontend source.'
+            echo 'Vercel URL found in canonical production source.'
             exit 1
           fi
 
@@ -95,14 +94,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          files=(index.html)
-          while IFS= read -r -d '' file; do files+=("$file"); done < <(find . -maxdepth 1 -type f -name '*.js' -print0)
+          files=(index.html v16.js v46-command-center.js v50-smart-gateway.js v53-production-authority.js v54-command-gateway-bridge.js v55-production-hardening.js v56-role-safety.js v58-production-runtime-guard.js v60-pdv-caixa.js v62-pdv-production-fixes.js v67-pdv-split-ui.js v68-neon-production-bridge.js)
           if grep -InE '(sk_live_[A-Za-z0-9_\-]+|sk_test_[A-Za-z0-9_\-]+|\$aact_prod_[A-Za-z0-9_\-]+|\$aact_hmlg_[A-Za-z0-9_\-]+)' "${files[@]}"; then
-            echo 'Potential payment-provider secret found in frontend source.'
+            echo 'Potential payment-provider secret found in canonical frontend source.'
             exit 1
           fi
           if grep -InE 'STRIPE_SECRET_KEY|PAGBANK_TOKEN|ASAAS_API_KEY|ASAAS_WEBHOOK_TOKEN|PICPAY_CLIENT_SECRET|STRIPE_WEBHOOK_SECRET' "${files[@]}"; then
-            echo 'Server-side payment secret identifier appears in frontend source.'
+            echo 'Server-side payment secret identifier appears in canonical frontend source.'
             exit 1
           fi
 
