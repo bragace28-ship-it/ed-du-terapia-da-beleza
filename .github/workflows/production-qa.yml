@@ -54,13 +54,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if grep -RInE --exclude-dir=.git --exclude='ED_DU_V33_PAINEL_FINANCEIRO_COMPLETO_BASE.html' 'Aprovar pagamento de teste|Pagamento em modo de teste|approvePaymentV31|Atendimento iniciado no modo de teste|8 Atendimentos hoje|4 Confirmados' .; then
-            echo 'Legacy/demo content detected.'
-            exit 1
-          fi
-          if grep -RIn --exclude-dir=.git --exclude='ED_DU_V33_PAINEL_FINANCEIRO_COMPLETO_BASE.html' 'localStorage' index.html ./*.js; then
-            echo 'Client localStorage persistence detected in production frontend.'
-            exit 1
+          scan_files=()
+          while IFS= read -r -d '' file; do scan_files+=("$file"); done < <(find . -type f \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '*.json' \) -not -path './.git/*' -not -path './.github/workflows/*' -not -name 'ED_DU_V33_PAINEL_FINANCEIRO_COMPLETO_BASE.html' -print0)
+          if ((${#scan_files[@]})); then
+            if grep -InE 'Aprovar pagamento de teste|Pagamento em modo de teste|approvePaymentV31|Atendimento iniciado no modo de teste|8 Atendimentos hoje|4 Confirmados' "${scan_files[@]}"; then
+              echo 'Legacy/demo content detected.'
+              exit 1
+            fi
+            if grep -In 'localStorage' "${scan_files[@]}"; then
+              echo 'Client localStorage persistence detected in production frontend.'
+              exit 1
+            fi
           fi
       - name: Frontend must not contain Vercel publication URLs
         shell: bash
@@ -98,3 +102,9 @@ jobs:
           grep -q "eddu_close_pdv_register" v62-pdv-production-fixes.js
           grep -q "eddu_register_pdv_sale_split" v67-pdv-split-ui.js
           grep -q "nubank_nupay" v50-smart-gateway.js
+      - name: Build production bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build
