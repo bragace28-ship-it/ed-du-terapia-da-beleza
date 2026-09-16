@@ -21,7 +21,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
 
       - name: JavaScript syntax check
         shell: bash
@@ -142,7 +141,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm ci
+          npm install
           npm run build
 
       - name: Verify Pages output
