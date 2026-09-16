@@ -12,8 +12,34 @@
   function release(){const r=root();if(!r)return;r.style.visibility='visible';r.style.opacity='1';r.dataset.edduRuntime='ready';released=true}
   function errorScreen(message){const r=root();if(!r)return;r.innerHTML='<main style="min-height:100vh;display:grid;place-items:center;padding:24px;background:#f4f2ee;color:#242321;font:14px/1.5 system-ui,sans-serif"><section style="width:min(560px,100%);background:#fff;border:1px solid #e6e1d9;border-radius:20px;padding:26px"><div style="font-weight:800;font-size:18px">ED & DU | Terapia da Beleza</div><h1 style="font-size:24px;margin:12px 0 8px">Não foi possível sincronizar os dados</h1><p style="color:#77736c">O aplicativo não exibirá dados demonstrativos. Verifique sua conexão e tente novamente.</p><div style="background:#f8f6f2;border-radius:12px;padding:12px">'+String(message||'Banco de dados indisponível.').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]))+'</div><div style="display:flex;gap:8px;margin-top:18px"><button id="eddu-runtime-retry" style="border:0;border-radius:11px;padding:11px 15px;background:#242321;color:#fff;font-weight:700">Tentar novamente</button><button id="eddu-runtime-signout" style="border:0;border-radius:11px;padding:11px 15px;background:#eeeae4">Sair</button></div></section></main>';r.style.visibility='visible';r.style.opacity='1';r.dataset.edduRuntime='error';released=false;document.getElementById('eddu-runtime-retry')?.addEventListener('click',()=>location.reload(),{once:true});document.getElementById('eddu-runtime-signout')?.addEventListener('click',()=>auth()?.signOut?.(),{once:true})}
   function safeRender(){if(!realReady())return false;try{if(typeof window.safeRender==='function')window.safeRender();else if(typeof window.render==='function')window.render();else return false}catch(e){console.error('[EDDU runtime] render',e);errorScreen('Falha ao renderizar os dados reais.');return false}release();return true}
-  function loadScript(src){return new Promise((resolve,reject)=>{if(document.querySelector('script[data-eddu-runtime-module="'+src+'"]'))return resolve();const s=document.createElement('script');s.src=src;s.dataset.edduRuntimeModule=src;s.onload=resolve;s.onerror=()=>reject(new Error('Falha ao carregar '+src));document.head.appendChild(s)})}
-  async function boot(){hide();try{await loadScript('./v68-neon-production-bridge.js');await wait(150);await loadScript('./v60-pdv-caixa.js');await loadScript('./v62-pdv-production-fixes.js');await loadScript('./v67-pdv-split-ui.js')}catch(e){console.error('[EDDU modules]',e)}for(let i=0;i<180;i++){if(realReady()){safeRender();return}await wait(100)}if(!realReady()){const p=profile();if(!p||p.active===false){try{await auth()?.signOut?.()}catch(e){console.error('[EDDU auth]',e)}}else errorScreen('O Neon não confirmou a carga de produção dentro do tempo esperado.')}}
-  observer=new MutationObserver(()=>{if(realReady()&&!released)safeRender();else if(!realReady()&&released){released=false;hide()}});observer.observe(document.documentElement,{subtree:true,childList:true});
-  window.addEventListener('error',e=>console.error('[EDDU runtime]',e.error||e.message));window.addEventListener('unhandledrejection',e=>console.error('[EDDU runtime]',e.reason));window.addEventListener('pagehide',()=>{if(observer){observer.disconnect();observer=null}},{once:true});boot();
+  function waitExistingScript(src){return new Promise((resolve,reject)=>{const existing=document.querySelector('script[src="'+src+'"],script[data-eddu-runtime-module="'+src+'"]');if(!existing)return resolve(false);if(existing.dataset.edduLoaded==='true')return resolve(true);const done=()=>{existing.dataset.edduLoaded='true';resolve(true)};const fail=()=>reject(new Error('Falha ao carregar '+src));existing.addEventListener('load',done,{once:true});existing.addEventListener('error',fail,{once:true})})}
+  function loadScript(src){return new Promise(async(resolve,reject)=>{try{if(await waitExistingScript(src))return resolve();const s=document.createElement('script');s.src=src;s.dataset.edduRuntimeModule=src;s.onload=()=>{s.dataset.edduLoaded='true';resolve()};s.onerror=()=>reject(new Error('Falha ao carregar '+src));document.head.appendChild(s)}catch(e){reject(e)}})}
+  async function ensureNeon(){
+    if(window.__EDDU_NEON_READY){await window.__EDDU_NEON_READY;return}
+    const existing=document.getElementById('v68-neon-bridge');
+    if(existing){
+      if(window.__EDDU_NEON_READY){await window.__EDDU_NEON_READY;return}
+      await new Promise((resolve,reject)=>{const t=setInterval(()=>{if(window.__EDDU_NEON_READY){clearInterval(t);resolve()}},50);setTimeout(()=>{clearInterval(t);reject(new Error('Neon bridge não inicializou'))},10000)})
+      return
+    }
+    await loadScript('./v68-neon-production-bridge.js');
+    if(window.__EDDU_NEON_READY)await window.__EDDU_NEON_READY;
+  }
+  async function boot(){
+    hide();
+    try{
+      await ensureNeon();
+      await loadScript('./v60-pdv-caixa.js');
+      await loadScript('./v62-pdv-production-fixes.js');
+      await loadScript('./v67-pdv-split-ui.js');
+    }catch(e){console.error('[EDDU modules]',e)}
+    for(let i=0;i<180;i++){if(realReady()){safeRender();return}await wait(100)}
+    if(!realReady()){const p=profile();if(!p||p.active===false){try{await auth()?.signOut?.()}catch(e){console.error('[EDDU auth]',e)}}else errorScreen('O Neon não confirmou a carga de produção dentro do tempo esperado.')}
+  }
+  observer=new MutationObserver(()=>{if(realReady()&&!released)safeRender();else if(!realReady()&&released){released=false;hide()}});
+  observer.observe(document.documentElement,{subtree:true,childList:true});
+  window.addEventListener('error',e=>console.error('[EDDU runtime]',e.error||e.message));
+  window.addEventListener('unhandledrejection',e=>console.error('[EDDU runtime]',e.reason));
+  window.addEventListener('pagehide',()=>{if(observer){observer.disconnect();observer=null}},{once:true});
+  boot();
 })();
