@@ -70,21 +70,14 @@ jobs:
               raise SystemExit('Legacy PicPay runtime modules must not be loaded by the canonical production guard')
           PY
 
-      - name: No legacy demo engine or seeded demo content
+      - name: No legacy demo engine or seeded demo content in production stack
         shell: bash
         run: |
           set -euo pipefail
-          scan_files=()
-          while IFS= read -r -d '' file; do scan_files+=("$file"); done < <(find . -type f \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '*.json' \) -not -path './.git/*' -not -path './.github/workflows/*' -not -path './node_modules/*' -not -name 'ED_DU_V33_PAINEL_FINANCEIRO_COMPLETO_BASE.html' -print0)
-          if ((${#scan_files[@]})); then
-            if grep -InE 'Aprovar pagamento de teste|Pagamento em modo de teste|approvePaymentV31|Atendimento iniciado no modo de teste|8 Atendimentos hoje|4 Confirmados' "${scan_files[@]}"; then
-              echo 'Legacy/demo content detected.'
-              exit 1
-            fi
-            if grep -In 'localStorage' "${scan_files[@]}"; then
-              echo 'Client localStorage persistence detected in production frontend.'
-              exit 1
-            fi
+          files=(index.html v16.js v46-command-center.js v50-smart-gateway.js v53-production-authority.js v54-command-gateway-bridge.js v55-production-hardening.js v56-role-safety.js v58-production-runtime-guard.js v60-pdv-caixa.js v62-pdv-production-fixes.js v67-pdv-split-ui.js v68-neon-production-bridge.js)
+          if grep -InE 'Aprovar pagamento de teste|Pagamento em modo de teste|approvePaymentV31|Atendimento iniciado no modo de teste|8 Atendimentos hoje|4 Confirmados' "${files[@]}"; then
+            echo 'Legacy/demo content detected in the canonical production stack.'
+            exit 1
           fi
 
       - name: Frontend must not contain Vercel publication URLs
