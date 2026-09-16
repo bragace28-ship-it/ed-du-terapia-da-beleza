@@ -1,9 +1,10 @@
 name: ED DU Production QA
+
 on:
   push:
-    branches: [main]
+    branches: [main, cloudflare-production]
   pull_request:
-    branches: [main]
+    branches: [main, cloudflare-production]
   workflow_dispatch:
 
 permissions:
@@ -15,10 +16,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+
       - name: JavaScript syntax check
         shell: bash
         run: |
@@ -28,8 +32,9 @@ jobs:
             found=1
             echo "Checking $file"
             node --check "$file"
-          done < <(find . -type f -name '*.js' -not -path './.git/*' -print0)
+          done < <(find . -type f -name '*.js' -not -path './.git/*' -not -path './node_modules/*' -print0)
           test "$found" -eq 1
+
       - name: Production stack integrity
         shell: bash
         run: |
@@ -38,24 +43,40 @@ jobs:
           from pathlib import Path
           import re
           html = Path('index.html').read_text(encoding='utf-8')
-          required = ['v16.js','v46-command-center.js','v50-smart-gateway.js','v53-production-authority.js','v54-command-gateway-bridge.js','v55-production-hardening.js','v56-role-safety.js','v58-production-runtime-guard.js']
+          required = [
+              'v16.js',
+              'v46-command-center.js',
+              'v50-smart-gateway.js',
+              'v53-production-authority.js',
+              'v54-command-gateway-bridge.js',
+              'v55-production-hardening.js',
+              'v56-role-safety.js',
+              'v58-production-runtime-guard.js',
+          ]
           positions=[]
           for name in required:
               matches=re.findall(r'<script[^>]+src=[\"\'](?:\./)?'+re.escape(name)+r'[\"\'][^>]*>\s*</script>',html,re.I)
-              if len(matches)!=1: raise SystemExit(f'{name}: expected exactly one script tag, found {len(matches)}')
+              if len(matches)!=1:
+                  raise SystemExit(f'{name}: expected exactly one script tag, found {len(matches)}')
               positions.append(html.lower().find(name.lower()))
-          if positions!=sorted(positions): raise SystemExit('Production script order is not canonical')
-          if 'id="eddu-production-boot"' not in html: raise SystemExit('Production boot gate missing')
+          if positions!=sorted(positions):
+              raise SystemExit('Production script order is not canonical')
+          if 'id="eddu-production-boot"' not in html:
+              raise SystemExit('Production boot gate missing')
           guard=Path('v58-production-runtime-guard.js').read_text(encoding='utf-8')
-          for module in ('v60-pdv-caixa.js','v62-pdv-production-fixes.js','v64-picpay-transparent.js','v65-picpay-config.js','v67-pdv-split-ui.js'):
-              if module not in guard: raise SystemExit(f'{module}: missing from production runtime loader')
+          for module in ('v60-pdv-caixa.js','v62-pdv-production-fixes.js','v67-pdv-split-ui.js'):
+              if module not in guard:
+                  raise SystemExit(f'{module}: missing from production runtime loader')
+          if 'v64-picpay-transparent.js' in guard or 'v65-picpay-config.js' in guard:
+              raise SystemExit('Legacy PicPay runtime modules must not be loaded by the canonical production guard')
           PY
+
       - name: No legacy demo engine or seeded demo content
         shell: bash
         run: |
           set -euo pipefail
           scan_files=()
-          while IFS= read -r -d '' file; do scan_files+=("$file"); done < <(find . -type f \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '*.json' \) -not -path './.git/*' -not -path './.github/workflows/*' -not -name 'ED_DU_V33_PAINEL_FINANCEIRO_COMPLETO_BASE.html' -print0)
+          while IFS= read -r -d '' file; do scan_files+=("$file"); done < <(find . -type f \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '*.json' \) -not -path './.git/*' -not -path './.github/workflows/*' -not -path './node_modules/*' -not -name 'ED_DU_V33_PAINEL_FINANCEIRO_COMPLETO_BASE.html' -print0)
           if ((${#scan_files[@]})); then
             if grep -InE 'Aprovar pagamento de teste|Pagamento em modo de teste|approvePaymentV31|Atendimento iniciado no modo de teste|8 Atendimentos hoje|4 Confirmados' "${scan_files[@]}"; then
               echo 'Legacy/demo content detected.'
@@ -66,6 +87,7 @@ jobs:
               exit 1
             fi
           fi
+
       - name: Frontend must not contain Vercel publication URLs
         shell: bash
         run: |
@@ -76,6 +98,7 @@ jobs:
             echo 'Vercel URL found in frontend source.'
             exit 1
           fi
+
       - name: Secret leak scan in frontend
         shell: bash
         run: |
@@ -90,21 +113,42 @@ jobs:
             echo 'Server-side payment secret identifier appears in frontend source.'
             exit 1
           fi
+
       - name: Payment integration contract checks
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "create-stripe-checkout" v46-command-center.js v50-smart-gateway.js
-          grep -q "create-pix-charge" v50-smart-gateway.js
-          grep -q "create-picpay-checkout-v2" v64-picpay-transparent.js
-          grep -q "CheckoutTransparent" v64-picpay-transparent.js
+          grep -q "create-stripe-checkout\|/api/payments/checkout" v46-command-center.js v50-smart-gateway.js functions/api/payments/checkout.ts
+          grep -q "create-pix-charge\|method.*pix" v50-smart-gateway.js functions/api/payments/checkout.ts
           grep -q "eddu_register_pdv_sale" v62-pdv-production-fixes.js
           grep -q "eddu_close_pdv_register" v62-pdv-production-fixes.js
           grep -q "eddu_register_pdv_sale_split" v67-pdv-split-ui.js
-          grep -q "nubank_nupay" v50-smart-gateway.js
+
+      - name: Cloudflare Functions contract checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f functions/_lib/auth.ts
+          test -f functions/_lib/db.ts
+          test -f functions/api/payments/checkout.ts
+          test -f functions/api/payments/webhook/'[provider].ts'
+          grep -q "jwtVerify" functions/_lib/auth.ts
+          grep -q "DATABASE_URL" functions/_lib/db.ts
+          grep -q "STRIPE_SECRET_KEY" functions/api/payments/checkout.ts
+          grep -q "PAGBANK_ACCESS_TOKEN" functions/api/payments/checkout.ts
+          grep -q "ASAAS_API_KEY" functions/api/payments/checkout.ts
+
       - name: Build production bundle
         shell: bash
         run: |
           set -euo pipefail
           npm ci
           npm run build
+
+      - name: Verify Pages output
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f dist/index.html
+          test -s dist/index.html
+          echo "Cloudflare Pages build output ready: dist/"
