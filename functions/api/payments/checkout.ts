@@ -1,0 +1,100 @@
+import { getSql, json } from '../../_lib/db';
+import { requireRole, requireUser } from '../../_lib/auth';
+
+const appOrigin = (request: Request) => new URL(request.url).origin;
+const cents = (value: number) => Math.round(Number(value || 0) * 100);
+
+async function stripeCheckout(env: any, command: any, idempotencyKey: string, origin: string) {
+  if (!env.STRIPE_SECRET_KEY) throw new Error('Stripe não está configurado no Cloudflare.');
+  const body = new URLSearchParams();
+  body.set('mode', 'payment');
+  body.set('success_url', `${origin}/?payment=success&command=${command.id}`);
+  body.set('cancel_url', `${origin}/?payment=cancelled&command=${command.id}`);
+  body.set('line_items[0][price_data][currency]', 'brl');
+  body.set('line_items[0][price_data][product_data][name]', `Comanda ED & DU ${String(command.id).slice(0,8)}`);
+  body.set('line_items[0][price_data][unit_amount]', String(cents(command.total)));
+  body.set('line_items[0][quantity]', '1');
+  body.set('metadata[command_id]', command.id);
+  body.set('client_reference_id', command.id);
+  if (command.email) body.set('customer_email', command.email);
+  const r = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, 'Content-Type': 'application/x-www-form-urlencoded', 'Idempotency-Key': idempotencyKey },
+    body,
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data?.error?.message || 'Stripe recusou a criação do checkout.');
+  return { gateway: 'stripe', externalId: data.id, checkoutUrl: data.url, raw: data };
+}
+
+async function asaasCheckout(env: any, command: any, idempotencyKey: string, origin: string, method: 'PIX'|'CREDIT_CARD') {
+  if (!env.ASAAS_API_KEY) throw new Error('Asaas não está configurado no Cloudflare.');
+  const base = env.ASAAS_BASE_URL || 'https://api.asaas.com';
+  const payload = {
+    billingTypes: [method],
+    chargeTypes: ['DETACHED'],
+    minutesToExpire: 60,
+    externalReference: command.id,
+    callback: {
+      successUrl: `${origin}/?payment=success&command=${command.id}`,
+      cancelUrl: `${origin}/?payment=cancelled&command=${command.id}`,
+      expiredUrl: `${origin}/?payment=expired&command=${command.id}`,
+    },
+    items: [{ name: `Comanda ED & DU ${String(command.id).slice(0,8)}`, quantity: 1, value: Number(command.total) }],
+    ...(command.email ? { customerData: { email: command.email, name: command.name || undefined } } : {}),
+  };
+  const r = await fetch(`${base}/v3/checkouts`, { method:'POST', headers:{ accept:'application/json', 'content-type':'application/json', access_token:env.ASAAS_API_KEY, 'Idempotency-Key':idempotencyKey }, body:JSON.stringify(payload) });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data?.errors?.[0]?.description || data?.message || 'Asaas recusou a criação do checkout.');
+  const checkoutUrl = data?.url || data?.checkoutUrl || (data?.id ? `https://asaas.com/checkoutSession/show?id=${data.id}` : null);
+  if (!checkoutUrl) throw new Error('Asaas não retornou a URL do checkout.');
+  return { gateway:'asaas', externalId:data.id, checkoutUrl, raw:data };
+}
+
+async function pagbankCheckout(env: any, command: any, idempotencyKey: string, origin: string, method: 'PIX'|'CREDIT_CARD') {
+  if (!env.PAGBANK_ACCESS_TOKEN) throw new Error('PagBank não está configurado no Cloudflare.');
+  const base = env.PAGBANK_BASE_URL || 'https://api.pagseguro.com';
+  const payload:any = {
+    reference_id: command.id,
+    items: [{ name:`Comanda ED & DU ${String(command.id).slice(0,8)}`, quantity:1, unit_amount:cents(command.total) }],
+    payment_methods: [{ type: method }],
+    notification_urls: [`${origin}/api/payments/webhook/pagbank`],
+    redirect_url: `${origin}/?payment=return&command=${command.id}`,
+    customer_modifiable: true,
+    address_modifiable: false,
+  };
+  if (method === 'CREDIT_CARD') payload.config_options=[{option:'INSTALLMENTS_LIMIT',value:String(Math.max(1,Math.min(12,Number(command.payment_installments||1))))}];
+  const r = await fetch(`${base}/checkouts`, { method:'POST', headers:{ accept:'application/json','content-type':'application/json', Authorization:`Bearer ${env.PAGBANK_ACCESS_TOKEN}`, 'x-idempotency-key':idempotencyKey }, body:JSON.stringify(payload) });
+  const data=await r.json();
+  if(!r.ok) throw new Error(data?.error_messages?.[0]?.description || data?.message || 'PagBank recusou a criação do checkout.');
+  const checkoutUrl=(data.links||[]).find((x:any)=>x.rel==='PAY')?.href;
+  if(!checkoutUrl) throw new Error('PagBank não retornou o link de pagamento.');
+  return { gateway:'pagbank', externalId:data.id, checkoutUrl, raw:data };
+}
+
+export async function onRequestPost({ request, env }: any) {
+  try {
+    const sql=getSql(env);
+    const { profile }=await requireUser(request,sql);
+    requireRole(profile,['admin','manager','receptionist','finance','professional']);
+    const body=await request.json().catch(()=>({}));
+    const commandId=String(body.command_id||'');
+    const method=String(body.method||'card').toLowerCase()==='pix'?'pix':'card';
+    if(!commandId) return json({error:'command_id é obrigatório.'},400);
+    const rows=await sql`select c.id,c.total,c.status,c.payment_gateway,c.payment_installments,cl.name,cl.email from public.commands c left join public.clients cl on cl.id=c.client_id where c.id=${commandId} limit 1`;
+    const command=rows[0];
+    if(!command) return json({error:'Comanda não encontrada.'},404);
+    if(['CANCELADA','ESTORNADA'].includes(String(command.status).toUpperCase())) return json({error:'A comanda não pode receber pagamento neste estado.'},409);
+    const gateway=String(body.gateway||command.payment_gateway||'').toLowerCase();
+    if(!['stripe','asaas','pagbank'].includes(gateway)) return json({error:'Gateway de pagamento não configurado para esta comanda.'},409);
+    const idempotencyKey=request.headers.get('idempotency-key')||`${command.id}:${gateway}:${method}`;
+    const origin=appOrigin(request);
+    const result = gateway==='stripe' ? await stripeCheckout(env,command,idempotencyKey,origin) : gateway==='asaas' ? await asaasCheckout(env,command,idempotencyKey,origin,method==='pix'?'PIX':'CREDIT_CARD') : await pagbankCheckout(env,command,idempotencyKey,origin,method==='pix'?'PIX':'CREDIT_CARD');
+    await sql`insert into public.payment_transactions (command_payment_id,gateway,method,external_transaction_id,gross_amount,fee_amount,net_amount,status,raw_payload) values (null,${result.gateway},${method},${result.externalId},${Number(command.total)},0,${Number(command.total)},'PROCESSING',${JSON.stringify(result.raw)}::jsonb)`;
+    await sql`update public.commands set payment_gateway=${result.gateway}, payment_installments=${Number(command.payment_installments||1)}, payment_link=${result.checkoutUrl}, updated_at=now() where id=${command.id}`;
+    return json({ok:true,gateway:result.gateway,checkout_url:result.checkoutUrl,external_id:result.externalId});
+  } catch(error:any) {
+    console.error('[EDDU payments/checkout]',error);
+    return json({error:error?.message||'Não foi possível criar o checkout.'},500);
+  }
+}
