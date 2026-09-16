@@ -16,6 +16,7 @@
   "dependencies": {
     "@neondatabase/neon-js": "^0.7.0-beta",
     "@neondatabase/serverless": "^1.0.0",
-    "@supabase/supabase-js": "^2.57.0"
+    "@supabase/supabase-js": "^2.57.0",
+    "jose": "^6.1.0"
   }
 }
