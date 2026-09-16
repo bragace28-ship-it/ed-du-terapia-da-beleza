@@ -24,6 +24,7 @@
       const originalGetUser=client.auth.getUser.bind(client.auth);
       client.auth.getUser=async function(){const r=await originalGetUser();if(r?.data?.user)await ensureProfile(client,r.data.user);return r};
       window.__EDDU_NEON_CLIENT=client;
+      window.__EDDU_SB=client;
       window.supabase=window.supabase||{};
       window.supabase.createClient=()=>client;
       window.__EDDU_DATA_AUTHORITY='neon';
@@ -33,5 +34,6 @@
     });
     return clientPromise;
   }
+  window.__EDDU_NEON_READY=load();
   load().catch(e=>{console.error('[EDDU Neon] bootstrap failed',e);window.__EDDU_NEON_ERROR=e});
 })();
