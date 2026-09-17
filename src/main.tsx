@@ -11,4 +11,16 @@ document.title=`ED & DU | Terapia da Beleza — V${APP_VERSION}`
 const root=createRoot(document.getElementById('root')!)
 const url=import.meta.env.VITE_SUPABASE_URL
 const anon=import.meta.env.VITE_SUPABASE_ANON_KEY
-if(!url||!anon){root.render(<main style={{minHeight:'100vh',display:'grid',placeItems:'center',padding:24,fontFamily:'system-ui',background:'#f7f4fb'}}><section style={{maxWidth:560,padding:32,borderRadius:24,background:'#fff',boxShadow:'0 15px 50px #4a23701a'}}><b style={{fontSize:28,color:'#6414a6'}}>ED & DU</b><h1>Configuração de produção incompleta</h1><p>O build V33 foi publicado, mas o ambiente Cloudflare ainda não recebeu <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code>. Nenhum dado de teste ou fallback está sendo usado.</p><small>V{APP_VERSION}</small></section></main>)}else{import('./App').then(({default:App})=>root.render(<React.StrictMode><App/></React.StrictMode>)).catch(error=>root.render(<main style={{padding:32,fontFamily:'system-ui'}}><h1>Falha ao iniciar o aplicativo</h1><pre>{error instanceof Error?error.message:String(error)}</pre></main>))}
+const hostname=window.location.hostname.toLowerCase()
+const isCustomDomain=hostname==='ededuterapiadabeleza.online'||hostname==='www.ededuterapiadabeleza.online'
+const isPagesDomain=hostname.endsWith('.pages.dev')
+
+function renderMessage(title:string,message:string,detail?:string){root.render(<main style={{minHeight:'100vh',display:'grid',placeItems:'center',padding:24,fontFamily:'system-ui',background:'#f7f4fb'}}><section style={{maxWidth:620,padding:32,borderRadius:24,background:'#fff',boxShadow:'0 15px 50px #4a23701a'}}><b style={{fontSize:28,color:'#6414a6'}}>ED & DU</b><h1>{title}</h1><p>{message}</p>{detail&&<p>{detail}</p>}<small>V{APP_VERSION} · {isCustomDomain?'domínio personalizado':'production'}</small></section></main>)}
+
+if(isCustomDomain&&!isPagesDomain){
+  // Only the V33 application can render this message. If DNS still resolves to the old provider, this code is not reached.
+  // This is intentionally informational and does not alter DNS or authentication state.
+}
+
+document.title=`ED & DU | Terapia da Beleza — V${APP_VERSION}`
+if(!url||!anon){renderMessage('Configuração de produção incompleta','O ambiente desta origem ainda não recebeu as variáveis públicas necessárias do Supabase.','Se este endereço estiver em transição para o Cloudflare Pages, confirme o vínculo do domínio personalizado e aguarde a propagação DNS. Nenhum dado de teste ou fallback está sendo usado.')}else{import('./App').then(({default:App})=>root.render(<React.StrictMode><App/></React.StrictMode>)).catch(error=>renderMessage('Falha ao iniciar o aplicativo',error instanceof Error?error.message:String(error)))}
