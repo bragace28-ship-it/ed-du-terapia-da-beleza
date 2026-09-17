@@ -26,6 +26,13 @@ jobs:
           test -f dist/_redirects
           grep -Fxq '/* /index.html 200' dist/_redirects
           ! grep -R -E 'V13\.1|V15|Mariana|Juliana|Camila|R\$ 8\.532,00|modo de teste|modo teste' dist
+      - name: Provision professional accounts
+        if: ${{ env.HOMOLOG_READY == 'true' }}
+        env:
+          SUPABASE_URL: https://cwdpwfzsasdsetthmpoa.supabase.co
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          HOMOLOG_USER_PASSWORD: ${{ secrets.HOMOLOG_USER_PASSWORD }}
+        run: node --experimental-strip-types scripts/create_professionals.ts
       - name: Provision authenticated homologation user
         if: ${{ env.HOMOLOG_READY == 'true' }}
         env:
@@ -37,6 +44,12 @@ jobs:
       - name: Install Playwright for production E2E
         if: ${{ env.HOMOLOG_READY == 'true' }}
         run: npx --yes @playwright/test@1.55.0 install --with-deps chromium
+      - name: Run professional login E2E
+        if: ${{ env.HOMOLOG_READY == 'true' }}
+        env:
+          HOMOLOG_USER_PASSWORD: ${{ secrets.HOMOLOG_USER_PASSWORD }}
+          E2E_BASE_URL: https://ed-du-terapia-da-beleza.pages.dev/
+        run: npx --yes @playwright/test@1.55.0 tests/e2e/professional-logins.spec.ts --reporter=list
       - name: Run authenticated production E2E
         if: ${{ env.HOMOLOG_READY == 'true' }}
         env:
