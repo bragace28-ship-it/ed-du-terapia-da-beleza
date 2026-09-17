@@ -14,7 +14,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
       - name: Bootstrap lockfile when missing
         run: |
           if [ ! -f package-lock.json ]; then npm install --package-lock-only --ignore-scripts; echo "LOCK_WAS_CREATED=true" >> "$GITHUB_ENV"; fi
