@@ -1,10 +1,11 @@
-/* V68.2 — Neon Auth + Data API bridge. Stable recovery without reload loops. */
+/* V68.3 — Neon Auth + Data API bridge. Rebuilds the client after JWK failures. */
 (function(){
   'use strict';
   const AUTH_URL='https://ep-sweet-meadow-b43jne0i.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
   const DATA_API_URL='https://ep-sweet-meadow-b43jne0i.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1';
   let clientPromise=null;
   let recovering=false;
+
   async function recoverJwkError(error){
     const msg=String(error?.message||error||'');
     if(!/jwk|jwks|key.*not found|not found.*key/i.test(msg))return false;
@@ -13,9 +14,17 @@
     try{window.sessionStorage.setItem('EDDU_AUTH_RECOVERY','jwk')}catch(e){}
     try{window.dispatchEvent(new CustomEvent('eddu-auth-reset',{detail:{reason:'jwk'}}))}catch(e){}
     try{await window.__EDDU_NEON_CLIENT?.auth?.signOut?.()}catch(e){}
+    try{
+      clientPromise=null;
+      window.__EDDU_NEON_CLIENT=null;
+      window.__EDDU_SB=null;
+      window.__EDDU_NEON_ERROR=error;
+      window.__EDDU_NEON_READY=load();
+    }catch(e){console.warn('[EDDU Neon] rebuild after JWK',e)}
     recovering=false;
     return true;
   }
+
   async function ensureProfile(client,user){
     if(!user?.id)return;
     try{
@@ -23,13 +32,21 @@
       if(!current.data) await client.from('profiles').insert({id:user.id,full_name:user.name||user.email?.split('@')[0]||'Cliente',role:'client',active:true});
     }catch(e){await recoverJwkError(e);console.warn('[EDDU Neon] profile sync',e)}
   }
+
   async function installLegacyRpcBridge(client){
     const originalRpc=client.rpc?.bind(client);
     client.rpc=async function(name,args){
       if(name!=='get_command_center_v2')return originalRpc?originalRpc(name,args):{data:null,error:new Error('RPC não disponível no Neon Data API: '+name)};
       try{
         const [profile,cl,sv,pr,co,ci,cp,pm]=await Promise.all([
-          client.auth.getUser(),client.from('clients').select('*').order('name'),client.from('services').select('*').order('name'),client.from('professionals').select('*').order('name'),client.from('commands').select('*').order('created_at',{ascending:false}),client.from('command_items').select('*'),client.from('command_payments').select('*'),client.from('payment_methods').select('*').eq('active',true).order('name')
+          client.auth.getUser(),
+          client.from('clients').select('*').order('name'),
+          client.from('services').select('*').order('name'),
+          client.from('professionals').select('*').order('name'),
+          client.from('commands').select('*').order('created_at',{ascending:false}),
+          client.from('command_items').select('*'),
+          client.from('command_payments').select('*'),
+          client.from('payment_methods').select('*').eq('active',true).order('name')
         ]);
         const first=[profile,cl,sv,pr,co,ci,cp,pm].find(x=>x?.error);
         if(first){await recoverJwkError(first.error);return {data:null,error:first.error};}
@@ -39,6 +56,7 @@
       }catch(error){await recoverJwkError(error);return {data:null,error}};
     };
   }
+
   async function load(){
     if(window.__EDDU_NEON_CLIENT)return window.__EDDU_NEON_CLIENT;
     if(clientPromise)return clientPromise;
@@ -47,12 +65,26 @@
       const originalGetUser=client.auth.getUser.bind(client.auth);
       client.auth.getUser=async function(){try{const r=await originalGetUser();if(r?.data?.user)await ensureProfile(client,r.data.user);return r}catch(e){await recoverJwkError(e);throw e}};
       await installLegacyRpcBridge(client);
-      window.__EDDU_NEON_CLIENT=client;window.__EDDU_SB=client;window.supabase=window.supabase||{};window.supabase.createClient=()=>client;window.__EDDU_DATA_AUTHORITY='neon';
+      window.__EDDU_NEON_CLIENT=client;
+      window.__EDDU_SB=client;
+      window.supabase=window.supabase||{};
+      window.supabase.createClient=()=>client;
+      window.__EDDU_DATA_AUTHORITY='neon';
       try{const session=await client.auth.getSession();if(session?.data?.session?.user)await ensureProfile(client,session.data.session.user)}catch(e){await recoverJwkError(e);throw e}
       return client;
     });
     return clientPromise;
   }
+
   window.__EDDU_NEON_READY=load();
+  window.__EDDU_RESET_NEON=async function(){
+    try{await window.__EDDU_NEON_CLIENT?.auth?.signOut?.()}catch(e){}
+    clientPromise=null;
+    window.__EDDU_NEON_CLIENT=null;
+    window.__EDDU_SB=null;
+    window.__EDDU_NEON_ERROR=null;
+    window.__EDDU_NEON_READY=load();
+    return window.__EDDU_NEON_READY;
+  };
   load().catch(e=>{console.error('[EDDU Neon] bootstrap failed',e);window.__EDDU_NEON_ERROR=e});
 })();
