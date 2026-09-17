@@ -1,144 +1,36 @@
 name: ED DU Production QA
-
 on:
   push:
-    branches: [main, cloudflare-production]
+    branches: [cloudflare-production, v33-production-rebuild]
   pull_request:
-    branches: [main, cloudflare-production]
-  workflow_dispatch:
-
+    branches: [cloudflare-production]
 permissions:
-  contents: read
-
+  contents: write
 jobs:
-  qa:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-
-      - name: JavaScript syntax check
-        shell: bash
+          node-version: 22
+          cache: npm
+      - name: Bootstrap lockfile when missing
         run: |
-          set -euo pipefail
-          found=0
-          while IFS= read -r -d '' file; do
-            found=1
-            echo "Checking $file"
-            node --check "$file"
-          done < <(find . -type f -name '*.js' -not -path './.git/*' -not -path './node_modules/*' -print0)
-          test "$found" -eq 1
-
-      - name: Production stack integrity
-        shell: bash
+          if [ ! -f package-lock.json ]; then npm install --package-lock-only --ignore-scripts; echo "LOCK_WAS_CREATED=true" >> "$GITHUB_ENV"; fi
+      - name: Persist generated lockfile
+        if: ${{ env.LOCK_WAS_CREATED == 'true' && github.event_name == 'push' }}
         run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          import re
-          html = Path('index.html').read_text(encoding='utf-8')
-          required = [
-              'v16.js',
-              'v46-command-center.js',
-              'v50-smart-gateway.js',
-              'v53-production-authority.js',
-              'v54-command-gateway-bridge.js',
-              'v55-production-hardening.js',
-              'v56-role-safety.js',
-              'v58-production-runtime-guard.js',
-          ]
-          positions=[]
-          for name in required:
-              matches=re.findall(r'<script[^>]+src=[\"\'](?:\./)?'+re.escape(name)+r'[\"\'][^>]*>\s*</script>',html,re.I)
-              if len(matches)!=1:
-                  raise SystemExit(f'{name}: expected exactly one script tag, found {len(matches)}')
-              positions.append(html.lower().find(name.lower()))
-          if positions!=sorted(positions):
-              raise SystemExit('Production script order is not canonical')
-          if 'id="eddu-production-boot"' not in html:
-              raise SystemExit('Production boot gate missing')
-          guard=Path('v58-production-runtime-guard.js').read_text(encoding='utf-8')
-          for module in ('v60-pdv-caixa.js','v62-pdv-production-fixes.js','v67-pdv-split-ui.js'):
-              if module not in guard:
-                  raise SystemExit(f'{module}: missing from production runtime loader')
-          if 'v64-picpay-transparent.js' in guard or 'v65-picpay-config.js' in guard:
-              raise SystemExit('Legacy PicPay runtime modules must not be loaded by the canonical production guard')
-          PY
-
-      - name: No legacy demo engine or seeded demo content in production stack
-        shell: bash
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package-lock.json
+          git commit -m 'build: add npm lockfile'
+          git push
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run build
+      - name: Assert production artifact
         run: |
-          set -euo pipefail
-          files=(index.html v16.js v46-command-center.js v50-smart-gateway.js v53-production-authority.js v54-command-gateway-bridge.js v55-production-hardening.js v56-role-safety.js v58-production-runtime-guard.js v60-pdv-caixa.js v62-pdv-production-fixes.js v67-pdv-split-ui.js v68-neon-production-bridge.js)
-          if grep -InE 'Aprovar pagamento de teste|Pagamento em modo de teste|approvePaymentV31|Atendimento iniciado no modo de teste|8 Atendimentos hoje|4 Confirmados' "${files[@]}"; then
-            echo 'Legacy/demo content detected in the canonical production stack.'
-            exit 1
-          fi
-
-      - name: Frontend must not contain Vercel publication URLs
-        shell: bash
-        run: |
-          set -euo pipefail
-          files=(index.html v16.js v46-command-center.js v50-smart-gateway.js v53-production-authority.js v54-command-gateway-bridge.js v55-production-hardening.js v56-role-safety.js v58-production-runtime-guard.js v60-pdv-caixa.js v62-pdv-production-fixes.js v67-pdv-split-ui.js v68-neon-production-bridge.js)
-          if grep -InE 'https?://[^[:space:]"'"'"']*\.vercel\.app' "${files[@]}"; then
-            echo 'Vercel URL found in canonical production source.'
-            exit 1
-          fi
-
-      - name: Secret leak scan in frontend
-        shell: bash
-        run: |
-          set -euo pipefail
-          files=(index.html v16.js v46-command-center.js v50-smart-gateway.js v53-production-authority.js v54-command-gateway-bridge.js v55-production-hardening.js v56-role-safety.js v58-production-runtime-guard.js v60-pdv-caixa.js v62-pdv-production-fixes.js v67-pdv-split-ui.js v68-neon-production-bridge.js)
-          if grep -InE '(sk_live_[A-Za-z0-9_\-]+|sk_test_[A-Za-z0-9_\-]+|\$aact_prod_[A-Za-z0-9_\-]+|\$aact_hmlg_[A-Za-z0-9_\-]+)' "${files[@]}"; then
-            echo 'Potential payment-provider secret found in canonical frontend source.'
-            exit 1
-          fi
-          if grep -InE 'STRIPE_SECRET_KEY|PAGBANK_TOKEN|ASAAS_API_KEY|ASAAS_WEBHOOK_TOKEN|PICPAY_CLIENT_SECRET|STRIPE_WEBHOOK_SECRET' "${files[@]}"; then
-            echo 'Server-side payment secret identifier appears in canonical frontend source.'
-            exit 1
-          fi
-
-      - name: Payment integration contract checks
-        shell: bash
-        run: |
-          set -euo pipefail
-          grep -q "create-stripe-checkout\|/api/payments/checkout" v46-command-center.js v50-smart-gateway.js functions/api/payments/checkout.ts
-          grep -q "create-pix-charge\|method.*pix" v50-smart-gateway.js functions/api/payments/checkout.ts
-          grep -q "eddu_register_pdv_sale" v62-pdv-production-fixes.js
-          grep -q "eddu_close_pdv_register" v62-pdv-production-fixes.js
-          grep -q "eddu_register_pdv_sale_split" v67-pdv-split-ui.js
-
-      - name: Cloudflare Functions contract checks
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -f functions/_lib/auth.ts
-          test -f functions/_lib/db.ts
-          test -f functions/api/payments/checkout.ts
-          test -f functions/api/payments/webhook/'[provider].ts'
-          grep -q "jwtVerify" functions/_lib/auth.ts
-          grep -q "DATABASE_URL" functions/_lib/db.ts
-          grep -q "STRIPE_SECRET_KEY" functions/api/payments/checkout.ts
-          grep -q "PAGBANK_ACCESS_TOKEN" functions/api/payments/checkout.ts
-          grep -q "ASAAS_API_KEY" functions/api/payments/checkout.ts
-
-      - name: Build production bundle
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm install
-          npm run build
-
-      - name: Verify Pages output
-        shell: bash
-        run: |
-          set -euo pipefail
           test -f dist/index.html
-          test -s dist/index.html
-          echo "Cloudflare Pages build output ready: dist/"
+          ! grep -E 'V13\.1|V15|Mariana|Juliana|Camila|R\$ 8\.532,00|modo de teste' dist/index.html
