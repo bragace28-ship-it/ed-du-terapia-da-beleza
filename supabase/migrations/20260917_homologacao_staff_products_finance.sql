@@ -22,6 +22,8 @@ drop policy if exists products_staff on public.products;
 create policy products_org on public.products for select to authenticated using(organization_id=public.current_organization_id() and(active or public.is_org_staff()));
 create policy products_staff on public.products for all to authenticated using(organization_id=public.current_organization_id() and public.is_org_staff()) with check(organization_id=public.current_organization_id());
 
+create unique index if not exists command_payments_transaction_reference_uq on public.command_payments(transaction_reference) where transaction_reference is not null;
+
 create or replace function public.create_financial_entry_from_command_payment() returns trigger language plpgsql security definer set search_path=public as $$
 declare c public.commands; existing uuid;
 begin
