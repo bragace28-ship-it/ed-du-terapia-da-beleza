@@ -9,6 +9,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      HOMOLOG_READY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY != '' && secrets.HOMOLOG_USER_PASSWORD != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,7 +27,7 @@ jobs:
           grep -Fxq '/* /index.html 200' dist/_redirects
           ! grep -R -E 'V13\.1|V15|Mariana|Juliana|Camila|R\$ 8\.532,00|modo de teste|modo teste' dist
       - name: Provision authenticated homologation user
-        if: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY != '' && secrets.HOMOLOG_USER_PASSWORD != '' }}
+        if: ${{ env.HOMOLOG_READY == 'true' }}
         env:
           SUPABASE_URL: https://cwdpwfzsasdsetthmpoa.supabase.co
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -33,17 +35,17 @@ jobs:
           HOMOLOG_USER_EMAIL: admin.homologacao@ededuterapiadabeleza.online
         run: node --experimental-strip-types scripts/create_homolog_user.ts
       - name: Install Playwright for production E2E
-        if: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY != '' && secrets.HOMOLOG_USER_PASSWORD != '' }}
+        if: ${{ env.HOMOLOG_READY == 'true' }}
         run: npx --yes @playwright/test@1.55.0 install --with-deps chromium
       - name: Run authenticated production E2E
-        if: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY != '' && secrets.HOMOLOG_USER_PASSWORD != '' }}
+        if: ${{ env.HOMOLOG_READY == 'true' }}
         env:
           HOMOLOG_USER_PASSWORD: ${{ secrets.HOMOLOG_USER_PASSWORD }}
           HOMOLOG_USER_EMAIL: admin.homologacao@ededuterapiadabeleza.online
           E2E_BASE_URL: https://ed-du-terapia-da-beleza.pages.dev/
         run: npx --yes @playwright/test@1.55.0 tests/e2e/production.spec.ts --reporter=list
       - name: Upload production E2E artifacts
-        if: always() && secrets.SUPABASE_SERVICE_ROLE_KEY != '' && secrets.HOMOLOG_USER_PASSWORD != ''
+        if: ${{ always() && env.HOMOLOG_READY == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: v33-production-e2e-artifacts
