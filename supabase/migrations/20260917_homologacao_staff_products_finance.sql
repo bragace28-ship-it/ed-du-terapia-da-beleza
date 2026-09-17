@@ -30,7 +30,7 @@ begin
   select id into existing from public.financial_transactions where source_id=new.id limit 1;
   if existing is null then
     insert into public.financial_transactions(type,description,amount,paid_at,status,command_id,client_id,professional_id,scope,category,source_type,source_id,organization_id)
-    values('income','Comanda paga via PDV / Maquininha',new.amount,new.paid_at,'paid',c.id,c.client_id,c.professional_id,'salon','vendas','card',new.id,new.organization_id);
+    values('revenue','Comanda paga via PDV / Maquininha',new.amount,new.paid_at,'paid',c.id,c.client_id,c.professional_id,'salon','vendas','card',new.id,new.organization_id);
   end if;
   return new;
 end$$;
