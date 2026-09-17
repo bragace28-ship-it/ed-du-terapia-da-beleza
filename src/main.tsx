@@ -2,6 +2,7 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import './styles/global.css'
+import './nav-bridge'
 
 const APP_VERSION=import.meta.env.VITE_APP_VERSION||'33.0.0'
 const KEY='eddu_app_version'
