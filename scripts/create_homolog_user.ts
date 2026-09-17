@@ -36,8 +36,7 @@ async function main() {
     console.log(`[homolog] usuário criado e confirmado: ${userId}`)
   }
 
-  // A trigger on_auth_user_created_eddu creates the initial profile/org membership.
-  // The SQL seed remains the authoritative promotion/catalog seed and is run separately.
+  // A trigger on_auth_user_created_eddu deve criar o perfil inicial.
   const { data: profile, error: profileError } = await admin
     .from('profiles')
     .select('id, role, active, organization_id')
@@ -45,10 +44,13 @@ async function main() {
     .maybeSingle()
   if (profileError) throw profileError
   console.log(`[homolog] trigger/profile: ${JSON.stringify(profile)}`)
+  if (!profile) throw new Error('Perfil não foi criado pela trigger de Auth; abortando homologação.')
 
-  if (!profile) {
-    throw new Error('Perfil não foi criado pela trigger de Auth; abortando homologação.')
-  }
+  // Equivalente operacional ao supabase/seed_homologacao.sql, encapsulado em RPC
+  // para manter o seed idempotente e executável pelo SDK sem expor SQL privilegiado.
+  const { data: seed, error: seedError } = await admin.rpc('provision_homologation_seed', { p_user_id: userId })
+  if (seedError) throw seedError
+  console.log(`[homolog] seed aplicado: ${JSON.stringify(seed)}`)
 
   console.log('[homolog] AUTH_PROVISIONED=PASS')
   console.log(`[homolog] user_id=${userId}`)
