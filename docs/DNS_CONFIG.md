@@ -7,9 +7,9 @@ Cloudflare Pages: `ed-du-terapia-da-beleza.pages.dev`
 
 Conectar o domínio personalizado ao projeto Cloudflare Pages e retirar o tráfego do site antigo/Wix.
 
-> **Importante:** o domínio precisa primeiro ser associado ao projeto em **Workers & Pages → ed-du-terapia-da-beleza → Custom domains → Set up a domain**. Só apontar um CNAME manualmente, sem associar o domínio ao projeto Pages, pode deixar o hostname sem serviço. citeturn0search0
+> **Importante:** o domínio precisa primeiro ser associado ao projeto em **Workers & Pages → ed-du-terapia-da-beleza → Custom domains → Set up a domain**. Só apontar um CNAME manualmente, sem associar o domínio ao projeto Pages, pode deixar o hostname sem serviço.
 
-> **Nameservers:** não altere os nameservers nesta etapa se eles já estiverem delegados ao Cloudflare. O domínio apex do Pages exige que a zona esteja no Cloudflare; nesse cenário o Cloudflare pode criar/gerenciar o CNAME necessário para o apex. citeturn0search0turn0search9
+> **Nameservers:** não altere os nameservers nesta etapa se eles já estiverem delegados ao Cloudflare. O domínio apex do Pages exige que a zona esteja no Cloudflare; nesse cenário o Cloudflare pode criar/gerenciar o CNAME necessário para o apex.
 
 ## 1. Associar o domínio ao Pages
 
@@ -18,7 +18,7 @@ No projeto `ed-du-terapia-da-beleza`, adicione:
 - `ededuterapiadabeleza.online`
 - `www.ededuterapiadabeleza.online`
 
-Conclua a ativação/validação do domínio antes de considerar o DNS finalizado. citeturn0search0
+Conclua a ativação/validação do domínio antes de considerar o DNS finalizado.
 
 ## 2. Registros DNS
 
@@ -30,11 +30,9 @@ Se o Cloudflare não criar o registro automaticamente, criar/ajustar:
 |---|---|---|---|
 | CNAME | `www` | `ed-du-terapia-da-beleza.pages.dev` | Proxied/Auto |
 
-O Cloudflare documenta CNAME de subdomínio apontando para o hostname `*.pages.dev`. citeturn0search0
-
 ### Raiz (`@`)
 
-Para o apex, **não use um IP arbitrário de Pages**. Com a zona no Cloudflare, CNAME flattening permite que o apex use o destino `ed-du-terapia-da-beleza.pages.dev`; para Pages, o fluxo recomendado é deixar o próprio Cloudflare criar/gerenciar o registro após a associação do custom domain. citeturn0search0turn0search9
+Para o apex, **não use um IP arbitrário de Pages**. Com a zona no Cloudflare, CNAME flattening permite que o apex use o destino `ed-du-terapia-da-beleza.pages.dev`; para Pages, o fluxo recomendado é deixar o próprio Cloudflare criar/gerenciar o registro após a associação do custom domain.
 
 | Tipo | Nome | Destino |
 |---|---|---|
@@ -56,7 +54,7 @@ Após a propagação:
 4. `https://ed-du-terapia-da-beleza.pages.dev/version.json` deve retornar `version` `33.0.0` e o commit atual ou posterior.
 5. Não deve existir uma página Wix no domínio.
 
-Se o Pages funcionar em `pages.dev` mas o domínio personalizado não funcionar, a investigação deve começar por DNS/custom domain, não pelo código React. citeturn0search11
+Se o Pages funcionar em `pages.dev` mas o domínio personalizado não funcionar, a investigação deve começar por DNS/custom domain, não pelo código React.
 
 ## Aviso durante a transição
 
