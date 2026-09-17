@@ -8,7 +8,7 @@
     "check": "tsc --noEmit",
     "build": "npm run check && vite build && node scripts/stamp-version.mjs",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run 'tests/**/*.test.ts'"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.116.0",
