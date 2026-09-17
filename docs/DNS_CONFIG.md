@@ -7,46 +7,60 @@ Cloudflare Pages: `ed-du-terapia-da-beleza.pages.dev`
 
 Conectar o domínio personalizado ao projeto Cloudflare Pages e retirar o tráfego do site antigo/Wix.
 
-> **Importante:** não altere os nameservers do domínio nesta etapa se eles já estiverem delegados ao Cloudflare. Faça somente os ajustes de DNS necessários e cadastre o domínio no projeto Pages.
+> **Importante:** o domínio precisa primeiro ser associado ao projeto em **Workers & Pages → ed-du-terapia-da-beleza → Custom domains → Set up a domain**. Só apontar um CNAME manualmente, sem associar o domínio ao projeto Pages, pode deixar o hostname sem serviço. citeturn0search0
 
-## Registros DNS
+> **Nameservers:** não altere os nameservers nesta etapa se eles já estiverem delegados ao Cloudflare. O domínio apex do Pages exige que a zona esteja no Cloudflare; nesse cenário o Cloudflare pode criar/gerenciar o CNAME necessário para o apex. citeturn0search0turn0search9
+
+## 1. Associar o domínio ao Pages
+
+No projeto `ed-du-terapia-da-beleza`, adicione:
+
+- `ededuterapiadabeleza.online`
+- `www.ededuterapiadabeleza.online`
+
+Conclua a ativação/validação do domínio antes de considerar o DNS finalizado. citeturn0search0
+
+## 2. Registros DNS
 
 ### `www`
 
-Criar/ajustar:
+Se o Cloudflare não criar o registro automaticamente, criar/ajustar:
 
 | Tipo | Nome | Destino | Proxy |
 |---|---|---|---|
 | CNAME | `www` | `ed-du-terapia-da-beleza.pages.dev` | Proxied/Auto |
 
+O Cloudflare documenta CNAME de subdomínio apontando para o hostname `*.pages.dev`. citeturn0search0
+
 ### Raiz (`@`)
 
-A forma recomendada para um domínio raiz em Cloudflare Pages é adicionar o domínio personalizado dentro do projeto Pages e deixar o Cloudflare gerenciar o vínculo/flattening necessário.
-
-Se o provedor DNS exigir um registro explícito, use o mecanismo de CNAME flattening/alias disponível no próprio Cloudflare para:
+Para o apex, **não use um IP arbitrário de Pages**. Com a zona no Cloudflare, CNAME flattening permite que o apex use o destino `ed-du-terapia-da-beleza.pages.dev`; para Pages, o fluxo recomendado é deixar o próprio Cloudflare criar/gerenciar o registro após a associação do custom domain. citeturn0search0turn0search9
 
 | Tipo | Nome | Destino |
 |---|---|---|
-| CNAME/Flattened | `@` | `ed-du-terapia-da-beleza.pages.dev` |
+| CNAME (flattened) | `@` | `ed-du-terapia-da-beleza.pages.dev` |
 
-**Não crie um A record arbitrário com um IP do Pages.** Se o provedor não suportar CNAME no apex, configure o domínio no Cloudflare Pages e siga a validação indicada pelo Cloudflare.
+## 3. Limpeza do Wix
 
-## Limpeza do Wix
+Depois de confirmar que o domínio está ativo no Pages, remova ou substitua os registros antigos que apontem para Wix.
 
-Depois de confirmar que os registros acima estão sendo usados pelo domínio, remova ou substitua registros antigos que apontem para Wix. Não remova registros de e-mail (`MX`, SPF, DKIM/DMARC) se eles forem usados por caixas de e-mail do domínio.
+**Não remova** registros de e-mail (`MX`, SPF, DKIM/DMARC) se eles forem usados pelas caixas de e-mail do domínio.
 
-## Validação
+## 4. Validação
 
 Após a propagação:
 
 1. `https://www.ededuterapiadabeleza.online/` deve abrir o ED & DU V33.
 2. `https://ededuterapiadabeleza.online/` deve abrir o ED & DU V33.
 3. O projeto Pages deve mostrar o domínio personalizado como ativo/verified.
-4. `https://ed-du-terapia-da-beleza.pages.dev/version.json` deve retornar `version` `33.0.0` e um commit igual ou posterior ao deploy atual.
+4. `https://ed-du-terapia-da-beleza.pages.dev/version.json` deve retornar `version` `33.0.0` e o commit atual ou posterior.
+5. Não deve existir uma página Wix no domínio.
+
+Se o Pages funcionar em `pages.dev` mas o domínio personalizado não funcionar, a investigação deve começar por DNS/custom domain, não pelo código React. citeturn0search11
 
 ## Aviso durante a transição
 
-A aplicação V33 possui uma verificação de origem na inicialização. Se for aberta em `ededuterapiadabeleza.online` enquanto o DNS ainda estiver apontando para o site antigo, a aplicação pode orientar que o domínio está em transição. Isso evita interpretar uma página do provedor antigo como se fosse a aplicação V33.
+A aplicação V33 verifica `/version.json` quando é aberta no domínio personalizado. Se o hostname estiver servindo o provedor antigo, ou uma publicação diferente da V33, a inicialização exibe **“Domínio em transição”** em vez de apresentar a origem antiga como se fosse o aplicativo.
 
 ## Supabase Auth
 
