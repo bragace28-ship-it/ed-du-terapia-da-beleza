@@ -17,6 +17,7 @@ env:
   VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
   VITE_APP_VERSION: 33.0.0
   VITE_APP_COMMIT: ${{ github.sha }}
+  WRANGLER_READY: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
 
 jobs:
   deploy:
@@ -51,11 +52,13 @@ jobs:
           SHORT_SHA="${GITHUB_SHA:0:8}"
           printf '{"version":"33.0.0","commit":"%s"}\n' "$SHORT_SHA" > dist/version.json
           test -f dist/index.html
+          test -f dist/_redirects
+          grep -Fxq '/* /index.html 200' dist/_redirects
           ! grep -R -E 'V13\.1|V15|Mariana|Juliana|Camila|R\$ 8\.532,00|modo de teste|modo teste' dist
           cat dist/version.json
 
       - name: Deploy dist to Cloudflare Pages with Wrangler
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+        if: ${{ env.WRANGLER_READY == 'true' }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -68,7 +71,7 @@ jobs:
             --commit-message="ED DU V33 production deploy $GITHUB_SHA"
 
       - name: Wrangler credentials not configured
-        if: ${{ secrets.CLOUDFLARE_API_TOKEN == '' || secrets.CLOUDFLARE_ACCOUNT_ID == '' }}
+        if: ${{ env.WRANGLER_READY != 'true' }}
         run: |
           echo 'INFO: CLOUDFLARE_API_TOKEN and/or CLOUDFLARE_ACCOUNT_ID are not configured.'
           echo 'INFO: Skipping direct Wrangler upload; Cloudflare Pages Git Integration remains the deployment authority.'
