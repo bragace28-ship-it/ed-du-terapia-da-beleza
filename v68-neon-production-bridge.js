@@ -1,7 +1,4 @@
-/* V68.1 — Neon Auth + Data API bridge.
- * Keeps the existing Supabase-shaped application API while moving authority to Neon.
- * Adds automatic recovery when an old/stale JWT is rejected by Neon RLS with a JWK error.
- */
+/* V68.2 — Neon Auth + Data API bridge. Stable recovery without reload loops. */
 (function(){
   'use strict';
   const AUTH_URL='https://ep-sweet-meadow-b43jne0i.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
@@ -14,22 +11,17 @@
     if(recovering)return true;
     recovering=true;
     try{window.sessionStorage.setItem('EDDU_AUTH_RECOVERY','jwk')}catch(e){}
-    try{await window.__EDDU_NEON_CLIENT?.auth?.signOut?.()}catch(e){}
     try{window.dispatchEvent(new CustomEvent('eddu-auth-reset',{detail:{reason:'jwk'}}))}catch(e){}
-    setTimeout(()=>{try{location.reload()}catch(e){}} ,50);
+    try{await window.__EDDU_NEON_CLIENT?.auth?.signOut?.()}catch(e){}
+    recovering=false;
     return true;
   }
   async function ensureProfile(client,user){
     if(!user?.id)return;
     try{
       const current=await client.from('profiles').select('id,full_name,phone,role,active,avatar_url').eq('id',user.id).maybeSingle();
-      if(!current.data){
-        await client.from('profiles').insert({id:user.id,full_name:user.name||user.email?.split('@')[0]||'Cliente',role:'client',active:true});
-      }
-    }catch(e){
-      await recoverJwkError(e);
-      console.warn('[EDDU Neon] profile sync',e)
-    }
+      if(!current.data) await client.from('profiles').insert({id:user.id,full_name:user.name||user.email?.split('@')[0]||'Cliente',role:'client',active:true});
+    }catch(e){await recoverJwkError(e);console.warn('[EDDU Neon] profile sync',e)}
   }
   async function installLegacyRpcBridge(client){
     const originalRpc=client.rpc?.bind(client);
@@ -37,18 +29,11 @@
       if(name!=='get_command_center_v2')return originalRpc?originalRpc(name,args):{data:null,error:new Error('RPC não disponível no Neon Data API: '+name)};
       try{
         const [profile,cl,sv,pr,co,ci,cp,pm]=await Promise.all([
-          client.auth.getUser(),
-          client.from('clients').select('*').order('name'),
-          client.from('services').select('*').order('name'),
-          client.from('professionals').select('*').order('name'),
-          client.from('commands').select('*').order('created_at',{ascending:false}),
-          client.from('command_items').select('*'),
-          client.from('command_payments').select('*'),
-          client.from('payment_methods').select('*').eq('active',true).order('name')
+          client.auth.getUser(),client.from('clients').select('*').order('name'),client.from('services').select('*').order('name'),client.from('professionals').select('*').order('name'),client.from('commands').select('*').order('created_at',{ascending:false}),client.from('command_items').select('*'),client.from('command_payments').select('*'),client.from('payment_methods').select('*').eq('active',true).order('name')
         ]);
         const first=[profile,cl,sv,pr,co,ci,cp,pm].find(x=>x?.error);
         if(first){await recoverJwkError(first.error);return {data:null,error:first.error};}
-        const role=profile?.data?.user?.id ? (await client.from('profiles').select('role').eq('id',profile.data.user.id).maybeSingle()) : {data:null,error:null};
+        const role=profile?.data?.user?.id?(await client.from('profiles').select('role').eq('id',profile.data.user.id).maybeSingle()):{data:null,error:null};
         if(role.error){await recoverJwkError(role.error);return {data:null,error:role.error};}
         return {data:{commands:co.data||[],command_items:ci.data||[],clients:cl.data||[],services:sv.data||[],professionals:pr.data||[],payments:cp.data||[],payment_methods:pm.data||[],role:role.data?.role==='client'?'client':'pro'},error:null};
       }catch(error){await recoverJwkError(error);return {data:null,error}};
@@ -62,15 +47,8 @@
       const originalGetUser=client.auth.getUser.bind(client.auth);
       client.auth.getUser=async function(){try{const r=await originalGetUser();if(r?.data?.user)await ensureProfile(client,r.data.user);return r}catch(e){await recoverJwkError(e);throw e}};
       await installLegacyRpcBridge(client);
-      window.__EDDU_NEON_CLIENT=client;
-      window.__EDDU_SB=client;
-      window.supabase=window.supabase||{};
-      window.supabase.createClient=()=>client;
-      window.__EDDU_DATA_AUTHORITY='neon';
-      try{
-        const session=await client.auth.getSession();
-        if(session?.data?.session?.user)await ensureProfile(client,session.data.session.user);
-      }catch(e){await recoverJwkError(e);throw e}
+      window.__EDDU_NEON_CLIENT=client;window.__EDDU_SB=client;window.supabase=window.supabase||{};window.supabase.createClient=()=>client;window.__EDDU_DATA_AUTHORITY='neon';
+      try{const session=await client.auth.getSession();if(session?.data?.session?.user)await ensureProfile(client,session.data.session.user)}catch(e){await recoverJwkError(e);throw e}
       return client;
     });
     return clientPromise;
