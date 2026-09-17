@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "vite build && cp eddu-selfhost-preload.js v16.js v46-command-center.js v50-smart-gateway.js v53-production-authority.js v54-command-gateway-bridge.js v55-production-hardening.js v56-role-safety.js v58-production-runtime-guard.js v60-pdv-caixa.js v62-pdv-production-fixes.js v67-pdv-split-ui.js v68-neon-production-bridge.js v69-app-shell-guard.js v70-auth-jwk-recovery.js dist/ && sed -i 's#</body>#<script src=\"./v69-app-shell-guard.js\"></script><script src=\"./v70-auth-jwk-recovery.js\"></script></body>#' dist/index.html",
+    "build": "vite build && cp eddu-selfhost-preload.js v16.js v46-command-center.js v50-smart-gateway.js v53-production-authority.js v54-command-gateway-bridge.js v55-production-hardening.js v56-role-safety.js v58-production-runtime-guard.js v60-pdv-caixa.js v62-pdv-production-fixes.js v67-pdv-split-ui.js v68-neon-production-bridge.js v69-app-shell-guard.js v70-auth-jwk-recovery.js v71-boot-fallback.js dist/ && sed -i 's#</body>#<script src=\"./v69-app-shell-guard.js\"></script><script src=\"./v70-auth-jwk-recovery.js\"></script><script src=\"./v71-boot-fallback.js\"></script></body>#' dist/index.html",
     "preview": "vite preview --host 127.0.0.1",
     "supabase": "supabase"
   },
