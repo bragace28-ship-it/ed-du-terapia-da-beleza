@@ -1,6 +1,7 @@
 import React from 'react'
 import {createRoot} from 'react-dom/client'
 import './styles/global.css'
+import './styles/intervention-fixes.css'
 import './nav-bridge'
 
 const APP_VERSION=import.meta.env.VITE_APP_VERSION||'33.0.0'
