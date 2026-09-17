@@ -36,7 +36,6 @@ begin
   end if;
   return new;
 end$$;
+revoke execute on function public.create_financial_entry_from_command_payment() from anon, authenticated;
 drop trigger if exists trg_command_payment_financial on public.command_payments;
 create trigger trg_command_payment_financial after insert on public.command_payments for each row execute function public.create_financial_entry_from_command_payment();
-
-create or replace view public.financial_entries as select * from public.financial_transactions;
