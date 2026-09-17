@@ -1,22 +1,27 @@
 {
   "name": "ed-du-terapia-da-beleza",
-  "version": "1.0.0",
+  "version": "33.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "vite build && cp eddu-selfhost-preload.js v16.js v46-command-center.js v50-smart-gateway.js v53-production-authority.js v54-command-gateway-bridge.js v55-production-hardening.js v56-role-safety.js v58-production-runtime-guard.js v60-pdv-caixa.js v62-pdv-production-fixes.js v67-pdv-split-ui.js v68-neon-production-bridge.js v69-app-shell-guard.js v70-auth-jwk-recovery.js v71-boot-fallback.js dist/ && sed -i 's#</body>#<script src=\"./v69-app-shell-guard.js\"></script><script src=\"./v70-auth-jwk-recovery.js\"></script><script src=\"./v71-boot-fallback.js\"></script></body>#' dist/index.html",
-    "preview": "vite preview --host 127.0.0.1",
-    "supabase": "supabase"
-  },
-  "devDependencies": {
-    "supabase": "latest",
-    "vite": "latest"
+    "dev": "vite",
+    "check": "tsc --noEmit",
+    "build": "npm run check && vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@neondatabase/neon-js": "^0.7.0-beta",
-    "@neondatabase/serverless": "^1.0.0",
-    "@supabase/supabase-js": "^2.57.0",
-    "jose": "^6.1.0"
+    "@supabase/supabase-js": "2.116.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "5.2.0",
+    "jsdom": "27.0.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.0",
+    "vitest": "4.1.8"
   }
 }
