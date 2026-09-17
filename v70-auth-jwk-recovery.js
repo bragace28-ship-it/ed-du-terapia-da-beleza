@@ -1,7 +1,4 @@
-/* V70 — Production auth/JWK recovery guard.
- * Recovers stale Neon Auth sessions without reload loops and never leaves
- * the Central de Comandas stuck on a raw "jwk not found" error.
- */
+/* V70.1 — Production auth/JWK recovery guard. Rebuilds Neon client and returns to stable auth. */
 (function(){
   'use strict';
   let recovering=false;
@@ -27,14 +24,15 @@
     recovering=true;
     try{sessionStorage.setItem('EDDU_AUTH_RECOVERY','jwk')}catch(e){}
     closeCommandCenter();
-    try{window.dispatchEvent(new CustomEvent('eddu-auth-reset',{detail:{reason:'jwk',source:'v70'}}))}catch(e){}
+    try{window.dispatchEvent(new CustomEvent('eddu-auth-reset',{detail:{reason:'jwk',source:'v70.1'}}))}catch(e){}
     try{await window.__EDDU_NEON_CLIENT?.auth?.signOut?.()}catch(e){}
     clearAuthStorage();
     try{window.__EDDU_SB=null}catch(e){}
     try{window.__EDDU_NEON_CLIENT=null}catch(e){}
     try{window.__EDDU_NEON_ERROR=error}catch(e){}
     try{
-      if(window.EDDU_AUTH?.bootUser)await window.EDDU_AUTH.bootUser(false);
+      if(typeof window.__EDDU_RESET_NEON==='function')await window.__EDDU_RESET_NEON();
+      else if(window.EDDU_AUTH?.bootUser)await window.EDDU_AUTH.bootUser(false);
     }catch(e){
       try{window.EDDU_AUTH?.bootUser?.(false)}catch(x){}
     }
@@ -70,7 +68,7 @@
       if(v46&&/jwk\s+not\s+found/i.test(v46.textContent||''))recover(new Error('jwk not found'));
     });
     observer.observe(document.documentElement,{subtree:true,childList:true,characterData:true});
-    window.__EDDU_AUTH_V70={version:'V70',recover};
+    window.__EDDU_AUTH_V70={version:'V70.1',recover};
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
   window.addEventListener('unhandledrejection',e=>{if(isJwk(e.reason))recover(e.reason)});
