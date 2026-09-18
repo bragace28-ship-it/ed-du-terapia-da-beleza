@@ -44,9 +44,9 @@ export async function addCommandItem(input:{command_id:string;service_id?:string
 export async function recalculateCommand(id:string){
   const {data:items,error:itemError}=await supabase.from('command_items').select('quantity,unit_price,unit_cost,commission_percent').eq('command_id',id)
   if(itemError)throw itemError
-  const subtotal=(items??[]).reduce((s,i)=>s+Number(i.quantity)*Number(i.unit_price),0)
-  const cost=(items??[]).reduce((s,i)=>s+Number(i.quantity)*Number(i.unit_cost??0),0)
-  const commission=(items??[]).reduce((s,i)=>s+Number(i.quantity)*Number(i.unit_price)*Number(i.commission_percent??0)/100,0)
+  const subtotal=(items??[]).reduce((s:number,i:any)=>s+Number(i.quantity)*Number(i.unit_price),0)
+  const cost=(items??[]).reduce((s:number,i:any)=>s+Number(i.quantity)*Number(i.unit_cost??0),0)
+  const commission=(items??[]).reduce((s:number,i:any)=>s+Number(i.quantity)*Number(i.unit_price)*Number(i.commission_percent??0)/100,0)
   const {data,error}=await supabase.from('commands').update({subtotal,total:Math.max(0,subtotal),total_cost:cost,commission,profit:subtotal-cost-commission,updated_at:new Date().toISOString()}).eq('id',id).select().single()
   if(error)throw error
   return data
