@@ -19,7 +19,7 @@ function Lotus(){return <svg className="lotus-art" viewBox="0 0 120 90" aria-hid
 
 export default function App(){
   const[profile,setProfile]=useState<Profile|null>(null),[uid,setUid]=useState(''),[boot,setBoot]=useState(true),[err,setErr]=useState('')
-  useEffect(()=>{let alive=true;supabase.auth.getSession().then(async({data})=>{if(data.session?.user){const p=await getProfile(data.session.user.id);if(alive&&p?.active){setUid(data.session.user.id);setProfile(p)}}}).catch(e=>alive&&setErr(e.message)).finally(()=>alive&&setBoot(false));const{data}=supabase.auth.onAuthStateChange(async(_,s)=>{if(!s?.user){setProfile(null);setUid('');return}try{const p=await getProfile(s.user.id);if(p?.active){setUid(s.user.id);setProfile(p)}}catch(e){setErr(e instanceof Error?e.message:'Falha ao carregar perfil')}});return()=>{alive=false;data.subscription.unsubscribe()}},[])
+  useEffect(()=>{let alive=true;supabase.auth.getSession().then(async({data}:any)=>{if(data.session?.user){const p=await getProfile(data.session.user.id);if(alive&&p?.active){setUid(data.session.user.id);setProfile(p)}}}).catch((e:any)=>alive&&setErr(e.message)).finally(()=>alive&&setBoot(false));const{data}=supabase.auth.onAuthStateChange(async(_:any,s:any)=>{if(!s?.user){setProfile(null);setUid('');return}try{const p=await getProfile(s.user.id);if(p?.active){setUid(s.user.id);setProfile(p)}}catch(e){setErr(e instanceof Error?e.message:'Falha ao carregar perfil')}});return()=>{alive=false;data.subscription.unsubscribe()}},[])
   if(boot)return <div className="app-loading"><b>ED & DU</b><span>TERAPIA DA BELEZA</span><Loading/></div>
   if(!profile)return <Login error={err} setError={setErr}/>
   return <Shell profile={profile} uid={uid}/>
