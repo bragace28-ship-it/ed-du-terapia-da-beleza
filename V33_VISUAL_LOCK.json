@@ -1,0 +1,8 @@
+{
+  "version":"33.0.0",
+  "visualBaseline":"IMMUTABLE-V33",
+  "gitBlobSha":"597d94ced915256d0f567fe5d4fbb7a68e4e231d",
+  "byteLength":3504106,
+  "source":"index.html",
+  "rule":"index.html is the immutable V33 visual baseline. Functional implementations must be additive and must not replace, rewrite, or regenerate this file."
+}
