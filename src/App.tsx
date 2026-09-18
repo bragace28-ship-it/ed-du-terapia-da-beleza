@@ -18,6 +18,7 @@ function Footer(){return <footer className="technical">ED & DU · V{APP_VERSION}
 function Lotus(){return <svg className="lotus-art" viewBox="0 0 120 90" aria-hidden="true"><g fill="none" stroke="currentColor" strokeWidth="2"><path d="M60 78C39 70 27 55 29 38c14 3 26 15 31 31"/><path d="M60 78c21-8 33-23 31-40-14 3-26 15-31 31"/><path d="M60 75C48 57 48 39 60 18c12 21 12 39 0 57Z"/><path d="M60 75C43 61 38 47 42 31c10 4 17 13 18 26"/><path d="M60 75c17-14 22-28 18-44-10 4-17 13-18 26"/><path d="M31 77c17 4 41 4 58 0"/></g></svg>}
 
 const HOMOLOGATION_BYPASS=true;
+if(typeof window!=='undefined')window.__EDDU_HOMOLOGATION_BYPASS=HOMOLOGATION_BYPASS;
 export default function App(){
   const[profile,setProfile]=useState<Profile|null>(null),[uid,setUid]=useState(''),[boot,setBoot]=useState(true),[err,setErr]=useState('')
   useEffect(()=>{let alive=true;supabase.auth.getSession().then(async({data}:any)=>{if(data.session?.user){const p=await getProfile(data.session.user.id);if(alive&&p?.active){setUid(data.session.user.id);setProfile(p)}}}).catch((e:any)=>alive&&setErr(e.message)).finally(()=>alive&&setBoot(false));const{data}=supabase.auth.onAuthStateChange(async(_:any,s:any)=>{if(!s?.user){setProfile(null);setUid('');return}try{const p=await getProfile(s.user.id);if(p?.active){setUid(s.user.id);setProfile(p)}}catch(e){setErr(e instanceof Error?e.message:'Falha ao carregar perfil')}});return()=>{alive=false;data.subscription.unsubscribe()}},[])
