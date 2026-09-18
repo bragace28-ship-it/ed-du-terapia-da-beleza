@@ -1,8 +1,6 @@
 name = "ed-du-terapia-da-beleza"
-compatibility_date = "2026-09-16"
+compatibility_date = "2026-09-18"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "./dist"
-# V33 production: Neon is the sole application data/auth authority.
-# No Supabase project variables are used by the production build.
 [vars]
 VITE_APP_VERSION = "33.0.0"
