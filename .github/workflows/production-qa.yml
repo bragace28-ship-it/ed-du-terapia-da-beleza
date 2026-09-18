@@ -25,5 +25,5 @@ jobs:
           test -f dist/_redirects
           grep -Fxq '/* /index.html 200' dist/_redirects
           ! grep -R -E 'V13\.1|V15|Mariana|Juliana|Camila|R\$ 8\.532,00|modo de teste|modo teste' dist
-          ! grep -R -E 'supabase\.co|VITE_SUPABASE|@supabase|v16-|v17-|v18-|v20-|v21-|v22-|v23-|v24-|v25-|v26-|v27-|v28-|v29-|v30-|v31-|v32-|v35-|v36-|v37-|v39-|v41-|v42-|v43-|v44-|v45-|v46-|v50-|v53-|v54-|v55-|v56-|v58-|v59-|v60-|v62-|v64-|v65-|v67-|v68-|v69-|v70-|v71-|v72-|v73-' dist
+          ! grep -R -E 'supabase\.co|VITE_SUPABASE|@supabase|(^|[^A-Za-z])v[0-9]+-[A-Za-z0-9_.-]+' dist
           echo 'Approved production artifact: PASS'
