@@ -6,16 +6,13 @@ import './nav-bridge'
 
 const APP_VERSION=import.meta.env.VITE_APP_VERSION||'33.0.0'
 const KEY='eddu_app_version'
-const stored=localStorage.getItem(KEY)
-if(!stored||stored<APP_VERSION){for(const key of Object.keys(localStorage)){if(/^(eddu|v1|v2|v3)/i.test(key)&&key!==KEY)localStorage.removeItem(key)}localStorage.setItem(KEY,APP_VERSION)}
+localStorage.setItem(KEY,APP_VERSION)
 document.title=`ED & DU | Terapia da Beleza — V${APP_VERSION}`
 const root=createRoot(document.getElementById('root')!)
 const hostname=window.location.hostname.toLowerCase()
 const isCustomDomain=hostname==='ededuterapiadabeleza.online'||hostname==='www.ededuterapiadabeleza.online'
 
-function renderMessage(title:string,message:string,detail?:string){
-  root.render(<main style={{minHeight:'100vh',display:'grid',placeItems:'center',padding:24,fontFamily:'system-ui',background:'#f7f4fb'}}><section style={{maxWidth:620,padding:32,borderRadius:24,background:'#fff',boxShadow:'0 15px 50px #4a23701a'}}><b style={{fontSize:28,color:'#6414a6'}}>ED & DU</b><h1>{title}</h1><p>{message}</p>{detail&&<p>{detail}</p>}<small>V{APP_VERSION} · production</small></section></main>)
-}
+function renderMessage(title:string,message:string,detail?:string){root.render(<main style={{minHeight:'100vh',display:'grid',placeItems:'center',padding:24,fontFamily:'system-ui',background:'#f7f4fb'}}><section style={{maxWidth:620,padding:32,borderRadius:24,background:'#fff',boxShadow:'0 15px 50px #4a23701a'}}><b style={{fontSize:28,color:'#6414a6'}}>ED & DU</b><h1>{title}</h1><p>{message}</p>{detail&&<p>{detail}</p>}<small>V{APP_VERSION} · production</small></section></main>)}
 
 async function boot(){
   if(isCustomDomain){
