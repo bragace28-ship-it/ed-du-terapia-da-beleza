@@ -17,7 +17,7 @@ jobs:
           test -f index.html
           test -f src/main.tsx
           test -f src/App.tsx
-          test -f v68-neon-production-bridge.js
+          test -f public/v68-neon-production-bridge.js
           python - <<'PY'
           from pathlib import Path
           s=Path('index.html').read_text(encoding='utf-8')
