@@ -1,5 +1,7 @@
 (function(){
 'use strict';
+const HOMOLOGATION_BYPASS=true;
+if(HOMOLOGATION_BYPASS){console.warn('[EDDU] Finance PIN temporarily bypassed for homologation. Re-enable v72 before production security sign-off.');return;}
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const timestampKey='eddu_finance_pin_timestamp';
 const ttl=86400000;
