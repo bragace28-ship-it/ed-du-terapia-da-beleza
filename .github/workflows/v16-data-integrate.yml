@@ -1,4 +1,4 @@
-name: ED DU Production stack validator
+name: ED DU V33 production build validator
 on:
   workflow_dispatch:
 
@@ -10,28 +10,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate stack order and modules
+      - name: Validate V33 Vite entrypoint
         shell: bash
         run: |
           set -euo pipefail
           test -f index.html
+          test -f src/main.tsx
+          test -f src/App.tsx
+          test -f v68-neon-production-bridge.js
           python - <<'PY'
           from pathlib import Path
           s=Path('index.html').read_text(encoding='utf-8')
-          expected=[
-            'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-            './v16.js','./v46-command-center.js','./v50-smart-gateway.js',
-            './v53-production-authority.js','./v54-command-gateway-bridge.js',
-            './v55-production-hardening.js','./v56-role-safety.js'
+          required=[
+            '<title>ED & DU | Terapia da Beleza — V33.0.0</title>',
+            '<div id="root"></div>',
+            '<script src="/v68-neon-production-bridge.js"></script>',
+            '<script type="module" src="/src/main.tsx"></script>',
           ]
-          pos=[]
-          for x in expected:
-            i=s.find(f'<script src="{x}"></script>')
-            if i<0: raise SystemExit(f'missing {x}')
-            pos.append(i)
-          if pos != sorted(pos): raise SystemExit('production script order invalid')
-          for x in ['v16-clinical.js','v16-finance.js','v16-storage.js']:
+          for x in required:
             if x not in s: raise SystemExit(f'missing {x}')
-          if '<style id="eddu-production-boot">#root{visibility:hidden}</style>' not in s:
-            raise SystemExit('production boot guard missing')
+          forbidden=['V28','v16.js','v16-clinical.js','v16-finance.js','v16-storage.js','v17-finalize.js','v18-real-payment.js','v20-auth-profile.js','v21-production-data.js','v22-operational-sync.js','v23-reconciliation.js','v24-financial-center.js','v25-pix-reconciliation.js','v26-pagbank-checkout.js','v27-pagbank-ui.js','v28-auth-fix.js','v29-command-save.js','v30-command-persist.js','v31-runtime-recovery.js','v32-command-render-guard.js','v33-command-list-sync.js']
+          for x in forbidden:
+            if x in s: raise SystemExit(f'legacy entrypoint dependency found: {x}')
           PY
