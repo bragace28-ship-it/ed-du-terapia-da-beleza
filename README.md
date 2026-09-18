@@ -1,16 +1,24 @@
 # ED & DU | Terapia da Beleza
 
-Aplicação web do salão com **Neon como autoridade única de produção** para autenticação e dados, controle de acesso por perfil, gestão de comandas e Smart Gateway para pagamentos.
+Aplicação web do salão. A publicação ativa é a interface visual aprovada, com Neon como autoridade única para autenticação e dados.
 
-## Produção V33
-- Entrypoint efetivo: `index.html`, processado pelo Vite e publicado em `dist/` no Cloudflare Pages.
-- Versão canônica: `33.0.0`.
-- - A camada de dados/autenticação usa exclusivamente o bridge de produção Neon.
-- O stack de produção é único e não utiliza integrações históricas.
+## Fonte única de produção
+- Repositório: `bragace28-ship-it/ed-du-terapia-da-beleza`
+- Branch de produção: `cloudflare-production`
+- Aplicação: V33.0.0
+- Banco e autenticação: Neon
+- Hospedagem/publicação: Cloudflare Pages
+- Não existe integração de produção com provedores ou implementações legadas.
 
-## Bloco 02
-- PIN financeiro persistido no Neon em `public.finance_pin_credentials`.
-- Validação por funções Neon: `set_finance_pin`, `finance_pin_status` e `verify_finance_pin`.
-- PIN não é solicitado em Agenda nem em Comandas.
-- Acesso financeiro fica condicionado ao nível de acesso e ao PIN.
-- Nenhum CSS, JSX, estilo inline, cor ou posicionamento da interface aprovado é alterado pelo módulo do PIN.
+## Regra de implementação
+A interface visual aprovada é imutável. Novos blocos entram somente como funcionalidade sobre a interface existente, sem reconstrução, redesign, troca de CSS ou alteração de layout.
+
+## Segurança e dados
+- Dados reais vêm exclusivamente do Neon.
+- Segredos de gateway permanecem no ambiente de backend.
+- Pagamentos confirmados devem usar webhooks idempotentes.
+- Agenda e Comandas não usam PIN.
+- Financeiro usa PIN na etapa de segurança final.
+
+## Implantação
+A cada bloco: validar código → build → QA → publicação → teste funcional. Um bloco só é considerado concluído após validação em produção.
