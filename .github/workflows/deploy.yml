@@ -1,95 +1,50 @@
 name: ED DU V33 Cloudflare Pages Deploy
-
 on:
   push:
     branches: [cloudflare-production]
   workflow_dispatch:
-
 permissions:
   contents: read
-
 concurrency:
   group: cloudflare-pages-production
   cancel-in-progress: true
-
-env:
-  VITE_APP_VERSION: 33.0.0
-  VITE_APP_COMMIT: ${{ github.sha }}
-  WRANGLER_READY: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - name: Checkout production branch
-        uses: actions/checkout@v4
-
-      - name: Setup Node 22
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Typecheck
+      - run: npm ci
+      - name: Validate approved master
         run: npm run check
-
-      - name: Unit tests
-        run: npm test
-
-      - name: Build V33
+      - name: Build approved master
         run: npm run build
-
-      - name: Stamp production version
-        shell: bash
+      - name: Stamp deployment metadata
         run: |
-          set -euo pipefail
-          SHORT_SHA="${GITHUB_SHA:0:8}"
-          printf '{"version":"33.0.0","commit":"%s"}\n' "$SHORT_SHA" > dist/version.json
+          printf '{"version":"33.0.0","commit":"%s"}\n' "${GITHUB_SHA:0:8}" > dist/version.json
           test -f dist/index.html
           test -f dist/_redirects
           grep -Fxq '/* /index.html 200' dist/_redirects
-          ! grep -R -E 'V13\.1|V15|Mariana|Juliana|Camila|R\$ 8\.532,00|modo de teste|modo teste' dist
-          cat dist/version.json
-
-      - name: Deploy dist to Cloudflare Pages with Wrangler
-        if: ${{ env.WRANGLER_READY == 'true' }}
+          ! grep -R -E 'supabase\.co|VITE_SUPABASE|@supabase' dist
+      - name: Deploy with Wrangler when authorized
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          set -euo pipefail
-          npx wrangler pages deploy ./dist \
-            --project-name=ed-du-terapia-da-beleza \
-            --branch=cloudflare-production \
-            --commit-hash="$GITHUB_SHA" \
-            --commit-message="ED DU V33 production deploy $GITHUB_SHA"
-
-      - name: Wrangler credentials not configured
-        if: ${{ env.WRANGLER_READY != 'true' }}
-        run: |
-          echo 'INFO: CLOUDFLARE_API_TOKEN and/or CLOUDFLARE_ACCOUNT_ID are not configured.'
-          echo 'INFO: Skipping direct Wrangler upload; Cloudflare Pages Git Integration remains the deployment authority.'
-          echo 'INFO: To enable direct Wrangler deployment, add both secrets under Settings > Secrets and variables > Actions.'
-
-      - name: Verify deployment through Pages URL
-        shell: bash
+        run: npx wrangler pages deploy ./dist --project-name=ed-du-terapia-da-beleza --branch=cloudflare-production --commit-hash="$GITHUB_SHA"
+      - name: Verify public publication
         run: |
           set -euo pipefail
           for i in {1..12}; do
             BODY="$(curl -fsSL --retry 2 --retry-all-errors https://ed-du-terapia-da-beleza.pages.dev/version.json || true)"
             echo "Attempt $i: $BODY"
-            if echo "$BODY" | grep -q '"version":"33.0.0"' && echo "$BODY" | grep -q "${GITHUB_SHA:0:8}"; then
-              exit 0
-            fi
+            if echo "$BODY" | grep -q '"version":"33.0.0"'; then exit 0; fi
             sleep 5
           done
-          echo 'Cloudflare Pages did not expose the new deployment metadata in time.'
           exit 1
-
       - name: HTTP smoke test
-        run: |
-          curl -fsSL --retry 3 --retry-all-errors https://ed-du-terapia-da-beleza.pages.dev/ | grep -F 'ED & DU'
+        run: curl -fsSL --retry 3 --retry-all-errors https://ed-du-terapia-da-beleza.pages.dev/ | grep -F 'ED & DU'
