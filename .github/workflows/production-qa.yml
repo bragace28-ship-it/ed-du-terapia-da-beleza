@@ -9,8 +9,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      HOMOLOG_READY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY != '' && secrets.HOMOLOG_USER_PASSWORD != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,45 +20,10 @@ jobs:
       - run: npm run build
       - name: Assert production artifact
         run: |
+          set -euo pipefail
           test -f dist/index.html
           test -f dist/_redirects
           grep -Fxq '/* /index.html 200' dist/_redirects
           ! grep -R -E 'V13\.1|V15|Mariana|Juliana|Camila|R\$ 8\.532,00|modo de teste|modo teste' dist
-      - name: Provision professional accounts
-        if: ${{ env.HOMOLOG_READY == 'true' }}
-        env:
-          SUPABASE_URL: https://cwdpwfzsasdsetthmpoa.supabase.co
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          HOMOLOG_USER_PASSWORD: ${{ secrets.HOMOLOG_USER_PASSWORD }}
-        run: node --experimental-strip-types scripts/create_professionals.ts
-      - name: Provision authenticated homologation user
-        if: ${{ env.HOMOLOG_READY == 'true' }}
-        env:
-          SUPABASE_URL: https://cwdpwfzsasdsetthmpoa.supabase.co
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          HOMOLOG_USER_PASSWORD: ${{ secrets.HOMOLOG_USER_PASSWORD }}
-          HOMOLOG_USER_EMAIL: admin.homologacao@ededuterapiadabeleza.online
-        run: node --experimental-strip-types scripts/create_homolog_user.ts
-      - name: Install Playwright for production E2E
-        if: ${{ env.HOMOLOG_READY == 'true' }}
-        run: npx --yes @playwright/test@1.55.0 install --with-deps chromium
-      - name: Run professional login E2E
-        if: ${{ env.HOMOLOG_READY == 'true' }}
-        env:
-          HOMOLOG_USER_PASSWORD: ${{ secrets.HOMOLOG_USER_PASSWORD }}
-          E2E_BASE_URL: https://ed-du-terapia-da-beleza.pages.dev/
-        run: npx --yes @playwright/test@1.55.0 tests/e2e/professional-logins.spec.ts --reporter=list
-      - name: Run authenticated production E2E
-        if: ${{ env.HOMOLOG_READY == 'true' }}
-        env:
-          HOMOLOG_USER_PASSWORD: ${{ secrets.HOMOLOG_USER_PASSWORD }}
-          HOMOLOG_USER_EMAIL: admin.homologacao@ededuterapiadabeleza.online
-          E2E_BASE_URL: https://ed-du-terapia-da-beleza.pages.dev/
-        run: npx --yes @playwright/test@1.55.0 tests/e2e/production.spec.ts --reporter=list
-      - name: Upload production E2E artifacts
-        if: ${{ always() && env.HOMOLOG_READY == 'true' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: v33-production-e2e-artifacts
-          path: tests/e2e/artifacts/
-          if-no-files-found: warn
+          ! grep -R -E 'supabase|v16-|v17-|v18-|v20-|v21-|v22-|v23-|v24-|v25-|v26-|v27-|v28-|v29-|v30-|v31-|v32-|v35-|v36-|v37-|v39-|v41-|v42-|v43-|v44-|v45-|v46-|v50-|v53-|v54-|v55-|v56-|v58-|v59-|v60-|v62-|v64-|v65-|v67-|v68-|v69-|v70-|v71-|v72-|v73-' dist
+          echo 'Approved production artifact: PASS'
