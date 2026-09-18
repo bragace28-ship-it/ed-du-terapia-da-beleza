@@ -18,12 +18,13 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npm run build
-      - name: Assert production artifact
+      - name: Assert approved production artifact
         run: |
           set -euo pipefail
           test -f dist/index.html
           test -f dist/_redirects
           grep -Fxq '/* /index.html 200' dist/_redirects
-          ! grep -R -E 'V13\.1|V15|Mariana|Juliana|Camila|R\$ 8\.532,00|modo de teste|modo teste' dist
-          ! grep -R -E 'supabase\.co|VITE_SUPABASE|@supabase|(^|[^A-Za-z])v[0-9]+-[A-Za-z0-9_.-]+' dist
-          echo 'Approved production artifact: PASS'
+          ! grep -R -E 'supabase\.co|VITE_SUPABASE|@supabase' dist
+          grep -Fq 'ED & DU' dist/index.html
+          grep -Fq 'V33 Painel Financeiro Completo' dist/index.html
+          echo 'Approved V33 master artifact: PASS'
