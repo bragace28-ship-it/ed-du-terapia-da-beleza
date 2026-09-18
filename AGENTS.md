@@ -28,10 +28,10 @@
 - Persist gateway, method, installments, gross, fee, fee amount, net, external transaction id, status, timestamps, and webhook/event data.
 - Never duplicate revenue on repeated webhook events; never delete original financial records for refunds/cancellations.
 
-## Database migration
-- The repository currently contains legacy Supabase-oriented code/migrations. Do not assume the Neon database is populated.
-- Before production cutover, reconcile the application data model with the actual Neon schema and create versioned PostgreSQL migrations.
-- Do not destroy or overwrite existing data during migration.
+## Database
+- Neon is the only database and authentication authority for this application.
+- Reconcile the application data model with the existing Neon schema before each production block.
+- Use additive, auditable PostgreSQL migrations; do not destroy or overwrite existing production data.
 
 ## QA
 - Run build and smoke checks before deployment.

@@ -25,17 +25,15 @@ function query(table:string){
   chain.single=(...args:any[])=>queue('single',...args)
   chain.insert=(...args:any[])=>queue('insert',...args)
   chain.update=(...args:any[])=>queue('update',...args)
-  chain.then=(resolve:any,reject?:any)=>ready()
-    .then((client:any)=>{
-      let q:any=client.from(table)
-      for(const [method,args] of calls){
-        const fn=q?.[method]
-        if(typeof fn!=='function')throw new Error(`Neon Data API: método ${method} não disponível para ${table}.`)
-        q=fn.apply(q,args)
-      }
-      return q
-    })
-    .then(resolve,reject)
+  chain.then=(resolve:any,reject?:any)=>ready().then((client:any)=>{
+    let q:any=client.from(table)
+    for(const [method,args] of calls){
+      const fn=q?.[method]
+      if(typeof fn!=='function')throw new Error(`Neon Data API: método ${method} não disponível para ${table}.`)
+      q=fn.apply(q,args)
+    }
+    return q
+  }).then(resolve,reject)
   chain.catch=(reject:any)=>chain.then((v:any)=>v,reject)
   chain.finally=(fn:any)=>chain.then((v:any)=>{fn?.();return v},(e:any)=>{fn?.();throw e})
   return chain
@@ -59,8 +57,4 @@ const auth={
   },
 }
 
-export const supabase:any={
-  auth,
-  from:(table:string)=>query(table),
-  rpc:(name:string,args?:any)=>ready().then((c:any)=>c.rpc(name,args||{})),
-}
+export const neon:any={auth,from:(table:string)=>query(table),rpc:(name:string,args?:any)=>ready().then((c:any)=>c.rpc(name,args||{}))}
