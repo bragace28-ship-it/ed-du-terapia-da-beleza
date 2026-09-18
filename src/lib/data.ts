@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient'
 export type Role='admin'|'professional'|'client'
 export type Profile={id:string;full_name:string|null;phone:string|null;role:Role;active:boolean;avatar_url:string|null}
+
 export async function getProfile(id:string){const {data,error}=await supabase.from('profiles').select('*').eq('id',id).maybeSingle();if(error)throw error;return data as Profile|null}
 export async function getClientByUser(id:string){const {data,error}=await supabase.from('clients').select('*').eq('user_id',id).maybeSingle();if(error)throw error;return data}
 export async function getProfessionalByUser(id:string){const {data,error}=await supabase.from('professionals').select('*').eq('user_id',id).maybeSingle();if(error)throw error;return data}
@@ -15,29 +16,55 @@ async function getCurrentStaffContext(){
   const {data:{user},error:authError}=await supabase.auth.getUser()
   if(authError)throw authError
   if(!user)throw new Error('Sessão expirada. Entre novamente para criar a comanda.')
-  const {data:profile,error:profileError}=await supabase.from('profiles').select('id,organization_id,role,active').eq('id',user.id).single()
+  const {data:profile,error:profileError}=await supabase.from('profiles').select('id,role,active').eq('id',user.id).single()
   if(profileError)throw profileError
   if(!profile?.active||!['admin','professional'].includes(profile.role))throw new Error('Seu perfil não possui permissão para criar comandas.')
-  if(!profile.organization_id)throw new Error('Sua sessão não possui uma organização ativa.')
-  return {user,profile}
+  const {data:professional,error:professionalError}=await supabase.from('professionals').select('id').eq('user_id',user.id).maybeSingle()
+  if(professionalError)throw professionalError
+  return {user,profile,professional}
 }
 
 export async function createCommand(input:{client_id:string;professional_id?:string|null;appointment_id?:string|null}){
-  const {user,profile}=await getCurrentStaffContext()
-  const payload={...input,organization_id:profile.organization_id,created_by:user.id,status:'new',subtotal:0,discount:0,total:0}
-  console.error('[commands] create payload', {client_id:payload.client_id,professional_id:payload.professional_id??null,appointment_id:payload.appointment_id??null,organization_id:payload.organization_id,created_by:payload.created_by})
+  const {user,professional}=await getCurrentStaffContext()
+  const payload={...input,professional_id:input.professional_id??professional?.id??null,created_by:user.id,status:'open',subtotal:0,discount:0,total:0,total_cost:0,commission:0,profit:0,payment_installments:1,payment_estimated_fee:0,payment_estimated_net:0,payment_installment_amount:0}
   const {data,error}=await supabase.from('commands').insert(payload).select().single()
-  if(error){console.error('[commands] create failed',error);throw error}
+  if(error)throw error
   return data
 }
 
 export async function addCommandItem(input:{command_id:string;service_id?:string|null;product_id?:string|null;professional_id?:string|null;description:string;quantity:number;unit_price:number;unit_cost?:number;commission_percent?:number}){
-  const {profile}=await getCurrentStaffContext()
-  const payload={...input,organization_id:profile.organization_id}
+  const {professional}=await getCurrentStaffContext()
+  const isService=!!input.service_id&&!input.product_id
+  const payload={command_id:input.command_id,item_type:isService?'service':'product',service_id:isService?input.service_id:null,product_id:isService?null:input.product_id??null,professional_id:input.professional_id??professional?.id??null,description:input.description,quantity:Math.max(1,input.quantity),unit_price:Math.max(0,input.unit_price),unit_cost:Math.max(0,input.unit_cost??0),commission_percent:Math.max(0,input.commission_percent??0)}
   const {data,error}=await supabase.from('command_items').insert(payload).select().single()
-  if(error){console.error('[command_items] insert failed',error);throw error}
+  if(error)throw error
   return data
 }
-export async function recalculateCommand(id:string){const {data:items,error:itemError}=await supabase.from('command_items').select('quantity,unit_price,unit_cost,commission_percent').eq('command_id',id);if(itemError)throw itemError;const subtotal=(items??[]).reduce((s,i)=>s+Number(i.quantity)*Number(i.unit_price),0);const cost=(items??[]).reduce((s,i)=>s+Number(i.quantity)*Number(i.unit_cost??0),0);const commission=(items??[]).reduce((s,i)=>s+Number(i.quantity)*Number(i.unit_price)*Number(i.commission_percent??0)/100,0);const {data,error}=await supabase.from('commands').update({subtotal,total:Math.max(0,subtotal),total_cost:cost,commission,profit:subtotal-cost-commission}).eq('id',id).select().single();if(error)throw error;return data}
-export async function closeCommandOnline(id:string,gatewayId:string,fee:number,net:number,installments:number){const {error:updateError}=await supabase.from('commands').update({payment_gateway:gatewayId,payment_estimated_fee:fee,payment_estimated_net:net,payment_installments:installments}).eq('id',id);if(updateError)throw updateError;const {data,error}=await supabase.rpc('transition_command_state',{p_command_id:id,p_next:'pending_payment'});if(error)throw error;return data}
-export async function markCommandPaidPdv(id:string,method:string,reference:string,amount:number){const {data:payment,error:paymentError}=await supabase.from('command_payments').insert({command_id:id,payment_method_id:method,amount,transaction_reference:reference}).select().single();if(paymentError)throw paymentError;const {data,error}=await supabase.rpc('transition_command_state',{p_command_id:id,p_next:'paid'});if(error)throw error;return {command:data,payment}}
+
+export async function recalculateCommand(id:string){
+  const {data:items,error:itemError}=await supabase.from('command_items').select('quantity,unit_price,unit_cost,commission_percent').eq('command_id',id)
+  if(itemError)throw itemError
+  const subtotal=(items??[]).reduce((s,i)=>s+Number(i.quantity)*Number(i.unit_price),0)
+  const cost=(items??[]).reduce((s,i)=>s+Number(i.quantity)*Number(i.unit_cost??0),0)
+  const commission=(items??[]).reduce((s,i)=>s+Number(i.quantity)*Number(i.unit_price)*Number(i.commission_percent??0)/100,0)
+  const {data,error}=await supabase.from('commands').update({subtotal,total:Math.max(0,subtotal),total_cost:cost,commission,profit:subtotal-cost-commission,updated_at:new Date().toISOString()}).eq('id',id).select().single()
+  if(error)throw error
+  return data
+}
+
+export async function closeCommandOnline(id:string,gatewayId:string,fee:number,net:number,installments:number){
+  const {error:updateError}=await supabase.from('commands').update({payment_gateway:gatewayId,payment_estimated_fee:Math.max(0,fee),payment_estimated_net:Math.max(0,net),payment_installments:Math.max(1,installments),status:'payment_pending',updated_at:new Date().toISOString()}).eq('id',id)
+  if(updateError)throw updateError
+  return {id,status:'payment_pending'}
+}
+
+export async function markCommandPaidPdv(id:string,method:string,reference:string,amount:number){
+  const {data:{user}}=await supabase.auth.getUser()
+  if(!user)throw new Error('Sessão expirada.')
+  const payment={command_id:id,payment_method_id:method,gateway:'PDV',gross_amount:amount,fee_amount:0,net_amount:amount,installments:1,external_transaction_id:reference,status:'paid',paid_at:new Date().toISOString(),amount,created_by:user.id,updated_at:new Date().toISOString()}
+  const {data,error:paymentError}=await supabase.from('command_payments').insert(payment).select().single()
+  if(paymentError)throw paymentError
+  const {data:command,error}=await supabase.from('commands').update({status:'paid',closed_at:new Date().toISOString(),payment_estimated_fee:0,payment_estimated_net:amount,payment_installments:1,payment_installment_amount:amount,updated_at:new Date().toISOString()}).eq('id',id).select().single()
+  if(error)throw error
+  return {command,payment}
+}
