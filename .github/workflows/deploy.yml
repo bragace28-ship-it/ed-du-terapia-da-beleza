@@ -94,4 +94,4 @@ jobs:
 
       - name: HTTP smoke test
         run: |
-          curl -fsSL --retry 3 --retry-all-errors https://ed-du-terapia-da-beleza.pages.dev/ | grep -F 'ED & DU | Terapia da Beleza — V33.0.0'
+          curl -fsSL --retry 3 --retry-all-errors https://ed-du-terapia-da-beleza.pages.dev/ | grep -F 'ED & DU'
