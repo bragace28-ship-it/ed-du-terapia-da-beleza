@@ -10,7 +10,6 @@ const commit = short(
 if (existsSync('dist/index.html')) {
   let html = readFileSync('dist/index.html', 'utf8')
   html = html.replace(/<title>[^<]*<\/title>/i, '<title>ED & DU — V33.0.0</title>')
-  html = html.replace(/V28(?:\.0)?(?:\s+Teste Final Funcional)?/g, 'V33.0.0')
   writeFileSync('dist/index.html', html)
 }
 writeFileSync('dist/version.json', JSON.stringify({ version: '33.0.0', commit }) + '\n')

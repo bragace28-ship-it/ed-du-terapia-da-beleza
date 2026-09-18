@@ -1,6 +1,5 @@
 import { supabase } from './supabaseClient'
 
-declare global { interface Window { __EDDU_HOMOLOGATION_BYPASS?: boolean } }
 export type Role='admin'|'professional'|'client'
 export type Profile={id:string;full_name:string|null;phone:string|null;role:Role;active:boolean;avatar_url:string|null}
 
@@ -12,7 +11,7 @@ export async function getProducts(){const {data,error}=await supabase.from('prod
 export async function getClients(){const {data,error}=await supabase.from('clients').select('*').eq('active',true).order('name');if(error)throw error;return data??[]}
 export async function getAppointments(limit=100){const {data,error}=await supabase.from('appointments').select('*, clients(name,email), professionals(name), appointment_services(price,duration_minutes,services(name))').order('starts_at').limit(limit);if(error)throw error;return data??[]}
 export async function getCommands(limit=100){const {data,error}=await supabase.from('commands').select('*, clients(name), professionals(name), command_items(*)').order('created_at',{ascending:false}).limit(limit);if(error)throw error;return data??[]}
-export async function getFinancial(limit=100){const table=typeof window!=='undefined'&&window.__EDDU_HOMOLOGATION_BYPASS?'financial_transactions_homologation':'financial_transactions';const {data,error}=await supabase.from(table).select('*').order('created_at',{ascending:false}).limit(limit);if(error)throw error;return data??[]}
+export async function getFinancial(limit=100){const table='financial_transactions';const {data,error}=await supabase.from(table).select('*').order('created_at',{ascending:false}).limit(limit);if(error)throw error;return data??[]}
 
 async function getCurrentStaffContext(){
   const {data:{user},error:authError}=await supabase.auth.getUser()
