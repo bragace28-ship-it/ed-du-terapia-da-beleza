@@ -2,10 +2,7 @@ name = "ed-du-terapia-da-beleza"
 compatibility_date = "2026-09-16"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "./dist"
-
-# Public client configuration for the Vite/Supabase SPA.
-# Supabase anon keys are intentionally client-exposed; RLS remains the security boundary.
+# V33 production: Neon is the sole application data/auth authority.
+# No Supabase project variables are used by the production build.
 [vars]
-VITE_SUPABASE_URL = "https://cwdpwfzsasdsetthmpoa.supabase.co"
-VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3ZHB3ZnpzYXNkc2V0dGhtcG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxNzE5MjIsImV4cCI6MjEwNDc0NzkyMn0.gmyL5af8vaFRoqMZTRyKbZ3toobukPWJ74uHy0SSV2w"
 VITE_APP_VERSION = "33.0.0"
