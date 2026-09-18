@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ED & DU — V33 Painel Financeiro Completo — FINAL</title>
+<title>ED & DU — V33 Painel Financeiro Completo</title>
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:#f4f0f7;font-family:Arial,Helvetica,sans-serif;color:#28202f}
@@ -39,8 +39,7 @@ label{font-size:12px;font-weight:800;color:#5d5362;display:block;margin-top:10px
 .toast.show{display:block}
 @media(max-width:520px){.sheet{padding-left:15px;padding-right:15px}}
 
-/* V6: client home spacing exactly in the requested order.
-   These overlays cover only the corresponding CTA area of the approved screenshot. */
+
 .recreated-referral{
  position:absolute;left:6%;top:57.6%;width:88%;height:6.8%;z-index:9;
  border:0;border-radius:22px;background:linear-gradient(90deg,#8f22d7,#b53be8);
@@ -67,7 +66,7 @@ label{font-size:12px;font-weight:800;color:#5d5362;display:block;margin-top:10px
 .gift-mini b{display:block;font-size:18px;color:#5b1b86;margin-bottom:5px}
 .gift-mini small{display:block;color:#706777;margin-bottom:12px}
 
-/* V7: WhatsApp e CTAs alinhados sem sobreposição */
+
 .wa-header{position:absolute;left:46.5%;top:7.2%;z-index:20;width:88px;height:31px;padding:0 8px;border:0;border-radius:18px;background:#25d366;color:#fff;display:flex;align-items:center;justify-content:center;gap:4px;font-family:inherit;font-size:10px;font-weight:800;box-shadow:0 3px 8px #0002;cursor:pointer}
 .client-cta-stack{position:absolute;left:6%;top:56.7%;width:88%;z-index:15;display:flex;flex-direction:column;gap:10px}
 .client-cta{width:100%;height:58px;box-sizing:border-box;border-radius:20px;cursor:pointer;font-family:inherit;display:flex;align-items:center;padding:0 18px;text-align:left;box-shadow:0 4px 12px #00000012}
@@ -81,7 +80,7 @@ label{font-size:12px;font-weight:800;color:#5d5362;display:block;margin-top:10px
 .client-cta.primary-cta .cta-arrow,.client-cta.secondary-cta .cta-arrow{margin-left:14px}
 .client-cta.secondary-cta{background:#fff;border:2px solid #7620b7;color:#5c1c87;justify-content:center;font-size:18px;font-weight:850}
 
-/* V8 — somente uma caixa nova de indicação; os CTAs Agendar/Agendamentos são os originais da arte */
+
 .referral-only{
   position:absolute;left:6%;top:56.7%;width:88%;height:58px;z-index:15;
   box-sizing:border-box;border:0;border-radius:20px;
@@ -96,7 +95,7 @@ label{font-size:12px;font-weight:800;color:#5d5362;display:block;margin-top:10px
 .referral-only .ref-copy strong{font-weight:900}
 .referral-only .ref-arrow{margin-left:auto;font-size:24px;font-weight:800}
 
-/* V9 — correção definitiva da composição da área do cliente */
+
 .wa-header-v9{
   position:absolute;left:57%;top:7.65%;z-index:30;
   width:108px;height:38px;padding:0 10px;
@@ -143,7 +142,7 @@ label{font-size:12px;font-weight:800;color:#5d5362;display:block;margin-top:10px
 /* Remove any prior V7/V8 custom CTA positioning from affecting the client page */
 .client-cta-stack,.recreated-referral,.recreated-agenda,.recreated-appointments,.referral-only{display:none!important}
 
-/* V10 — três caixas imediatamente abaixo da fidelidade; sem duplicação */
+
 .wa-header-v10{position:absolute;left:46.8%;top:7.0%;z-index:30;width:108px;height:38px;padding:0 10px;border:0;border-radius:20px;background:#25d366;color:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;font-size:10.5px;font-weight:800;box-shadow:0 3px 8px #0002;cursor:pointer}
 .wa-header-v10 svg{width:19px;height:19px;display:block;flex:0 0 19px}
 .client-main-actions-v10{position:absolute;left:0;top:52.8%;width:100%;height:24.8%;z-index:25;background:#fff;padding:8px 6% 7px;box-sizing:border-box;display:flex;flex-direction:column;gap:7px}
@@ -159,7 +158,7 @@ label{font-size:12px;font-weight:800;color:#5d5362;display:block;margin-top:10px
 .main-action-v10 .action-arrow{margin-left:auto;font-size:23px;font-weight:800}
 .book-v10 .action-arrow,.appointments-v10 .action-arrow{margin-left:14px}
 
-/* V11 — composição conforme a imagem de referência: 3 caixas e, abaixo, os 4 atalhos */
+
 .wa-header-v11{position:absolute;left:46.5%;top:7.1%;z-index:40;width:108px;height:38px;border:0;border-radius:20px;background:#25d366;color:#fff;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;font-size:10.5px;font-weight:800;box-shadow:0 3px 8px #0002;cursor:pointer}
 .wa-header-v11 svg{width:19px;height:19px;flex:0 0 19px}
 .client-actions-v11{position:absolute;left:0;top:52.55%;width:100%;height:24.5%;z-index:30;background:#fff;padding:8px 6%;box-sizing:border-box;display:flex;flex-direction:column;gap:7px}
@@ -183,7 +182,7 @@ label{font-size:12px;font-weight:800;color:#5d5362;display:block;margin-top:10px
 .shortcut-v11 small{display:block;color:#706777;font-size:10px;line-height:1.15;padding-right:8px}
 .shortcut-v11 i{position:absolute;right:13px;top:58px;font-size:25px;font-style:normal;color:#7620b7}
 
-/* V12 — WhatsApp conforme à referência enviada: cápsula + ícone destacado, sem fundo externo */
+
 .wa-header-v12{
   position:absolute;left:45.8%;top:5.8%;z-index:45;
   width:116px;height:38px;padding:0 34px 0 10px;
@@ -258,7 +257,7 @@ label{font-size:12px;font-weight:800;color:#5d5362;display:block;margin-top:10px
 }
 
 
-/* V14 FINAL — correção visual conforme a referência enviada */
+
 .wa-header-final{
   left:50% !important;
   top:50% !important;
@@ -295,7 +294,7 @@ label{font-size:12px;font-weight:800;color:#5d5362;display:block;margin-top:10px
 /* Garantia: os três CTAs ocupam apenas a área reservada. */
 .client-action-v11{height:55px !important;min-height:55px !important}
 
-/* V15 — correção definitiva da composição do cliente */
+
 .wa-header-final{
   position:absolute !important;
   left:48.8% !important;
@@ -373,7 +372,7 @@ label{font-size:12px;font-weight:800;color:#5d5362;display:block;margin-top:10px
 }
 
 
-/* V17 — acabamento estético final do layout do cliente */
+
 .wa-header-final{
   left:24.2% !important;
   top:5.15% !important;
@@ -426,7 +425,7 @@ label{font-size:12px;font-weight:800;color:#5d5362;display:block;margin-top:10px
 .referral-v11 .ref-copy b{font-size:16px !important;line-height:1.05 !important;white-space:nowrap !important}
 .referral-v11 .ref-copy small{font-size:10px !important;line-height:1.12 !important}
 .client-action-v11 .arr{font-size:22px !important;line-height:1 !important}
-/* V18: the three home actions must never float over secondary screens/sheets */
+
 body.sheet-open .client-actions-v11{display:none !important;visibility:hidden !important;pointer-events:none !important}
 body.sheet-open .client-main-actions-v9,body.sheet-open .client-main-actions-v10{display:none !important}
 #shade.show{z-index:1000 !important}
@@ -442,7 +441,7 @@ body.sheet-open .client-main-actions-v9,body.sheet-open .client-main-actions-v10
 }
 
 
-/* V20 — acabamento final solicitado: WhatsApp no cabeçalho, indicação harmônica e navegação inferior redesenhada. */
+
 .wa-header-final{
   left:24.2% !important;
   top:6.0% !important;
@@ -540,7 +539,7 @@ body.sheet-open .client-main-actions-v9,body.sheet-open .client-main-actions-v10
 .service-option b:last-child{font-size:13px !important;color:#61209a !important;white-space:nowrap !important}
 
 
-/* V24 — WhatsApp: um único texto, sem pseudo-elemento duplicado */
+
 .wa-header-final .wa-final-text {
   display:block !important;
   font-size:12px !important;
@@ -573,9 +572,7 @@ body.sheet-open .client-main-actions-v9,body.sheet-open .client-main-actions-v10
 .badge-ok{display:inline-block;background:#e7f8eb;color:#21863f;border-radius:99px;padding:5px 9px;font-size:11px;font-weight:800}
 .action-row{display:flex;gap:8px}.action-row .btn{flex:1}
 
-/* V21 — viewport limpo: a arte-base trazia barras do aparelho embutidas.
-   O conteúdo do app usa somente a área útil; a barra de navegação do próprio
-   Android/browser não é recriada pelo aplicativo. */
+
 .screen{height:auto !important;aspect-ratio:681 / 1392 !important;overflow:hidden !important;position:relative !important}
 .screen > .v21-stage{position:absolute !important;left:0 !important;top:-4.427083% !important;width:100% !important;height:110.344828% !important;overflow:visible !important}
 .screen > .v21-stage > img{display:block !important;width:100% !important;height:auto !important}
@@ -594,8 +591,7 @@ body.sheet-open .client-main-actions-v9,body.sheet-open .client-main-actions-v10
 </style>
 
 <style>
-/* V22 — WhatsApp reposicionado: nunca sobre o logotipo ED & DU.
-   Mantém o cabeçalho original e ocupa somente a área livre entre o logo e os ícones. */
+
 .wa-header-final{
   left:40.5% !important;
   top:5.65% !important;
@@ -628,7 +624,7 @@ body.sheet-open .client-main-actions-v9,body.sheet-open .client-main-actions-v10
 </style>
 
 <style id="v28-role-nav-performance">
-/* V28 — camadas funcionais transparentes sobre a arte aprovada; não alteram a arte. */
+
 .role-overlay{position:absolute;left:0;top:0;width:100%;height:12%;z-index:150;pointer-events:none}
 .role-overlay button{position:absolute;top:4%;height:55%;border:0;background:transparent;pointer-events:auto;cursor:pointer}
 .role-overlay .role-pro{left:34%;width:25%}.role-overlay .role-client{left:59%;width:23%}
@@ -1153,9 +1149,9 @@ function openHistory(n,i){
 }
 
 
-/* V28 — anamnese ampliada + galeria antes/depois */
 
-/* V19 — fluxo funcional completo + histórico clínico do cliente */
+
+
 
 (function(){
  const demoPhotos={
@@ -1205,17 +1201,7 @@ views.newClient=()=>`<h2>Novo cliente</h2><p class="sub">Cadastre os dados bási
 })();
 </script>
 
-<script>
-(function(){
-  document.querySelectorAll('.screen').forEach(function(screen){
-    if(screen.querySelector(':scope > .v21-stage')) return;
-    var stage=document.createElement('div');
-    stage.className='v21-stage';
-    while(screen.firstChild) stage.appendChild(screen.firstChild);
-    screen.appendChild(stage);
-  });
-})();
-</script>
+
 
 <style id="loyalty-services-v25">
   .loyalty-overlay{position:absolute;left:57%;top:23%;width:37%;height:11%;z-index:140;background:transparent;border:0;cursor:pointer}
@@ -1227,712 +1213,24 @@ views.newClient=()=>`<h2>Novo cliente</h2><p class="sub">Cadastre os dados bási
   .money-good{color:#21863f;font-weight:900}.money-discount{color:#b1268d;font-weight:900}
   .service-list{display:grid;gap:8px}.service-list .option{margin:0}
 </style>
-<script>
-(function(){
-  // V25 — fidelidade + catálogo oficial de serviços, sem alterar a arte-base aprovada.
-  const SERVICE_CATALOG=[
-    ['Corte Fem',110,140,49],['Corte Masc',89,89,31],['Corte + Secagem',136,166,56],
-    ['Escova Efeito Lis',99,130,46],['Escova com Text.',112,140,53],['Lava e seca',89,99,29],
-    ['Bio Nutrição',89,99,41],['Bio Reconstrução',149,179,50],['Coloração Avulso',189,289,110],
-    ['Selagem 3d',229,329,180],['Escova progressiva',289,389,180],['Alisamento',259,359,180],
-    ['Combo Mechas Dia',729,849,315],['Combo Master',1599,1999,802],['Combo Coloração',249,349,170],['Combo Terapia',599,799,197]
-  ].map(([name,base,long,cost])=>({name,base,long,cost}));
-  window.EDDU_SERVICES=SERVICE_CATALOG;
-
-  const FLOWERS=['ORQUIDEA','ROSA','LIRIO','TULIPA','JASMIM','VIOLETA','MARGARIDA','GIRASSOL','AZALEIA','BEGONIA','CAMELIA','DALIA','PETUNIA','LAVANDA','IRIS','HIBISCO','GARDENIA','MAGNOLIA','ACACIA','AMORPERFEITO','CRISANTEMO','FRÉSIA'.normalize('NFD').replace(/[\\u0300-\\u036f]/g,''),'NARCISO','LOTUS','PRIMAVERA','CALENDULA','VERBENA','ALSTROMERIA','ANTURIO','CRAVO','MANACA','IPOMEIA','JACINTO','MIMOSA','PEONIA','RANUNCULO','SENECIO','HELICONIA','GERBERA','PAPOULA','CAMELIA','DAMA','FLORDEMAIO','FLORDELOBO','ESTRELITZIA','SAOJOAO','CEREJEIRA','MALVA'];
-  const TREES=['IPÊ','JACARANDA','PAU-BRASIL','ARAUCARIA','JEQUITIBA','MOGNO','CEDRO','EUCALIPTO','ACER','OLIVEIRA','AMENDOEIRA','CASTANHEIRA','CARVALHO','FIGUEIRA','MANGUEIRA','ABACATEIRO','LARANJEIRA','LIMOEIRO','GOIABEIRA','PITANGUEIRA','CEREJEIRA','CAJUEIRO','PEROBA','IMBUIA','AROEIRA','BAOBÁ','PINHEIRO','SIBIPIRUNA','FLAMBOYANT','PAINEIRA','JATOBÁ','COPAIBA','ANGICO','INGA','URUCUM','BURITI','ACAI','SERINGUEIRA','CUPUACU','BROMELIA','TUCUM','CANDEIA','GUAPURUVU','MANACA','TAMARINDO','ROMA','PESSEGUEIRO','MACIEIRA','PEREIRA','MULUNGU'];
-  const BIRDS=['BEIJAFLOR','CANARIO','SABIA','TUCANO','ARARA','COLIBRI','JOAO-DE-BARRO','BEM-TE-VI','ROLINHA','PAPAGAIO','CALOPSITA','ANDORINHA','PARDAL','CURIO','TRINCA-FERRO','CARDEAL','SANHACO','URUBU','GAVIAO','FALCAO','CORUJA','PICA-PAU','GARCA','GUARA','EMA','EMA-REAL','SERIELE','ANUM','BICUDO','AZULAO','PINTASSILGO','TIETÊ','Uirapuru'.normalize('NFD').replace(/[\\u0300-\\u036f]/g,''),'SARACURA','MARITACA','PERIQUITO','CISNE','FLAMINGO','PELICANO','ALBATROZ','CONDOR','MAÇARICO'.normalize('NFD').replace(/[\\u0300-\\u036f]/g,''),'JAÇANA'.normalize('NFD').replace(/[\\u0300-\\u036f]/g,''),'TANGARA','CURICA','PAPAGAIO-VERDADEIRO','ARAPONGA','TICO-TICO','TORDO','GRALHA'];
-  const norm=x=>x.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9-]/g,'');
-  const coupons=[]; const seen=new Set();
-  for(let f=0;f<FLOWERS.length && coupons.length<5000;f++) for(let t=0;t<TREES.length && coupons.length<5000;t++) for(let b=0;b<BIRDS.length && coupons.length<5000;b++){
-    const c=norm(FLOWERS[f])+'-'+norm(TREES[t])+'-'+norm(BIRDS[b]);
-    if(!seen.has(c)){seen.add(c);coupons.push(c)}
-  }
-  // A base fixa tem exatamente 5.000 nomes únicos disponíveis no teste.
-  window.EDDU_COUPON_POOL=coupons.slice(0,5000);
-
-  state.points=typeof state.points==='number'?state.points:340;
-  state.coupons=Array.isArray(state.coupons)?state.coupons:[];
-  state.command=Object.assign({grossAmount:120,discount:0,netAmount:120,coupon:'',service:'Limpeza de Pele',hairLength:'',cost:0},state.command||{});
-  state.financial=state.financial||{grossSales:0,loyaltyDiscounts:0,netSales:0};
-
-  const money=n=>'R$ '+Number(n||0).toFixed(2).replace('.',',');
-  const serviceByName=n=>SERVICE_CATALOG.find(x=>x.name.toLowerCase()===String(n||'').toLowerCase())||null;
-  function priceFor(s,len){return len==='Longo'?s.long:s.base}
-  function nextCoupon(){
-    const used=new Set(state.coupons.map(x=>x.code));
-    return window.EDDU_COUPON_POOL.find(c=>!used.has(c))||null;
-  }
-  function couponForClient(code){return state.coupons.find(c=>c.code===String(code||'').trim().toUpperCase())||null}
-
-  views.loyalty=()=>{
-    const p=state.points;
-    if(p>=1000) return `<h2>Trocar pontos por desconto</h2><p class="sub">Você tem <b>${p.toLocaleString('pt-BR')} pontos</b>. A partir de 1.000 pontos, você pode trocar <b>todos os pontos disponíveis</b> por desconto.</p><div class="card"><div class="row"><span>Pontos disponíveis</span><b>${p.toLocaleString('pt-BR')}</b></div><div class="row"><span>Valor do desconto</span><b class="money-good">${money(p/10)}</b></div><div class="row"><span>Pontos após a troca</span><b>0</b></div></div><p class="sub"><b>Confirma a troca?</b> Ao confirmar, o sistema reservará um cupom único da base de 5.000 cupons e consumirá todos os seus pontos.</p><button class="btn primary full" onclick="confirmLoyaltyRedeem()">✓ Confirmar troca de pontos</button><button class="btn full" onclick="closeSheet()">Cancelar</button>`;
-    const falta=1000-p;
-    return `<h2>Fidelidade</h2><p class="sub">Você tem <b>${p.toLocaleString('pt-BR')} pontos</b>. Ainda faltam <b>${falta.toLocaleString('pt-BR')} pontos</b> para liberar a troca.</p><div class="card"><div class="row"><span>Disponível agora</span><b>${money(p/10)}</b></div><div class="row"><span>Meta de resgate</span><b>1.000 pontos = R$ 100,00</b></div></div><div class="catalog-note">🎁 <b>Quer chegar mais rápido?</b><br>Indique um novo cliente. Você ganha <b>+100 pontos somente quando a pessoa indicada usar o Gift Card e fechar um serviço no salão</b>. A indicação enviada sozinha não gera pontos.</div><button class="btn primary full" onclick="openSheet('clientReferral')">🎁 Indicar cliente e ganhar pontos</button><button class="btn full" onclick="closeSheet()">Voltar</button><button class="btn full" onclick="state.points=1850;render('loyalty');toast('Modo de teste: pontos ajustados para 1.850')">🧪 Teste: simular 1.850 pontos</button>`;
-  };
-
-  window.confirmLoyaltyRedeem=function(){
-    if(state.points<1000){openSheet('loyalty');return}
-    const code=nextCoupon();
-    if(!code){toast('Base de 5.000 cupons esgotada');return}
-    const discount=state.points/10;
-    state.coupons.push({code,client:'Mariana',discount,points:state.points,status:'Disponível',createdAt:new Date().toISOString()});
-    state.points=0;
-    state.lastCoupon=code;
-    openSheet('loyaltyCoupon');
-  };
-  views.loyaltyCoupon=()=>`<h2>Seu cupom foi gerado 🎉</h2><p class="sub">A troca foi concluída. Seus pontos foram consumidos e este cupom é <b>único</b> e não será gerado novamente para outra troca.</p><div class="coupon-box"><div class="coupon-code" id="couponCode">${state.lastCoupon||''}</div><p><b>Desconto: ${money((state.coupons.find(c=>c.code===state.lastCoupon)||{}).discount)}</b></p><button class="btn primary full" onclick="copyCoupon()">📋 Copiar cupom</button></div><div class="card"><b>Como usar</b><p class="sub">Assim que você finalizar o procedimento e o profissional liberar a comanda para pagamento, cole este código no campo <b>Cupom de desconto</b>. O desconto será abatido do valor total antes do pagamento.</p><p class="sub">O desconto também será registrado no financeiro como <b>desconto de fidelidade</b>, para que o valor cobrado na comanda e o valor efetivamente recebido fiquem conciliados.</p></div><button class="btn full" onclick="closeSheet()">Fechar</button>`;
-  window.copyCoupon=async function(){const c=state.lastCoupon||'';try{await navigator.clipboard.writeText(c);toast('Cupom copiado: '+c)}catch(e){toast('Cupom: '+c)}};
-
-  // Hotspot invisível sobre o botão “Troque por” da arte aprovada.
-  const client=document.getElementById('client');
-  if(client && !client.querySelector('.loyalty-overlay')){const b=document.createElement('button');b.className='loyalty-overlay';b.title='Trocar pontos';b.setAttribute('aria-label','Trocar pontos por desconto');b.onclick=()=>openSheet('loyalty');client.querySelector('.v21-stage')?.appendChild(b);}
-
-  views.serviceCatalog=()=>`<h2>Catálogo de serviços</h2><p class="sub">Tabela oficial do salão. <b>Curto e Médio</b> usam a coluna <b>BASE</b>. <b>Longo</b> usa a coluna <b>LONGO</b>.</p><div class="service-list">${SERVICE_CATALOG.map(s=>`<div class="option"><span><b>${s.name}</b><small>Base: ${money(s.base)} · Longo: ${money(s.long)}</small></span><b>${money(s.base)} / ${money(s.long)}</b></div>`).join('')}</div><div class="catalog-note">🔒 <b>Custo é interno.</b> O custo de cada serviço fica disponível somente para o profissional na análise financeira/simulação de venda. Nunca é exibido na comanda do cliente.</div>`;
-
-  views.booking=()=>`<h2>Agendar atendimento</h2><p class="sub">Escolha o serviço, tamanho do cabelo, profissional, data e horário.</p><h3>1. Serviço</h3><div class="service-list">${SERVICE_CATALOG.map(s=>`<div class="option service-option" onclick="selectBookingService('${s.name.replace(/'/g,"\\'")}')"><span><b>${s.name}</b><small>Base (Curto/Médio): ${money(s.base)} · Longo: ${money(s.long)}</small></span><b>${state.booking?.service===s.name?'✓':'›'}</b></div>`).join('')}</div><h3>2. Tamanho do cabelo</h3><div class="grid2"><button class="btn ${state.booking?.hairLength==='Curto'?'primary':''}" onclick="selectHairLength('Curto')">Curto</button><button class="btn ${state.booking?.hairLength==='Médio'?'primary':''}" onclick="selectHairLength('Médio')">Médio</button><button class="btn ${state.booking?.hairLength==='Longo'?'primary':''}" onclick="selectHairLength('Longo')">Longo</button></div><h3>3. Profissional</h3><div class="option" onclick="selectBooking('professional','Profissional ED')"><span><b>Profissional ED</b><small>Disponível</small></span><b>${state.booking?.professional?'✓':'›'}</b></div><h3>4. Data e horário</h3><div class="option" onclick="selectBooking('date','Amanhã · 10:00')"><span><b>Amanhã · 10:00</b><small>Horário disponível</small></span><b>${state.booking?.date?'✓':'›'}</b></div><div class="card"><div class="row"><span>Valor do serviço</span><b>${money(selectedBookingAmount())}</b></div></div><button class="btn primary full" onclick="confirmBooking()">✓ Confirmar agendamento</button>`;
-  window.selectBookingService=function(name){state.booking=state.booking||{};state.booking.service=name;state.booking.hairLength=state.booking.hairLength||'Médio';render('booking');toast(name+' selecionado')};
-  window.selectHairLength=function(len){state.booking=state.booking||{};state.booking.hairLength=len;render('booking');toast('Cabelo '+len+' selecionado')};
-  window.selectedBookingAmount=function(){const s=serviceByName(state.booking?.service);return s?priceFor(s,state.booking?.hairLength):0};
-  window.confirmBooking=function(){if(!state.booking?.service||!state.booking?.hairLength||!state.booking?.professional||!state.booking?.date){toast('Selecione serviço, tamanho, profissional e horário');return}const s=serviceByName(state.booking.service);state.command.service=s.name;state.command.hairLength=state.booking.hairLength;state.command.grossAmount=priceFor(s,state.booking.hairLength);state.command.cost=s.cost;state.command.amount=state.command.grossAmount;state.command.discount=0;state.command.netAmount=state.command.grossAmount;state.booking.confirmed=true;openSheet('bookingConfirmed')};
-  views.bookingConfirmed=()=>`<h2>Agendamento confirmado</h2><div class="card"><span class="badge-ok">✓ CONFIRMADO</span><h3>${state.booking.service}</h3><p class="sub">${state.booking.hairLength} · ${state.booking.date} · ${state.booking.professional}</p><div class="row"><span>Valor</span><b>${money(selectedBookingAmount())}</b></div></div><button class="btn primary full" onclick="openSheet('appointments')">Ver meus agendamentos</button>`;
-
-  views.saleSimulation=()=>`<h2>Simulação de Venda — uso profissional</h2><p class="sub">Ferramenta <b>estritamente interna</b>. O custo não é compartilhado com o cliente nem aparece na comanda.</p><label>Serviço</label><select id="sv">${SERVICE_CATALOG.map(s=>`<option value="${s.name}">${s.name}</option>`).join('')}</select><label>Tamanho do cabelo</label><select id="sl"><option>Curto</option><option selected>Médio</option><option>Longo</option></select><label>Comissão profissional (%)</label><input id="comm" type="number" value="30"><label>Forma de pagamento</label><select id="spay"><option value="cash">À vista / Pix</option><option value="card">Cartão</option></select><label>Parcelas</label><select id="sinst"><option>1</option><option>2</option><option>3</option><option>6</option><option>12</option></select><button class="btn primary full" onclick="calcSaleV25()">Calcular margem</button><div id="saleResult"></div>`;
-  window.calcSaleV25=function(){const s=serviceByName(document.getElementById('sv').value),len=document.getElementById('sl').value,v=priceFor(s,len),cost=s.cost,c=Number(document.getElementById('comm').value)/100,pay=document.getElementById('spay').value,n=Number(document.getElementById('sinst').value),fee=pay==='card'?v*(n===1?.0299:.0599):0,commission=v*c,profit=v-commission-cost-fee;document.getElementById('saleResult').innerHTML=`<div class="card"><div class="row"><span>Preço ao cliente</span><b>${money(v)}</b></div><div class="row"><span>Custo interno</span><b>${money(cost)}</b></div><div class="row"><span>Comissão</span><b>− ${money(commission)}</b></div><div class="row"><span>Taxa estimada</span><b>− ${money(fee)}</b></div><div class="row"><span class="money-good">Lucro estimado</span><b class="money-good">${money(profit)}</b></div></div><div class="catalog-note">🔒 Estes dados são somente para análise financeira do profissional. <b>Não enviar para a comanda/cliente.</b></div>`};
-
-  function commandTotals(){state.command.grossAmount=Number(state.command.grossAmount||state.command.amount||0);state.command.discount=Number(state.command.discount||0);state.command.netAmount=Math.max(0,state.command.grossAmount-state.command.discount);state.command.amount=state.command.netAmount;return state.command}
-  window.validateLoyaltyCoupon=function(){const el=document.getElementById('cmdCoupon');const code=(el?.value||'').trim().toUpperCase();const c=couponForClient(code);if(!c){toast('Cupom inválido, já utilizado ou não encontrado');return}if(c.status!=='Disponível'){toast('Este cupom já foi utilizado');return}if(c.client && c.client!=='Mariana'){toast('Cupom vinculado a outro cliente');return}state.command.coupon=c.code;state.command.discount=c.discount;commandTotals();toast('Cupom validado: desconto de '+money(c.discount));render('command')};
-  window.useCouponOnClient=function(){const el=document.getElementById('clientCoupon');const code=(el?.value||'').trim().toUpperCase();const c=couponForClient(code);if(!c||c.status!=='Disponível'){toast('Cupom inválido ou já utilizado');return}if(c.client && c.client!=='Mariana'){toast('Cupom vinculado a outro cliente');return}state.clientCoupon=c.code;state.command.coupon=c.code;state.command.discount=c.discount;commandTotals();toast('Cupom aplicado: − '+money(c.discount));render('clientCheckout')};
-  window.finalizeCommand=function(){commandTotals();if(state.command.coupon){const c=couponForClient(state.command.coupon);if(!c||c.status!=='Disponível'){toast('Cupom não disponível');return}c.status='Utilizado';c.usedAt=new Date().toISOString();c.commandValue=state.command.grossAmount;c.netReceived=state.command.netAmount;}state.financial.grossSales+=state.command.grossAmount;state.financial.loyaltyDiscounts+=state.command.discount;state.financial.netSales+=state.command.netAmount;state.command.closed=true;toast('Comanda fechada e conciliada: '+money(state.command.netAmount)+' recebido');setTimeout(()=>openSheet('financialReconciliation'),350)};
-
-  views.command=()=>{commandTotals();return `<h2>Central de Comandas</h2><p class="sub">Cliente → serviço → tamanho → cupom → pagamento → Smart Gateway. O custo interno nunca aparece nesta tela.</p><div class="card"><div class="row"><span>Cliente</span><b>${state.command.client}</b></div><div class="row"><span>Serviço</span><b>${state.command.service}</b></div><div class="row"><span>Tamanho</span><b>${state.command.hairLength||'—'}</b></div><div class="row"><span>Valor bruto</span><b>${money(state.command.grossAmount)}</b></div>${state.command.coupon?`<div class="row"><span>Cupom</span><b>${state.command.coupon}</b></div><div class="row"><span>Desconto fidelidade</span><b class="money-discount">− ${money(state.command.discount)}</b></div>`:''}<div class="row"><span>Total a pagar</span><b class="money-good">${money(state.command.netAmount)}</b></div></div><h3>Cupom de desconto</h3><div class="coupon-input-row"><input id="cmdCoupon" value="${state.command.coupon||''}" placeholder="COLE O CUPOM AQUI" autocomplete="off"><button class="btn primary" onclick="validateLoyaltyCoupon()">Validar</button></div><p class="sub">O cupom reduz o total antes do pagamento e o desconto fica separado no financeiro.</p><h3>Forma de pagamento</h3><div class="grid2"><button class="btn" onclick="choosePay('Pix')">Pix</button><button class="btn" onclick="choosePay('Cartão')">Cartão</button><button class="btn" onclick="choosePay('Tap On')">Tap On</button><button class="btn" onclick="choosePay('Outro')">Outro</button></div><button class="btn primary full" onclick="finalizeCommand()">✓ Liberar / fechar comanda</button>`};
-
-  views.clientCheckout=()=>{commandTotals();return `<h2>Pagamento da comanda</h2><p class="sub">A comanda foi liberada pelo profissional. Cole abaixo seu cupom de fidelidade, se tiver um.</p><div class="card"><div class="row"><span>Serviço</span><b>${state.command.service}</b></div><div class="row"><span>Valor</span><b>${money(state.command.grossAmount)}</b></div>${state.command.discount?`<div class="row"><span>Desconto de fidelidade</span><b class="money-discount">− ${money(state.command.discount)}</b></div>`:''}<div class="row"><span>Total</span><b class="money-good">${money(state.command.netAmount)}</b></div></div><label>Cupom de desconto</label><div class="coupon-input-row"><input id="clientCoupon" value="${state.clientCoupon||''}" placeholder="COLE SEU CUPOM" autocomplete="off"><button class="btn primary" onclick="useCouponOnClient()">Aplicar</button></div><div class="catalog-note">O desconto será abatido do total e registrado no financeiro como desconto de fidelidade. Assim, o salão não contabiliza o valor bruto como recebido.</div><button class="btn primary full" onclick="toast('Pagamento encaminhado no modo de teste: '+money(state.command.netAmount))">Continuar para pagamento</button>`};
-
-  views.financialReconciliation=()=>`<h2>Conciliação financeira</h2><p class="sub">O desconto de fidelidade é registrado separadamente para conciliar com o valor efetivamente recebido.</p><div class="kpis"><div class="kpi"><b>${money(state.financial.grossSales)}</b><small>Vendas brutas</small></div><div class="kpi"><b>${money(state.financial.loyaltyDiscounts)}</b><small>Descontos fidelidade</small></div><div class="kpi"><b>${money(state.financial.netSales)}</b><small>Receita líquida</small></div><div class="kpi"><b>${money(state.financial.grossSales-state.financial.netSales)}</b><small>Diferença conciliada</small></div></div><div class="card"><div class="row"><span>Comanda atual</span><b>${state.command.client}</b></div><div class="row"><span>Valor bruto</span><b>${money(state.command.grossAmount)}</b></div><div class="row"><span>Desconto</span><b>− ${money(state.command.discount)}</b></div><div class="row"><span>Recebido</span><b class="money-good">${money(state.command.netAmount)}</b></div><div class="row"><span>Status</span><b class="badge-ok">Conciliado</b></div></div><button class="btn primary full" onclick="openSheet('reports')">Ver relatórios</button>`;
-
-  views.reports=()=>`<h2>Relatórios e performance</h2><div class="kpis"><div class="kpi"><b>${money(state.financial.grossSales||1280)}</b><small>Faturamento bruto</small></div><div class="kpi"><b>${money(state.financial.loyaltyDiscounts)}</b><small>Descontos fidelidade</small></div><div class="kpi"><b>${money((state.financial.netSales||0)+0)}</b><small>Receita líquida teste</small></div><div class="kpi"><b>8</b><small>Atendimentos</small></div></div><h3>Controle de descontos</h3><div class="card"><div class="row"><span>Desconto de fidelidade</span><b>${money(state.financial.loyaltyDiscounts)}</b></div><div class="row"><span>Recebimento real após descontos</span><b class="money-good">${money(state.financial.netSales)}</b></div></div><button class="btn primary full" onclick="openSheet('financialReconciliation')">Abrir conciliação financeira</button>`;
-
-  views.more=()=>`<h2>Mais — Gestão profissional</h2><p class="sub">Todos os módulos administrativos.</p><div class="grid2"><button class="card" onclick="openFinancialPanel()"><b>💰 Financeiro</b><p>Contas a pagar e receber</p></button><button class="card" onclick="openSheet('gatewaySettings')"><b>⚡ Gateways</b><p>Ranking e regras</p></button><button class="card" onclick="openSheet('saleSimulation')"><b>🧮 Simulação de Venda</b><p>Preço, custo interno, comissão e lucro</p></button><button class="card" onclick="openSheet('serviceCatalog')"><b>✂️ Catálogo de serviços</b><p>Preços por tamanho</p></button><button class="card" onclick="openSheet('referralsPro')"><b>🎁 Indicações</b><p>Gift Cards pendentes</p></button><button class="card" onclick="openSheet('cardInvoices')"><b>💳 Faturas de Cartão</b><p>Upload e análise</p></button><button class="card" onclick="openSheet('settings')"><b>⚙️ Configurações</b><p>Preferências</p></button></div>`;
-
-  // Pontos só entram quando o Gift Card é efetivamente validado/serviço fechado.
-  const oldValidate=window.validateReferral;
-  window.validateReferral=function(i){
-    const r=state.referrals[i]; if(!r||r.status==='Validado'){toast('100 pontos já liberados');return}
-    r.status='Validado'; r.pointsReleased=true; state.points+=100; render('referralsPro'); toast('+100 pontos liberados para '+r.from+' após serviço/Gift Card validado');
-  };
-
-  // Ações auxiliares para testar o cupom de 185 pontos sem mudar a arte-base.
-  window.setTestPoints=function(v){state.points=Number(v);toast('Pontos de teste: '+state.points);openSheet('loyalty')};
-
-  // Torna “Pagamentos” do cliente capaz de abrir a etapa de cupom quando houver comanda liberada.
-  views.payments=()=>`<h2>Pagamentos</h2>${state.command.closed?`<div class="card"><div class="row"><span>Última comanda</span><b>${state.command.service}</b></div><div class="row"><span>Valor recebido</span><b>${money(state.command.netAmount)}</b></div><div class="row"><span>Status</span><b class="badge-ok">Pago / conciliado</b></div></div>`:`<div class="card"><b>Comanda liberada para pagamento</b><p class="sub">Valor atual: ${money(state.command.netAmount||state.command.grossAmount)}</p><button class="btn primary full" onclick="openSheet('clientCheckout')">Pagar comanda</button></div>`}<button class="btn full" onclick="openSheet('receipt')">Ver comprovante</button>`;
-
-  // Corrige o preço do serviço selecionado na ficha do comando sem expor custo.
-  const oldChoosePay=window.choosePay;
-  window.choosePay=function(p){state.command.method=p;if(p==='Cartão')openSheet('cardDetails');else if(p==='Tap On')openSheet('tapOn');else if(p==='Pix'){state.command.brand='Pix';state.command.installments=1;openSheet('gatewayRanking')}else toast('Forma de pagamento selecionada')};
-
-  // V29: não existe mais teste de pontos na área profissional.
-  // A fidelidade continua exclusivamente na área do cliente.
-
-})();
-</script>
 
 
-<script id="v26-agendamento-correcoes">
-(function(){
-  // V26: somente funcionalidade de agendamento; layout V24 permanece como base.
-  const oldCatalog=window.EDDU_SERVICES||[];
-  const evalService={name:'Avaliação Técnica para Orçamento',base:0,long:0,cost:0,duration:30,quote:true};
-  const cat=oldCatalog.map(s=>Object.assign({},s,{duration:s.duration||60}));
-  const durations={
-    'Corte Fem':60,'Corte Masc':60,'Corte + Secagem':90,'Escova Efeito Lis':60,'Escova com Text.':60,'Lava e seca':60,
-    'Bio Nutrição':90,'Bio Reconstrução':120,'Coloração Avulso':150,'Selagem 3d':150,'Escova progressiva':180,'Alisamento':180,
-    'Combo Mechas Dia':240,'Combo Master':300,'Combo Coloração':180,'Combo Terapia':180
-  };
-  cat.forEach(x=>x.duration=durations[x.name]||60);
-  window.EDDU_SERVICES=[evalService].concat(cat);
-  const byName=n=>window.EDDU_SERVICES.find(x=>x.name===n);
-  const money2=n=>'R$ '+Number(n||0).toFixed(2).replace('.',',');
-  const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  window.v26DateLabel=function(v){ if(!v)return 'Escolha uma data'; const d=new Date(v+'T12:00:00'); return d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric'}).replace(/^./,c=>c.toUpperCase()); };
-  window.v26IsClosedDay=function(v){if(!v)return false;const day=new Date(v+'T12:00:00').getDay();return day===0||day===1};
-  window.v26Duration=function(){const s=byName(state.booking?.service);return s?.duration||60};
-  window.v26TimeOptions=function(){
-    const d=v26Duration(); let out='';
-    for(let h=8;h<=18;h++){
-      if(d>=120 && h>17) continue;
-      const hh=String(h).padStart(2,'0'); out+=`<option value="${hh}:00">${hh}:00</option>`;
-    }
-    return out;
-  };
-  window.v26DateChanged=function(v){
-    state.booking=state.booking||{}; state.booking.date=v; state.booking.time='';
-    if(v26IsClosedDay(v)){
-      openSheet('closedDayNotice');
-      render('booking');
-      return;
-    }
-    render('booking');
-  };
-  window.v26TimeChanged=function(v){state.booking=state.booking||{};state.booking.time=v;render('booking')};
-  window.v26Request18=function(){state.booking=state.booking||{};state.booking.time='18:00';state.booking.request18=true;toast('Pedido de 18:00 registrado para avaliação do profissional');render('booking')};
-  window.v26SelectProfessional=function(p){state.booking=state.booking||{};state.booking.professional=p;render('booking')};
-  window.v26Confirm=function(){
-    const b=state.booking||{}; if(!b.service||!b.professional||!b.date||!b.time){toast('Selecione serviço, profissional, data e horário');return}
-    state.booking.confirmed=true;
-    const s=byName(b.service); state.command=state.command||{}; state.command.service=b.service; state.command.hairLength=b.hairLength||''; state.command.grossAmount=s?.quote?0:(b.hairLength==='Longo'?s.long:s.base); state.command.amount=state.command.grossAmount; state.command.cost=s?.cost||0; state.command.netAmount=state.command.grossAmount; state.command.client=state.command.client||'Mariana'; state.command.notes=b.notes||'';
-    openSheet('bookingConfirmed');
-  };
-  window.v26NotesChanged=function(v){state.booking=state.booking||{};state.booking.notes=v};
-  window.v26RequestClosedDay=function(){state.booking=state.booking||{};state.booking.closedDayRequest=true;toast('Solicitação enviada: o profissional entrará em contato para confirmar');closeSheet()};
 
-  views.closedDayNotice=()=>`<h2>Esse dia não temos atendimento</h2><p class="sub">Domingos e segundas-feiras não fazem parte da agenda normal do salão.</p><div class="card"><b>Mas você pode solicitar mesmo assim.</b><p class="sub">Selecione este dia e envie a solicitação. O profissional entrará em contato para avaliar se poderá atender excepcionalmente.</p></div><button class="btn primary full" onclick="v26RequestClosedDay()">Solicitar atendimento neste dia</button><button class="btn full" onclick="closeSheet()">Voltar</button>`;
 
-  views.booking=()=>{
-    const b=state.booking||{}, s=byName(b.service), duration=s?.duration||60, amount=s?.quote?0:(s?(b.hairLength==='Longo'?s.long:s.base):0);
-    const minDate=new Date().toISOString().slice(0,10);
-    return `<h2>Agendar atendimento</h2><p class="sub">Escolha o serviço, tamanho do cabelo, profissional, data e horário. Você também pode deixar uma mensagem para o profissional.</p>
-      <h3>1. Escolha o serviço</h3>
-      <div class="catalog-note"><b>Avaliação Técnica para Orçamento</b><br>Primeiro atendimento para avaliação profissional e definição do orçamento. <b>Valor: gratuito.</b></div>
-      ${window.EDDU_SERVICES.map(x=>`<div class="option service-option" onclick="selectBookingService('${String(x.name).replace(/'/g,"\\'")}')"><span><b>${esc(x.name)}</b><small>${x.quote?'Avaliação profissional · orçamento':'Base (Curto/Médio): '+money2(x.base)+' · Longo: '+money2(x.long)}${x.duration?' · '+x.duration+' min':''}</small></span><b>${b.service===x.name?'✓':'›'}</b></div>`).join('')}
-      <h3>2. Tamanho do cabelo</h3><div class="grid2"><button class="btn ${b.hairLength==='Curto'?'primary':''}" onclick="selectHairLength('Curto')">Curto</button><button class="btn ${b.hairLength==='Médio'?'primary':''}" onclick="selectHairLength('Médio')">Médio</button><button class="btn ${b.hairLength==='Longo'?'primary':''}" onclick="selectHairLength('Longo')">Longo</button></div>
-      <p class="sub">Curto e Médio usam a coluna Base. Longo usa a coluna Longo.</p>
-      <h3>3. Profissional</h3>
-      <div class="option" onclick="v26SelectProfessional('Profissional ED')"><span><b>Profissional ED</b><small>Disponível</small></span><b>${b.professional==='Profissional ED'?'✓':'›'}</b></div>
-      <div class="option" onclick="v26SelectProfessional('Profissional DU')"><span><b>Profissional DU</b><small>Disponível</small></span><b>${b.professional==='Profissional DU'?'✓':'›'}</b></div>
-      <h3>4. Data</h3><label>Escolha no calendário</label><input id="v26date" type="date" min="${minDate}" value="${b.date||''}" onchange="v26DateChanged(this.value)"><p class="sub">${b.date?v26DateLabel(b.date):'Escolha a data desejada.'}</p>
-      <h3>5. Horário</h3><select id="v26time" onchange="v26TimeChanged(this.value)" ${b.date&&!v26IsClosedDay(b.date)?'':'disabled'}><option value="">Escolha um horário</option>${v26TimeOptions()}</select>
-      <div class="catalog-note"><b>Horário normal:</b> 08:00 às 18:00. Para procedimentos com duração de 2 horas ou mais, o último horário normal é 17:00. Se você precisar de 18:00, solicite abaixo; o profissional avaliará a possibilidade.</div>
-      <button class="btn full" onclick="v26Request18()">Solicitar último horário · 18:00</button>
-      <h3>6. Informações ao profissional</h3><label>Observações</label><textarea id="v26notes" rows="4" placeholder="Escreva aqui informações importantes para o profissional..." oninput="v26NotesChanged(this.value)">${esc(b.notes||'')}</textarea>
-      <div class="card"><div class="row"><span>Serviço</span><b>${esc(b.service||'—')}</b></div><div class="row"><span>Valor do serviço</span><b>${s?.quote?'Orçamento após avaliação':money2(amount)}</b></div><div class="row"><span>Duração estimada</span><b>${duration} min</b></div></div>
-      <button class="btn primary full" onclick="v26Confirm()">✓ Confirmar agendamento</button>`;
-  };
-  views.bookingConfirmed=()=>{const b=state.booking||{},s=byName(b.service),amount=s?.quote?0:(b.hairLength==='Longo'?s?.long:s?.base);return `<h2>Solicitação de agendamento</h2><div class="card"><span class="badge-ok">✓ REGISTRADO</span><h3>${esc(b.service)}</h3><p class="sub">${esc(b.hairLength||'')} · ${esc(b.date? v26DateLabel(b.date):'')} · ${esc(b.time||'')} · ${esc(b.professional)}</p><div class="row"><span>Valor</span><b>${s?.quote?'A definir após avaliação':money2(amount)}</b></div>${b.notes?`<div class="row"><span>Observações</span><b>${esc(b.notes)}</b></div>`:''}${b.request18?`<div class="catalog-note">Pedido especial de 18:00: aguardando avaliação do profissional.</div>`:''}</div><p class="sub">Seu pedido foi registrado. Em dias não atendidos normalmente ou em horário excepcional, o profissional entrará em contato para confirmar.</p><button class="btn primary full" onclick="openSheet('appointments')">Ver meus agendamentos</button>`};
-
-  // Style only for the newly added form controls; no change to V24 visual home.
-  const st=document.createElement('style');st.textContent=`textarea{width:100%;padding:12px;border:1px solid #dcd0e3;border-radius:11px;margin-top:5px;background:#fff;resize:vertical;font:inherit;color:#28202f}.service-option{cursor:pointer}.service-option b:last-child{color:#6420a1}.catalog-note{font-size:13px}`;document.head.appendChild(st);
-})();
-</script>
 
 
 <style id="v27-correcoes-funcionais">
-/* V27 — apenas comportamento; layout aprovado V24 preservado */
+
 .command-hub{display:grid;gap:12px;margin-top:16px}.command-tile{border:1px solid #e5dbe9;border-radius:18px;padding:18px;background:#fff;text-align:left;cursor:pointer}.command-tile b{display:block;font-size:18px;color:#5f2093;margin-bottom:5px}.command-tile small{color:#706777;line-height:1.4}
 .calendar{border:1px solid #e5dbe9;border-radius:18px;padding:12px;background:#fff}.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.cal-head button{border:0;background:#f3e8f8;color:#6420a1;border-radius:10px;width:38px;height:38px;font-weight:900;cursor:pointer}.cal-title{font-weight:900;color:#5f2093;font-size:18px}.cal-week,.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.cal-week span{text-align:center;font-size:11px;color:#7a7080;font-weight:800;padding:4px 0}.cal-day{min-height:43px;border:1px solid #e7dfe9;border-radius:10px;background:#edf9ec;color:#25723a;font-weight:900;cursor:pointer;position:relative}.cal-day.muted{opacity:.35}.cal-day.busy{background:#ffe9ee;color:#b02045;border-color:#f2b9c6}.cal-day.selected{outline:3px solid #7623b7;outline-offset:-2px}.cal-day span{display:block;padding-top:7px}.cal-day i{display:block;font-style:normal;font-size:9px;margin-top:2px}.day-list{margin-top:14px}.day-list .option{margin:8px 0}.calendar-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:#706777;margin-top:10px}.legend-dot{display:inline-flex;align-items:center;gap:5px}.legend-dot:before{content:"";width:10px;height:10px;border-radius:50%;background:#edf9ec;border:1px solid #a9d5a9}.legend-dot.busy:before{background:#ffe9ee;border-color:#f2b9c6}.pdf-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.pdf-actions .btn{margin-top:0}.quote-sheet{background:#fff;border:1px solid #e4d8e9;border-radius:20px;padding:18px}.quote-brand{color:#63209d;font-weight:950;font-size:20px}.quote-title{font-size:25px;color:#2b2031;font-weight:900;margin:8px 0 14px}.quote-total{font-size:25px;color:#21863f;font-weight:950}.internal-lock{background:#f8f1fb;border:1px solid #e4d5ed;border-radius:14px;padding:11px;font-size:12px;color:#65586b;margin-top:12px}
 </style>
-<script id="v27-correcoes">
-(function(){
-  const WA_NUMBER='5511992102905';
-  const esc2=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  const m=n=>'R$ '+Number(n||0).toFixed(2).replace('.',',');
-  const svc=n=>(window.EDDU_SERVICES||[]).find(x=>x.name===n)||null;
 
-  /* 1) Central de Comandas: abrir central, não uma comanda nova. */
-  views.command=()=>`<h2>Central de Comandas</h2><p class="sub">Gerencie as comandas sem misturar a abertura de uma nova venda com as que já estão em andamento.</p><div class="command-hub">
-    <button class="command-tile" onclick="openSheet('commandNew')"><b>＋ Lançar nova comanda</b><small>Crie uma nova comanda escolhendo cliente, serviço, tamanho e demais informações.</small></button>
-    <button class="command-tile" onclick="openSheet('commandsOngoing')"><b>▣ Comandas em andamento</b><small>Veja, retome, edite ou libere para pagamento as comandas que já foram lançadas.</small></button>
-  </div><div class="card"><div class="row"><span>Comanda de teste</span><b>${state.command?.service||'Sem serviço'}</b></div><div class="row"><span>Status</span><b>${state.command?.closed?'Finalizada':'Em andamento'}</b></div></div>`;
-  views.commandNew=()=>{commandTotals();return `<h2>Nova comanda</h2><p class="sub">Lançamento de uma nova venda. O custo interno continua exclusivo da análise profissional.</p><div class="card"><div class="row"><span>Cliente</span><b>${esc2(state.command.client||'Mariana')}</b></div><div class="row"><span>Serviço</span><b>${esc2(state.command.service||'Selecione')}</b></div><div class="row"><span>Valor bruto</span><b>${m(state.command.grossAmount)}</b></div></div><button class="btn primary full" onclick="openSheet('command')">Abrir ficha de lançamento</button><button class="btn full" onclick="openSheet('command')">Continuar com esta comanda</button>`};
-  views.commandsOngoing=()=>`<h2>Comandas em andamento</h2><p class="sub">Comandas que ainda podem receber itens, cupom ou pagamento.</p><div class="option" onclick="openSheet('command')"><span><b>Mariana · ${esc2(state.command.service||'Limpeza de Pele')}</b><small>${state.command.closed?'Finalizada':'Em andamento'} · Total ${m(state.command.netAmount||state.command.grossAmount)}</small></span><b>›</b></div><div class="option"><span><b>Juliana · Spa Capilar</b><small>Em andamento · R$ 280,00</small></span><b>›</b></div><div class="option"><span><b>Camila · Corte + Secagem</b><small>Aguardando finalização</small></span><b>›</b></div><button class="btn primary full" onclick="openSheet('commandNew')">＋ Lançar nova comanda</button>`;
 
-  /* 2) Agenda profissional com calendário e agenda do dia. */
-  const agendaData={};
-  function key(d){return d.toISOString().slice(0,10)}
-  function seedAgenda(y,mn){
-    const first=new Date(y,mn,1), last=new Date(y,mn+1,0), out={};
-    const samples=[5,8,10,14,17,22,26].filter(d=>d<=last.getDate());
-    samples.forEach((d,i)=>out[key(new Date(y,mn,d))]=i%2?[{time:'14:30',client:'Juliana',service:'Spa Capilar'}]:[{time:'10:00',client:'Mariana',service:'Limpeza de Pele'},{time:'16:00',client:'Camila',service:'Corte + Secagem'}]);
-    return out;
-  }
-  let calCursor=new Date(); calCursor.setDate(1); let selectedDay=key(new Date());
-  Object.assign(agendaData,seedAgenda(calCursor.getFullYear(),calCursor.getMonth()));
-  window.v27ChangeMonth=function(delta){calCursor.setMonth(calCursor.getMonth()+delta);Object.assign(agendaData,seedAgenda(calCursor.getFullYear(),calCursor.getMonth()));render('agenda');};
-  window.v27SelectDay=function(v){selectedDay=v;render('agenda');};
-  function calHtml(){
-    const y=calCursor.getFullYear(),mn=calCursor.getMonth(),first=new Date(y,mn,1),days=new Date(y,mn+1,0).getDate(),start=(first.getDay()+6)%7, labels=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];let h='<div class="calendar"><div class="cal-head"><button onclick="v27ChangeMonth(-1)">‹</button><div class="cal-title">'+first.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})+'</div><button onclick="v27ChangeMonth(1)">›</button></div><div class="cal-week">'+labels.map(x=>'<span>'+x+'</span>').join('')+'</div><div class="cal-grid">';
-    for(let i=0;i<start;i++)h+='<button class="cal-day muted" disabled></button>';
-    for(let d=1;d<=days;d++){const dt=new Date(y,mn,d),k=key(dt),busy=!!agendaData[k],sel=k===selectedDay;h+=`<button class="cal-day ${busy?'busy':'clean'} ${sel?'selected':''}" onclick="v27SelectDay('${k}')"><span>${d}</span>${busy?'<i>● agenda</i>':'<i>livre</i>'}</button>`}
-    h+='</div><div class="calendar-legend"><span class="legend-dot busy">Dia com agendamento</span><span class="legend-dot">Dia sem cliente</span></div></div>';return h;
-  }
-  views.agenda=()=>{const arr=agendaData[selectedDay]||[];const d=new Date(selectedDay+'T12:00:00');const label=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});return `<h2>Minha agenda</h2><div class="kpis"><div class="kpi"><b>${arr.length}</b><small>Atendimentos no dia</small></div><div class="kpi"><b>${arr.filter(x=>x.time).length}</b><small>Horários definidos</small></div></div>${calHtml()}<div class="day-list"><h3>${label.charAt(0).toUpperCase()+label.slice(1)}</h3>${arr.length?arr.map(x=>`<div class="option" onclick="openProfessionalAppointment('${x.time}','${x.client}','${x.service}')"><span><b>${x.time} · ${x.client}</b><small>${x.service}</small></span><b>›</b></div>`).join(''):'<div class="card"><b>Nenhum cliente agendado.</b><p class="sub">Este dia está livre na agenda.</p></div>'}</div><button class="btn primary full" onclick="openSheet('command')">Central de Comandas</button>`};
 
-  /* 3) Simulação de venda: compartilhar e gerar PDF. */
-  function saleValues(){const s=svc(document.getElementById('sv')?.value),len=document.getElementById('sl')?.value||'Médio',v=s?(len==='Longo'?s.long:s.base):0,c=Number(document.getElementById('comm')?.value||30)/100,pay=document.getElementById('spay')?.value||'cash',n=Number(document.getElementById('sinst')?.value||1),fee=pay==='card'?v*(n===1?.0299:.0599):0,commission=v*c,profit=v-commission-(s?.cost||0)-fee;return {s,len,v,commission,cost:s?.cost||0,fee,profit,pay,n};}
-  window.v27WhatsAppQuote=function(){const q=saleValues(),msg=`Olá! Segue a simulação de orçamento da ED & DU | Terapia da Beleza.\n\nServiço: ${q.s?.name||''}\nTamanho: ${q.len}\nValor ao cliente: ${m(q.v)}\n\nEsta mensagem é uma simulação de orçamento para avaliação do profissional.`;window.open('https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(msg),'_blank');};
-  function pdfEscape(s){return String(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');}
-  window.v27DownloadQuotePDF=function(){const q=saleValues(),lines=[['ED & DU | TERAPIA DA BELEZA',22,0],['SIMULAÇÃO DE ORÇAMENTO',15,0],['Serviço: '+(q.s?.name||''),11,0],['Tamanho: '+q.len,11,0],['Preço ao cliente: '+m(q.v),12,0],['Custo interno: '+m(q.cost),11,0],['Comissão: - '+m(q.commission),11,0],['Taxa estimada: - '+m(q.fee),11,0],['Lucro estimado: '+m(q.profit),13,0],['Uso exclusivo do profissional · documento de análise financeira',9,0]];let y=760,ops=['q','1 1 1 rg','0 0 0 rg','BT'];
-    ops.push('/F1 22 Tf 60 '+y+' Td ('+pdfEscape(lines[0][0])+') Tj ET');y-=34;ops.push('/F1 15 Tf 60 '+y+' Td ('+pdfEscape(lines[1][0])+') Tj ET');y-=48;ops.push('0.95 0.93 0.97 rg 50 '+(y-14)+' 512 150 re f');ops.push('0 0 0 rg');let yy=y;for(let i=2;i<=8;i++){ops.push('/F1 '+lines[i][1]+' Tf 70 '+yy+' Td ('+pdfEscape(lines[i][0])+') Tj ET');yy-=22}ops.push('0.45 0.32 0.55 rg');ops.push('/F1 9 Tf 60 70 Td ('+pdfEscape(lines[9][0])+') Tj ET');const stream=ops.join('\n');const objs=[];objs.push('<< /Type /Catalog /Pages 2 0 R >>');objs.push('<< /Type /Pages /Kids [3 0 R] /Count 1 >>');objs.push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>');objs.push('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');objs.push('<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream');let pdf='%PDF-1.4\n',offs=[0];for(let i=0;i<objs.length;i++){offs.push(pdf.length);pdf+=(i+1)+' 0 obj\n'+objs[i]+'\nendobj\n'}const x=pdf.length;pdf+='xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n';for(let i=1;i<offs.length;i++)pdf+=String(offs[i]).padStart(10,'0')+' 00000 n \n';pdf+='trailer\n<< /Size '+(objs.length+1)+' /Root 1 0 R >>\nstartxref\n'+x+'\n%%EOF';const blob=new Blob([pdf],{type:'application/pdf'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='EDDU-Simulacao-Orcamento.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('PDF do orçamento baixado');}
-  const oldSale=views.saleSimulation;
-  views.saleSimulation=()=>`<h2>Simulação de Venda — uso profissional</h2><p class="sub">Selecione o serviço e veja preço, comissão, custo interno, taxa e lucro. <b>Esses dados são estritamente internos.</b></p><label>Serviço</label><select id="sv">${(window.EDDU_SERVICES||[]).filter(x=>!x.quote).map(s=>`<option value="${esc2(s.name)}">${esc2(s.name)}</option>`).join('')}</select><label>Tamanho do cabelo</label><select id="sl"><option>Curto</option><option selected>Médio</option><option>Longo</option></select><label>Comissão profissional (%)</label><input id="comm" type="number" value="30"><label>Forma de pagamento</label><select id="spay"><option value="cash">À vista / Pix</option><option value="card">Cartão</option></select><label>Parcelas</label><select id="sinst"><option>1</option><option>2</option><option>3</option><option>6</option><option>12</option></select><button class="btn primary full" onclick="calcSaleV25()">Calcular margem</button><div id="saleResult"></div>`;
-  const oldCalc=window.calcSaleV25;
-  window.calcSaleV25=function(){oldCalc&&oldCalc();setTimeout(()=>{const r=document.getElementById('saleResult');if(!r)return; r.insertAdjacentHTML('beforeend',`<div class="quote-sheet"><div class="quote-brand">ED & DU | Terapia da Beleza</div><div class="quote-title">Orçamento / Simulação</div><div class="row"><span>Serviço</span><b>${esc2(document.getElementById('sv').value)}</b></div><div class="row"><span>Tamanho</span><b>${esc2(document.getElementById('sl').value)}</b></div><div class="row"><span>Preço ao cliente</span><b class="quote-total">${m(saleValues().v)}</b></div><div class="internal-lock">🔒 Custo, comissão, taxa e lucro são exclusivamente para análise do profissional e não devem ser enviados ao cliente.</div><div class="pdf-actions"><button class="btn green" onclick="v27WhatsAppQuote()">↗ Compartilhar WhatsApp</button><button class="btn primary" onclick="v27DownloadQuotePDF()">↓ Baixar PDF</button></div></div>`);},20)};
 
-  /* 4) Garantia da navegação inferior do cliente: os botões continuam funcionais mesmo quando a arte-base cobre a área. */
-  const c=document.getElementById('client');
-  if(c){const nav=c.querySelector('.client-bottom-nav-v20');if(nav){nav.style.pointerEvents='auto';nav.querySelectorAll('button').forEach(b=>{b.style.pointerEvents='auto';});}}
 
-  /* V29 — Desempenho Comercial: substitui integralmente a antiga lógica de pontos do profissional. Meta única ED + DU. */
-  /* V29 — Meta única do salão (ED + DU).
-     Regra: meta = faturamento/vendas do mês anterior + 10%.
-     No primeiro mês de uso do app, a meta-base é R$ 7.000,00. */
-  const perf={vendas:1280,mesAnterior:0,primeiroMes:true,clientesSemana:12,atendimentos:8,ticket:160,ocupacao:92,avaliacao:4.9,novos:3,reativar:5,reativados:2,retorno:40};
-  perf.meta=perf.primeiroMes?7000:Math.round(perf.mesAnterior*1.10*100)/100;
-  perf.percentual=Math.min(100,Math.round(perf.vendas/perf.meta*100));
-  views.performance=()=>`<h2>Desempenho Comercial</h2><p class="sub">Uma única meta de vendas para o salão <b>ED + DU</b>. A meta é definida pelo resultado do mês anterior + 10%. No primeiro mês de uso do app, a meta é <b>R$ 7.000,00</b>.</p><div class="kpis"><div class="kpi"><b>${m(perf.vendas)}</b><small>Vendas do salão</small></div><div class="kpi"><b>${perf.percentual}%</b><small>Meta atingida</small></div><div class="kpi"><b>${perf.clientesSemana}</b><small>Clientes esta semana</small></div><div class="kpi"><b>${perf.avaliacao.toFixed(1).replace('.',',')}</b><small>Avaliação média</small></div></div><h3>Meta única do salão · ED + DU</h3><div class="card"><div class="row"><span>${m(perf.vendas)} de ${m(perf.meta)}</span><b>${perf.percentual}%</b></div><div class="bar"><i style="width:${Math.min(100,perf.vendas/perf.meta*100)}%"></i></div><p class="sub">${perf.primeiroMes?'Primeiro mês de uso · meta-base de R$ 7.000,00.':`Mês anterior: ${m(perf.mesAnterior)} · meta atual: ${m(perf.meta)}.`}</p><p class="sub"><b>${m(Math.max(0,perf.meta-perf.vendas))}</b> para atingir a meta 🎯</p></div><h3>Foco comercial</h3><div class="card"><div class="row"><span>Clientes para reativar</span><b>${perf.reativar}</b></div><div class="row"><span>Clientes reativados</span><b>${perf.reativados}</b></div><div class="row"><span>Taxa de retorno</span><b>${perf.retorno}%</b></div><button class="btn primary full" onclick="openSheet('reactivation')">Ver clientes para reativar</button></div><h3>Indicadores do salão</h3><div class="card"><div class="row"><span>Atendimentos</span><b>${perf.atendimentos}</b></div><div class="row"><span>Ticket médio</span><b>${m(perf.ticket)}</b></div><div class="row"><span>Ocupação da agenda</span><b>${perf.ocupacao}%</b></div><div class="row"><span>Novos clientes</span><b>${perf.novos}</b></div></div>`;
-  views.reactivation=()=>`<h2>Clientes para reativar</h2><p class="sub">Lista de clientes sem atendimento recente para ação comercial do profissional.</p>${[['Juliana','último atendimento há 34 dias'],['Camila','último atendimento há 41 dias'],['Renata','último atendimento há 48 dias'],['Paula','último atendimento há 56 dias'],['Fernanda','último atendimento há 63 dias']].map(x=>`<div class="option"><span><b>${x[0]}</b><small>${x[1]}</small></span><button class="btn" onclick="reactivateClient('${x[0]}')">Reativar</button></div>`).join('')}<button class="btn full" onclick="openFinancialPanel()">← Voltar ao desempenho</button>`;
-  window.reactivateClient=function(n){const msg=`Olá, ${n}! Sentimos sua falta na ED & DU | Terapia da Beleza. Quer agendar seu próximo atendimento?`;window.open('https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(msg),'_blank');toast('Mensagem de reativação preparada para '+n)};
-  /* Força os botões de troca de perfil a usarem uma única função, sem depender da arte. */
-  window.switchRole=function(r){const c=document.getElementById('client'),p=document.getElementById('professional');if(!c||!p)return;c.classList.toggle('active',r==='client');p.classList.toggle('active',r==='professional');closeSheet();window.scrollTo(0,0);toast(r==='client'?'Área do cliente':'Área do profissional');};
-  /* Navegação do cliente também recebe uma camada de toque direta sobre a arte. */
-  if(c&&!c.querySelector('.nav-overlay')){const n=document.createElement('nav');n.className='nav-overlay';n.innerHTML=`<button aria-label="Início" onclick="closeSheet();window.scrollTo(0,0)"></button><button aria-label="Agendar" onclick="openSheet('booking')"></button><button aria-label="Documentos" onclick="openSheet('documents')"></button><button aria-label="Pagamentos" onclick="openSheet('payments')"></button>`;c.appendChild(n);}
-})();
-</script>
 
-<script>
-(function(){
-  // V30 — gestão de cupons, reativação com benefício, termos e comandas operacionais.
-  // Mantém a arte-base V29; somente amplia as telas funcionais.
-  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const brl=v=>'R$ '+Number(v||0).toFixed(2).replace('.',',');
-  const nowISO=()=>new Date().toISOString();
-  const todayBR=()=>new Date().toLocaleDateString('pt-BR');
-  const waDigits=v=>{const d=String(v||'').replace(/\D/g,''); return d?('55'+d.replace(/^55/,'')):''};
-  const openWA=(phone,msg)=>{const n=waDigits(phone)||'5511992102905'; window.open('https://wa.me/'+n+'?text='+encodeURIComponent(msg),'_blank');};
 
-  state.couponCampaigns=Array.isArray(state.couponCampaigns)?state.couponCampaigns:[];
-  state.terms=Array.isArray(state.terms)?state.terms:[
-    {id:'TERM-001',client:'Mariana',status:'Assinado',sentAt:'14/09/2026 10:20',signedAt:'14/09/2026 10:31'},
-    {id:'TERM-002',client:'Juliana',status:'Pendente de assinatura',sentAt:'14/09/2026 15:10',signedAt:''}
-  ];
-  state.reactivationCoupons=Array.isArray(state.reactivationCoupons)?state.reactivationCoupons:[];
-  state.commands=Array.isArray(state.commands)?state.commands:[];
-  if(!state.commands.length){
-    state.commands=[
-      {id:'CMD-001',client:'Mariana',phone:'(11) 99999-0001',service:'Limpeza de Pele',hairLength:'Médio',grossAmount:120,discount:0,netAmount:120,items:[{service:'Limpeza de Pele',hairLength:'Médio',qty:1,price:120}],notes:'',status:'Em andamento'},
-      {id:'CMD-002',client:'Juliana',phone:'(11) 99999-0002',service:'Spa Capilar',hairLength:'Longo',grossAmount:280,discount:0,netAmount:280,items:[{service:'Spa Capilar',hairLength:'Longo',qty:1,price:280}],notes:'',status:'Em andamento'},
-      {id:'CMD-003',client:'Camila',phone:'(11) 99999-0003',service:'Corte + Secagem',hairLength:'Médio',grossAmount:136,discount:0,netAmount:136,items:[{service:'Corte + Secagem',hairLength:'Médio',qty:1,price:136}],notes:'',status:'Aguardando finalização'}
-    ];
-  }
-  state.activeCommandId=state.activeCommandId||'CMD-001';
-
-  function getCmd(id){return state.commands.find(c=>c.id===id)||null}
-  function syncLegacy(c){
-    if(!c)return;
-    state.command=Object.assign(state.command||{},c,{grossAmount:Number(c.grossAmount||0),discount:Number(c.discount||0),netAmount:Math.max(0,Number(c.grossAmount||0)-Number(c.discount||0))});
-  }
-  function saveCmd(c){
-    if(!c)return;
-    c.grossAmount=Number(c.grossAmount||0); c.discount=Number(c.discount||0); c.netAmount=Math.max(0,c.grossAmount-c.discount);
-    const idx=state.commands.findIndex(x=>x.id===c.id); if(idx>=0) state.commands[idx]=c; else state.commands.push(c);
-    state.activeCommandId=c.id; syncLegacy(c);
-  }
-  function nextCmdId(){return 'CMD-'+String(state.commands.length+1).padStart(3,'0')}
-
-  // ---------- CUPONS ----------
-  function availableCoupon(){
-    const used=new Set((state.coupons||[]).map(c=>c.code));
-    return (window.EDDU_COUPON_POOL||[]).find(c=>!used.has(c))||null;
-  }
-  function makeCoupon({type,value,service='',client='',source='Manual',expires=''}){
-    const code=availableCoupon(); if(!code){toast('A base de 5.000 cupons está esgotada');return null}
-    const n=Number(value||0);
-    if(type==='percent' && (n<=0||n>100)) {toast('Percentual deve estar entre 1% e 100%');return null}
-    if(type==='fixed' && n<=0){toast('Informe um valor de desconto maior que zero');return null}
-    const c={code,type,value:n,discountType:type==='percent'?'percentual':type==='fixed'?'valor':'serviço',service:service||'',client:client||'',source,status:'Disponível',createdAt:nowISO(),expiresAt:expires||'',uses:0};
-    state.coupons.push(c); state.couponCampaigns.push(c); return c;
-  }
-  function discountFor(c,gross,service){
-    if(!c)return 0;
-    if(c.type==='percent') return Math.min(gross,gross*(Number(c.value)/100));
-    if(c.type==='fixed') return Math.min(gross,Number(c.value));
-    if(c.type==='service') return service && c.service && service.toLowerCase()===c.service.toLowerCase()?gross:0;
-    return Number(c.discount||0);
-  }
-  window.createManualCoupon=function(){
-    const type=document.getElementById('couponType')?.value;
-    const value=document.getElementById('couponValue')?.value;
-    const service=document.getElementById('couponService')?.value||'';
-    const client=document.getElementById('couponClient')?.value.trim()||'';
-    const expires=document.getElementById('couponExpiry')?.value||'';
-    if(type==='service' && !service){toast('Selecione o serviço do benefício');return}
-    const c=makeCoupon({type,value,service,client,source:'Manual'}); if(!c)return;
-    render('coupons'); toast('Cupom '+c.code+' gerado com sucesso');
-  };
-  window.shareCoupon=function(code){
-    const c=(state.coupons||[]).find(x=>x.code===code); if(!c){toast('Cupom não encontrado');return}
-    const target=c.client||'';
-    const benefit=c.type==='percent'?c.value+'% de desconto':c.type==='fixed'?brl(c.value)+' de desconto':('serviço: '+c.service);
-    const msg='🎁 ED & DU | Terapia da Beleza\n\nVocê recebeu um benefício especial!\n\nCupom: '+c.code+'\nBenefício: '+benefit+'\n'+(c.expiresAt?'Validade: '+c.expiresAt+'\n':'')+'\nApresente/insira este cupom no checkout da sua próxima compra.';
-    openWA(target,msg); toast('WhatsApp preparado com o cupom '+c.code);
-  };
-  window.copyManagedCoupon=async function(code){try{await navigator.clipboard.writeText(code);toast('Cupom copiado: '+code)}catch(e){toast('Cupom: '+code)}};
-
-  views.coupons=()=>{
-    const list=(state.coupons||[]).slice().reverse().slice(0,30);
-    const services=(window.EDDU_SERVICES||[]).map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('');
-    return `<h2>Cupons de desconto</h2><p class="sub">Gere cupons da mesma base de 5.000 códigos únicos. O benefício pode ser percentual, valor fixo ou um serviço.</p>
-      <div class="card"><h3>Novo cupom</h3><label>Tipo de benefício</label><select id="couponType" onchange="toggleCouponFields()"><option value="percent">Percentual (%)</option><option value="fixed">Valor (R$)</option><option value="service">Serviço</option></select>
-      <div id="couponValueWrap"><label>Desconto percentual</label><input id="couponValue" type="number" min="1" max="100" step="1" placeholder="Ex.: 20"></div>
-      <div id="couponServiceWrap" style="display:none"><label>Serviço concedido</label><select id="couponService"><option value="">Selecione</option>${services}</select></div>
-      <label>Vincular a cliente (opcional)</label><input id="couponClient" placeholder="Nome do cliente"><label>Validade (opcional)</label><input id="couponExpiry" type="date"><button class="btn primary full" onclick="createManualCoupon()">＋ Gerar cupom</button></div>
-      <h3>Cupons gerados</h3>${list.length?list.map(c=>{const b=c.type==='percent'?c.value+'%':c.type==='fixed'?brl(c.value):'Serviço: '+esc(c.service);return `<div class="option"><span><b>${esc(c.code)}</b><small>${b} · ${esc(c.client||'Uso geral')} · ${esc(c.status)}</small></span><div><button class="btn" onclick="copyManagedCoupon('${esc(c.code)}')">Copiar</button> <button class="btn" onclick="shareCoupon('${esc(c.code)}')">WhatsApp</button></div></div>`}).join(''):'<div class="card"><p class="sub">Nenhum cupom manual gerado ainda.</p></div>'}`;
-  };
-  window.toggleCouponFields=function(){
-    const t=document.getElementById('couponType')?.value; const w=document.getElementById('couponValueWrap'),s=document.getElementById('couponServiceWrap');
-    if(w)w.style.display=t==='service'?'none':'block'; if(s)s.style.display=t==='service'?'block':'none';
-    const l=w?.querySelector('label'); if(l)l.textContent=t==='percent'?'Desconto percentual':'Desconto em valor';
-    const i=document.getElementById('couponValue'); if(i){i.placeholder=t==='percent'?'Ex.: 20':'Ex.: 50';i.max=t==='percent'?'100':''}
-  };
-
-  // ---------- REATIVAÇÃO ----------
-  const REACT={Juliana:'(11) 99999-0002',Camila:'(11) 99999-0003',Renata:'(11) 99999-0004',Paula:'(11) 99999-0005',Fernanda:'(11) 99999-0006'};
-  window.reactivateClient=function(n){
-    state.reactivationTarget={name:n,phone:REACT[n]||''};
-    openSheet('reactivationBenefit');
-  };
-  views.reactivationBenefit=()=>`<h2>Benefício de reativação</h2><p class="sub">Escolha o benefício para <b>${esc(state.reactivationTarget?.name||'cliente')}</b>. O cupom será criado antes do envio do WhatsApp.</p>
-    <div class="card"><label>Tipo de benefício</label><select id="reactType" onchange="toggleReactBenefit()"><option value="percent">Desconto percentual</option><option value="fixed">Desconto em valor</option><option value="service">Serviço</option></select>
-    <div id="reactValueWrap"><label>Percentual de desconto</label><input id="reactValue" type="number" min="1" max="100" value="20"></div>
-    <div id="reactServiceWrap" style="display:none"><label>Serviço concedido</label><select id="reactService"><option value="">Selecione</option>${(window.EDDU_SERVICES||[]).map(s=>`<option>${esc(s.name)}</option>`).join('')}</select></div>
-    <button class="btn primary full" onclick="generateReactivationCoupon()">Gerar benefício e continuar</button></div>
-    <button class="btn full" onclick="openSheet('reactivation')">Cancelar</button>`;
-  window.toggleReactBenefit=function(){const t=document.getElementById('reactType')?.value,w=document.getElementById('reactValueWrap'),s=document.getElementById('reactServiceWrap');if(w)w.style.display=t==='service'?'none':'block';if(s)s.style.display=t==='service'?'block':'none';const l=w?.querySelector('label');if(l)l.textContent=t==='percent'?'Percentual de desconto':'Valor do desconto';};
-  window.generateReactivationCoupon=function(){
-    const target=state.reactivationTarget||{}; const type=document.getElementById('reactType')?.value; const value=document.getElementById('reactValue')?.value; const service=document.getElementById('reactService')?.value||'';
-    if(type==='service'&&!service){toast('Selecione o serviço');return}
-    const c=makeCoupon({type,value,service,client:target.name,source:'Reativação'});if(!c)return;
-    state.reactivationCoupons.push({client:target.name,coupon:c.code,createdAt:nowISO(),benefit:c});
-    openSheet('reactivationSend');
-  };
-  views.reactivationSend=()=>{const r=state.reactivationCoupons[state.reactivationCoupons.length-1],c=r&&(state.coupons||[]).find(x=>x.code===r.coupon);const b=c?(c.type==='percent'?c.value+'% de desconto':c.type==='fixed'?brl(c.value)+' de desconto':'serviço '+c.service):'';return `<h2>Benefício pronto 🎁</h2><p class="sub">O cupom foi vinculado a <b>${esc(r?.client||'')}</b>.</p><div class="card"><div class="row"><span>Cupom</span><b>${esc(r?.coupon||'')}</b></div><div class="row"><span>Benefício</span><b>${esc(b)}</b></div><div class="row"><span>Status</span><b>Disponível</b></div></div><button class="btn primary full" onclick="sendReactivationWhatsApp()">💬 Enviar pelo WhatsApp</button><button class="btn full" onclick="openSheet('reactivation')">← Voltar</button>`};
-  window.sendReactivationWhatsApp=function(){const r=state.reactivationCoupons[state.reactivationCoupons.length-1],c=r&&(state.coupons||[]).find(x=>x.code===r.coupon);if(!r||!c){toast('Benefício não encontrado');return}const benefit=c.type==='percent'?c.value+'% de desconto':c.type==='fixed'?brl(c.value)+' de desconto':'o serviço '+c.service;const msg=`Olá, ${r.client}! 😊\n\nSentimos sua falta na ED & DU | Terapia da Beleza e preparamos um benefício especial para o seu retorno.\n\n🎁 Benefício: ${benefit}\n🎟️ Cupom: ${c.code}\n\nUse o cupom no checkout, no pagamento da sua próxima comanda.\n\nEsperamos você! 💜`;openWA(REACT[r.client]||'',msg);toast('WhatsApp de '+r.client+' preparado com o benefício');};
-
-  // ---------- TERMOS ----------
-  views.termsManager=()=>{const rows=(state.terms||[]).slice().reverse();return `<h2>Termos de responsabilidade</h2><p class="sub">Selecione o cliente, envie o termo digital e acompanhe envio e assinatura.</p><div class="card"><label>Cliente</label><select id="termClientSelect"><option>Mariana</option><option>Juliana</option><option>Camila</option><option>Renata</option><option>Paula</option><option>Fernanda</option></select><button class="btn primary full" onclick="sendResponsibilityTerm()">📄 Enviar termo ao cliente</button></div><h3>Termos enviados</h3>${rows.map(t=>`<div class="option"><span><b>${esc(t.client)}</b><small>${esc(t.id)} · Enviado: ${esc(t.sentAt)} · ${t.status==='Assinado'?'Assinado: '+esc(t.signedAt):'Pendente de assinatura'}</small></span><b class="${t.status==='Assinado'?'badge-ok':''}">${esc(t.status)}</b></div>`).join('')}`};
-  window.sendResponsibilityTerm=function(){const client=document.getElementById('termClientSelect')?.value||'Mariana';const id='TERM-'+String((state.terms||[]).length+1).padStart(3,'0');const sent=new Date();const sentBR=sent.toLocaleDateString('pt-BR')+' '+sent.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});state.terms.push({id,client,status:'Pendente de assinatura',sentAt:sentBR,signedAt:''});const msg=`Olá, ${client}! A ED & DU | Terapia da Beleza enviou seu Termo de Responsabilidade e Consentimento para assinatura digital.\n\nTermo: ${id}\nEnviado em: ${sentBR}\n\nAcesse o aplicativo para revisar e assinar o documento.`;openWA('',msg);render('termsManager');toast('Termo enviado para '+client);};
-
-  // ---------- COMANDAS ----------
-  function commandForm(id){const c=getCmd(id)||{id:nextCmdId(),client:'Mariana',phone:'(11) 99999-0001',service:'Corte Fem',hairLength:'Médio',grossAmount:110,discount:0,netAmount:110,items:[],notes:'',status:'Em andamento'};syncLegacy(c);const services=(window.EDDU_SERVICES||[]).map(s=>`<option value="${esc(s.name)}" ${s.name===c.service?'selected':''}>${esc(s.name)}</option>`).join('');return `<h2>${getCmd(id)?'Editar comanda':'Lançar nova comanda'}</h2><p class="sub">Inclua serviços, ajuste quantidade, aplique cupom e encaminhe para pagamento. Custos internos não aparecem ao cliente.</p><div class="card"><label>Cliente</label><select id="cmdClient"><option ${c.client==='Mariana'?'selected':''}>Mariana</option><option ${c.client==='Juliana'?'selected':''}>Juliana</option><option ${c.client==='Camila'?'selected':''}>Camila</option><option ${c.client==='Renata'?'selected':''}>Renata</option><option ${c.client==='Paula'?'selected':''}>Paula</option><option ${c.client==='Fernanda'?'selected':''}>Fernanda</option></select><label>Serviço principal</label><select id="cmdService">${services}</select><label>Tamanho</label><select id="cmdLength"><option ${c.hairLength==='Curto'?'selected':''}>Curto</option><option ${c.hairLength==='Médio'?'selected':''}>Médio</option><option ${c.hairLength==='Longo'?'selected':''}>Longo</option></select><label>Valor bruto</label><input id="cmdGross" type="number" step="0.01" value="${Number(c.grossAmount||0)}"><label>Observações</label><textarea id="cmdNotes" rows="3" placeholder="Observações para a comanda">${esc(c.notes||'')}</textarea></div><div class="card"><h3>Cupom de desconto</h3><div class="coupon-input-row"><input id="cmdCouponV30" value="${esc(c.coupon||'')}" placeholder="COLE O CUPOM"><button class="btn" onclick="applyCommandCouponV30()">Aplicar</button></div><div id="cmdDiscountInfo"><p class="sub">Desconto atual: <b>${brl(c.discount||0)}</b></p></div></div><div class="card"><div class="row"><span>Valor bruto</span><b id="cmdGrossOut">${brl(c.grossAmount)}</b></div><div class="row"><span>Desconto</span><b class="money-discount" id="cmdDiscOut">− ${brl(c.discount)}</b></div><div class="row"><span>Total a pagar</span><b class="money-good" id="cmdNetOut">${brl(c.netAmount)}</b></div></div><button class="btn primary full" onclick="saveCommandV30('${esc(c.id)}')">💾 Salvar comanda</button><button class="btn green full" onclick="saveAndPaymentV30('${esc(c.id)}')">💳 Salvar e enviar para pagamento</button><button class="btn full" onclick="openSheet('commandsOngoing')">← Voltar às comandas</button>`}
-  views.commandNew=()=>commandForm(null);
-  views.commandEdit=()=>commandForm(state.activeCommandId);
-  window.applyCommandCouponV30=function(){const code=(document.getElementById('cmdCouponV30')?.value||'').trim().toUpperCase();const c=(state.coupons||[]).find(x=>x.code===code);if(!c||c.status!=='Disponível'){toast('Cupom inválido, utilizado ou não encontrado');return}const gross=Number(document.getElementById('cmdGross')?.value||0);const service=document.getElementById('cmdService')?.value||'';const d=discountFor(c,gross,service);if(!d){toast(c.type==='service'?'Este cupom é para outro serviço':'Cupom sem desconto aplicável');return}const el=document.getElementById('cmdDiscountInfo');if(el)el.innerHTML=`<p class="sub">Cupom <b>${esc(c.code)}</b> aplicado: <b class="money-discount">− ${brl(d)}</b> (${c.type==='percent'?c.value+'%':c.type==='fixed'?brl(c.value):'serviço'})</p>`;document.getElementById('cmdDiscountInfo').dataset.discount=String(d);document.getElementById('cmdDiscountInfo').dataset.coupon=c.code;updateCmdPreviewV30();};
-  window.updateCmdPreviewV30=function(){const g=Number(document.getElementById('cmdGross')?.value||0);const info=document.getElementById('cmdDiscountInfo');const d=Number(info?.dataset.discount||0);const net=Math.max(0,g-d);if(document.getElementById('cmdGrossOut'))document.getElementById('cmdGrossOut').textContent=brl(g);if(document.getElementById('cmdDiscOut'))document.getElementById('cmdDiscOut').textContent='− '+brl(d);if(document.getElementById('cmdNetOut'))document.getElementById('cmdNetOut').textContent=brl(net);};
-  window.saveCommandV30=function(id){const old=getCmd(id);const c=old||{id:nextCmdId(),items:[]};c.client=document.getElementById('cmdClient').value;c.service=document.getElementById('cmdService').value;c.hairLength=document.getElementById('cmdLength').value;c.grossAmount=Number(document.getElementById('cmdGross').value||0);const info=document.getElementById('cmdDiscountInfo');c.discount=Number(info?.dataset.discount||0);c.coupon=info?.dataset.coupon||'';c.netAmount=Math.max(0,c.grossAmount-c.discount);c.notes=document.getElementById('cmdNotes').value;c.status=c.status==='Pago'?'Pago':'Em andamento';c.items=c.items?.length?c.items:[{service:c.service,hairLength:c.hairLength,qty:1,price:c.grossAmount}];saveCmd(c);toast('Comanda '+c.id+' salva');openSheet('commandsOngoing');};
-  window.saveAndPaymentV30=function(id){window.saveCommandV30(id);setTimeout(()=>openSheet('commandPayment'),250)};
-  views.commandsOngoing=()=>{const list=state.commands.filter(c=>c.status!=='Pago');return `<h2>Comandas em andamento</h2><p class="sub">Comandas que ainda podem receber itens, cupom ou pagamento. Toque em uma comanda para abrir e editar.</p>${list.map(c=>`<button class="option" onclick="openCommandById('${esc(c.id)}')"><span><b>${esc(c.client)} · ${esc(c.service)}</b><small>${esc(c.status)} · Total ${brl(c.netAmount||c.grossAmount)}</small></span><b>›</b></button>`).join('')||'<div class="card"><p class="sub">Nenhuma comanda em andamento.</p></div>'}<button class="btn primary full" onclick="openSheet('commandNew')">＋ Lançar nova comanda</button>`};
-  window.openCommandById=function(id){state.activeCommandId=id;syncLegacy(getCmd(id));openSheet('commandEdit');};
-  views.commandEdit=()=>commandForm(state.activeCommandId);
-  views.commandPayment=()=>{const c=getCmd(state.activeCommandId);if(c)syncLegacy(c);return `<h2>Enviar comanda para pagamento</h2><p class="sub">Confira o valor e escolha como o cliente pagará.</p><div class="card"><div class="row"><span>Cliente</span><b>${esc(c?.client)}</b></div><div class="row"><span>Valor bruto</span><b>${brl(c?.grossAmount)}</b></div><div class="row"><span>Desconto</span><b class="money-discount">− ${brl(c?.discount)}</b></div><div class="row"><span>Total a pagar</span><b class="money-good">${brl(c?.netAmount)}</b></div></div><button class="btn primary full" onclick="sendCommandToClientV30()">📲 Liberar para o cliente</button><button class="btn full" onclick="openSheet('commandEdit')">← Editar comanda</button>`};
-  window.sendCommandToClientV30=function(){const c=getCmd(state.activeCommandId);if(!c)return;c.status='Aguardando pagamento';saveCmd(c);toast('Comanda liberada para pagamento');openSheet('commandClientCheckout');};
-  views.commandClientCheckout=()=>{const c=getCmd(state.activeCommandId);return `<h2>Checkout da comanda</h2><p class="sub">Área de teste do cliente. O cupom pode ser aplicado antes do pagamento.</p><div class="card"><div class="row"><span>Cliente</span><b>${esc(c?.client)}</b></div><div class="row"><span>Serviço</span><b>${esc(c?.service)}</b></div><div class="row"><span>Total</span><b class="money-good">${brl(c?.netAmount)}</b></div></div><label>Cupom</label><div class="coupon-input-row"><input id="clientCmdCouponV30" placeholder="COLE O CUPOM"><button class="btn" onclick="applyClientCommandCouponV30()">Aplicar</button></div><button class="btn primary full" onclick="payCommandTestV30()">💳 Pagar no modo de teste</button>`};
-  window.applyClientCommandCouponV30=function(){const c=getCmd(state.activeCommandId);const code=(document.getElementById('clientCmdCouponV30')?.value||'').trim().toUpperCase();const cp=(state.coupons||[]).find(x=>x.code===code);if(!cp||cp.status!=='Disponível'){toast('Cupom inválido ou já utilizado');return}const d=discountFor(cp,Number(c.grossAmount||0),c.service);if(!d){toast('Cupom não se aplica a este serviço');return}c.coupon=cp.code;c.discount=d;c.netAmount=Math.max(0,c.grossAmount-d);saveCmd(c);render('commandClientCheckout');toast('Cupom aplicado: − '+brl(d));};
-  window.payCommandTestV30=function(){const c=getCmd(state.activeCommandId);if(!c)return;if(c.coupon){const cp=(state.coupons||[]).find(x=>x.code===c.coupon);if(cp){cp.status='Utilizado';cp.usedAt=nowISO();cp.commandId=c.id;cp.grossAmount=c.grossAmount;cp.discount=c.discount;cp.netReceived=c.netAmount;}}c.status='Pago';saveCmd(c);state.financial=state.financial||{grossSales:0,loyaltyDiscounts:0,netSales:0};state.financial.grossSales+=Number(c.grossAmount||0);state.financial.loyaltyDiscounts+=Number(c.discount||0);state.financial.netSales+=Number(c.netAmount||0);toast('Pagamento de teste aprovado: '+brl(c.netAmount));openSheet('financialReconciliation');};
-
-  // Central de comandas: entrada agora sempre vai para a tela de lançamento.
-  views.command=()=>`<h2>Central de Comandas</h2><p class="sub">Escolha uma ação. As comandas em andamento podem ser reabertas, editadas e enviadas para pagamento.</p><button class="command-tile" onclick="openSheet('commandNew')"><b>＋ Lançar nova comanda</b><small>Abra a ficha completa de lançamento.</small></button><button class="command-tile" onclick="openSheet('commandsOngoing')"><b>▣ Comandas em andamento</b><small>Retome, edite, aplique cupom ou envie para pagamento.</small></button>`;
-
-  // ---------- MAIS / CONFIGURAÇÕES ----------
-  views.more=()=>`<h2>Mais — Gestão profissional</h2><p class="sub">Todos os módulos administrativos.</p><div class="grid2"><button class="card" onclick="openFinancialPanel()"><b>💰 Financeiro</b><p>Contas a pagar e receber</p></button><button class="card" onclick="openSheet('gatewaySettings')"><b>⚡ Gateways</b><p>Ranking e regras</p></button><button class="card" onclick="openSheet('saleSimulation')"><b>🧮 Simulação de Venda</b><p>Preço, custo interno, comissão e lucro</p></button><button class="card" onclick="openSheet('serviceCatalog')"><b>✂️ Catálogo de serviços</b><p>Preços por tamanho</p></button><button class="card" onclick="openSheet('referralsPro')"><b>🎁 Indicações</b><p>Gift Cards pendentes</p></button><button class="card" onclick="openSheet('cardInvoices')"><b>💳 Faturas de Cartão</b><p>Upload e análise</p></button><button class="card" onclick="openSheet('coupons')"><b>🎟️ Cupons de desconto</b><p>Percentual, valor ou serviço</p></button><button class="card" onclick="openSheet('termsManager')"><b>📄 Termos de responsabilidade</b><p>Enviar e acompanhar assinaturas</p></button><button class="card" onclick="openSheet('settings')"><b>⚙️ Configurações</b><p>Preferências</p></button></div>`;
-  views.settings=()=>`<h2>Configurações</h2><div class="option" onclick="toast('Horários de atendimento')"><span><b>Horários</b><small>Seg–Sáb · 09:00–18:00</small></span>›</div><div class="option" onclick="openSheet('serviceCatalog')"><span><b>Serviços e preços</b><small>Gerenciar catálogo</small></span>›</div><div class="option" onclick="openSheet('coupons')"><span><b>Cupons de desconto</b><small>Gerar percentual, valor ou serviço e compartilhar</small></span>›</div><div class="option" onclick="openSheet('termsManager')"><span><b>Termos de responsabilidade</b><small>Enviar termos e acompanhar assinatura</small></span>›</div>`;
-
-  // ---------- performance -> reativação mantém fluxo ----------
-  const oldPerf=views.performance; // preserved conceptually; no visual home changes.
-
-  // V30.1 — múltiplos itens na comanda + assinatura de termo no modo de teste.
-  function commandItemsTotal(c){return (c.items||[]).reduce((a,i)=>a+Number(i.price||0)*Number(i.qty||1),0)}
-  window.addCommandItemV30=function(){
-    const id=state.activeCommandId, c=getCmd(id); if(!c){toast('Abra uma comanda primeiro');return}
-    const service=document.getElementById('itemServiceV30')?.value||'Serviço';
-    const len=document.getElementById('itemLengthV30')?.value||'Médio';
-    const qty=Math.max(1,Number(document.getElementById('itemQtyV30')?.value||1));
-    const price=Number(document.getElementById('itemPriceV30')?.value||0);
-    if(price<=0){toast('Informe o preço do item');return}
-    c.items=Array.isArray(c.items)?c.items:[]; c.items.push({service,hairLength:len,qty,price}); c.grossAmount=commandItemsTotal(c); c.netAmount=Math.max(0,c.grossAmount-Number(c.discount||0));
-    c.service=c.items[0]?.service||service; saveCmd(c); render('commandEdit'); toast('Item adicionado à comanda');
-  };
-  window.removeCommandItemV30=function(idx){const c=getCmd(state.activeCommandId);if(!c)return;c.items.splice(idx,1);c.grossAmount=commandItemsTotal(c);c.netAmount=Math.max(0,c.grossAmount-Number(c.discount||0));saveCmd(c);render('commandEdit');};
-  window.signTermV30=function(id){const t=(state.terms||[]).find(x=>x.id===id);if(!t)return;t.status='Assinado';const d=new Date();t.signedAt=d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});render('termsManager');toast('Termo '+id+' marcado como assinado');};
-  const oldTerms=views.termsManager;
-  views.termsManager=()=>{const rows=(state.terms||[]).slice().reverse();return `<h2>Termos de responsabilidade</h2><p class="sub">Selecione o cliente, envie o termo digital e acompanhe envio e assinatura.</p><div class="card"><label>Cliente</label><select id="termClientSelect"><option>Mariana</option><option>Juliana</option><option>Camila</option><option>Renata</option><option>Paula</option><option>Fernanda</option></select><button class="btn primary full" onclick="sendResponsibilityTerm()">📄 Enviar termo ao cliente</button></div><h3>Termos enviados</h3>${rows.map(t=>`<div class="option"><span><b>${esc(t.client)}</b><small>${esc(t.id)} · Enviado: ${esc(t.sentAt)} · ${t.status==='Assinado'?'Assinado: '+esc(t.signedAt):'Pendente de assinatura'}</small></span><div>${t.status==='Assinado'?'<b class="badge-ok">Assinado</b>':'<button class="btn" onclick="signTermV30(\''+esc(t.id)+'\')">🖊️ Simular assinatura</button>'}</div></div>`).join('')}`};
-
-  const originalCommandForm=commandForm;
-  commandForm=function(id){
-    const c=getCmd(id)||{id:nextCmdId(),client:'Mariana',phone:'(11) 99999-0001',service:'Corte Fem',hairLength:'Médio',grossAmount:110,discount:0,netAmount:110,items:[{service:'Corte Fem',hairLength:'Médio',qty:1,price:110}],notes:'',status:'Em andamento'};
-    if(!c.items||!c.items.length)c.items=[{service:c.service||'Corte Fem',hairLength:c.hairLength||'Médio',qty:1,price:Number(c.grossAmount||110)}];
-    syncLegacy(c); const services=(window.EDDU_SERVICES||[]).map(s=>`<option value="${esc(s.name)}">${esc(s.name)}</option>`).join('')+`<option value="Spa Capilar">Spa Capilar</option>`;
-    return `<h2>${getCmd(id)?'Editar comanda':'Lançar nova comanda'}</h2><p class="sub">Inclua quantos serviços/vendas forem necessários, edite os itens, aplique cupom e envie para pagamento.</p><div class="card"><label>Cliente</label><select id="cmdClient"><option ${c.client==='Mariana'?'selected':''}>Mariana</option><option ${c.client==='Juliana'?'selected':''}>Juliana</option><option ${c.client==='Camila'?'selected':''}>Camila</option><option ${c.client==='Renata'?'selected':''}>Renata</option><option ${c.client==='Paula'?'selected':''}>Paula</option><option ${c.client==='Fernanda'?'selected':''}>Fernanda</option></select><label>Observações</label><textarea id="cmdNotes" rows="3" placeholder="Observações para a comanda">${esc(c.notes||'')}</textarea></div><div class="card"><h3>Itens da comanda</h3>${c.items.map((i,idx)=>`<div class="option"><span><b>${esc(i.service)}</b><small>${esc(i.hairLength||'')} · ${i.qty} × ${brl(i.price)} = ${brl(Number(i.price)*Number(i.qty))}</small></span><button class="btn" onclick="removeCommandItemV30(${idx})">Excluir</button></div>`).join('')}<hr><label>Novo serviço/venda</label><select id="itemServiceV30">${services}</select><div class="grid2"><div><label>Tamanho</label><select id="itemLengthV30"><option>Curto</option><option selected>Médio</option><option>Longo</option></select></div><div><label>Quantidade</label><input id="itemQtyV30" type="number" min="1" value="1"></div></div><label>Preço unitário</label><input id="itemPriceV30" type="number" step="0.01" value="0" placeholder="Ex.: 120"><button class="btn full" onclick="addCommandItemV30()">＋ Adicionar serviço à comanda</button></div><div class="card"><h3>Cupom de desconto</h3><div class="coupon-input-row"><input id="cmdCouponV30" value="${esc(c.coupon||'')}" placeholder="COLE O CUPOM"><button class="btn" onclick="applyCommandCouponV30()">Aplicar</button></div><div id="cmdDiscountInfo"><p class="sub">Desconto atual: <b>${brl(c.discount||0)}</b></p></div></div><div class="card"><div class="row"><span>Valor bruto</span><b id="cmdGrossOut">${brl(c.grossAmount)}</b></div><div class="row"><span>Desconto</span><b class="money-discount" id="cmdDiscOut">− ${brl(c.discount)}</b></div><div class="row"><span>Total a pagar</span><b class="money-good" id="cmdNetOut">${brl(c.netAmount)}</b></div></div><button class="btn primary full" onclick="saveCommandV30('${esc(c.id)}')">💾 Salvar comanda</button><button class="btn green full" onclick="saveAndPaymentV30('${esc(c.id)}')">💳 Salvar e enviar para pagamento</button><button class="btn full" onclick="openSheet('commandsOngoing')">← Voltar às comandas</button>`;
-  };
-  // O preço do novo item pode ser preenchido manualmente; ao selecionar serviço, preenche a base como ponto de partida.
-  document.addEventListener('change',function(e){if(e.target&&e.target.id==='itemServiceV30'){const s=(window.EDDU_SERVICES||[]).find(x=>x.name===e.target.value);const p=document.getElementById('itemPriceV30');if(s&&p)p.value=s.base;}});
-  // Termos enviados usam o WhatsApp do cliente quando houver telefone de teste cadastrado.
-  const oldSendTerm=window.sendResponsibilityTerm;
-  window.sendResponsibilityTerm=function(){const client=document.getElementById('termClientSelect')?.value||'Mariana';const phones={Mariana:'(11) 99999-0001',Juliana:'(11) 99999-0002',Camila:'(11) 99999-0003',Renata:'(11) 99999-0004',Paula:'(11) 99999-0005',Fernanda:'(11) 99999-0006'};const id='TERM-'+String((state.terms||[]).length+1).padStart(3,'0');const sent=new Date();const sentBR=sent.toLocaleDateString('pt-BR')+' '+sent.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});state.terms.push({id,client,status:'Pendente de assinatura',sentAt:sentBR,signedAt:'',phone:phones[client]||''});const msg=`Olá, ${client}! A ED & DU | Terapia da Beleza enviou seu Termo de Responsabilidade e Consentimento para assinatura digital.\n\nTermo: ${id}\nEnviado em: ${sentBR}\n\nAcesse o aplicativo para revisar e assinar o documento.`;openWA(phones[client]||'',msg);render('termsManager');toast('Termo enviado para '+client);};
-})();
-
-</script>
-
-<script>
-/* V31.2 — CORREÇÃO OPERACIONAL DAS COMANDAS + FLUXO REAL DE TERMOS NO TESTE
-   Mantém o layout V29/V30. Apenas corrige/amarra as ações. */
-(function(){
-  'use strict';
-  const escSafe = (v)=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  const brlSafe = (v)=>'R$ '+Number(v||0).toFixed(2).replace('.',',');
-  const svcList = ()=>Array.isArray(window.EDDU_SERVICES)?window.EDDU_SERVICES:[];
-  const findSvc = (name)=>svcList().find(x=>String(x.name).toLowerCase()===String(name||'').toLowerCase())||null;
-  const priceForSize = (name,len)=>{const s=findSvc(name); if(!s)return 0; return len==='Longo'?Number(s.long||0):Number(s.base||0)};
-  const get = id=>state.commands.find(c=>c.id===id)||null;
-  const nextId=()=>{
-    let n=state.commands.reduce((m,c)=>Math.max(m,parseInt(String(c.id||'').replace(/\D/g,''))||0),0)+1;
-    let id='CMD-'+String(n).padStart(3,'0');
-    while(get(id)){n++;id='CMD-'+String(n).padStart(3,'0')}
-    return id;
-  };
-  const totalItems=c=>(c.items||[]).reduce((a,i)=>a+Number(i.price||0)*Math.max(1,Number(i.qty||1)),0);
-  const sync=c=>{ if(typeof syncLegacy==='function') syncLegacy(c); };
-  const persist=c=>{
-    c.grossAmount=totalItems(c);
-    c.discount=Math.min(Math.max(0,Number(c.discount||0)),c.grossAmount);
-    c.netAmount=Math.max(0,c.grossAmount-c.discount);
-    const idx=state.commands.findIndex(x=>x.id===c.id);
-    if(idx<0)state.commands.push(c); else state.commands[idx]=c;
-    state.activeCommandId=c.id; sync(c);
-  };
-  const toastSafe=m=>{try{toast(m)}catch(e){alert(m)}};
-
-  function newDraft(){
-    const id=nextId();
-    const c={id,client:'Mariana',phone:'(11) 99999-0001',service:'Corte Fem',hairLength:'Médio',grossAmount:110,discount:0,netAmount:110,coupon:'',items:[{service:'Corte Fem',hairLength:'Médio',qty:1,price:110}],notes:'',status:'Em andamento',isDraft:true};
-    state.commands.push(c); state.activeCommandId=id; sync(c); return c;
-  }
-
-  function renderCmdEdit(){
-    const c=get(state.activeCommandId); if(!c){openSheet('commandNew');return}
-    if(!Array.isArray(c.items))c.items=[];
-    c.grossAmount=totalItems(c); c.netAmount=Math.max(0,c.grossAmount-Number(c.discount||0));
-    const services=svcList().map(x=>`<option value="${escSafe(x.name)}">${escSafe(x.name)}</option>`).join('');
-    const items=c.items.length?c.items.map((i,idx)=>`<div class="option"><span><b>${escSafe(i.service)}</b><small>${escSafe(i.hairLength||'Médio')} · ${Math.max(1,Number(i.qty||1))} × ${brlSafe(i.price)} = ${brlSafe(Number(i.price||0)*Math.max(1,Number(i.qty||1)))}</small></span><button class="btn" type="button" onclick="removeCommandItemV31(${idx})">Excluir</button></div>`).join(''):'<p class="sub">Nenhum serviço lançado ainda.</p>';
-    return `<h2>${c.isDraft?'Lançar nova comanda':'Editar comanda'}</h2><p class="sub">Adicione serviços, altere quantidade e preço, aplique cupom e escolha como finalizar. Custos internos nunca aparecem ao cliente.</p>
-    <div class="card"><label>Cliente</label><select id="cmdClient"><option ${c.client==='Mariana'?'selected':''}>Mariana</option><option ${c.client==='Juliana'?'selected':''}>Juliana</option><option ${c.client==='Camila'?'selected':''}>Camila</option><option ${c.client==='Renata'?'selected':''}>Renata</option><option ${c.client==='Paula'?'selected':''}>Paula</option><option ${c.client==='Fernanda'?'selected':''}>Fernanda</option></select><label>Observações</label><textarea id="cmdNotes" rows="3" placeholder="Observações para a comanda">${escSafe(c.notes||'')}</textarea></div>
-    <div class="card"><h3>Itens da comanda</h3>${items}<hr><label>Novo serviço/venda</label><select id="itemServiceV31" onchange="updateNewItemPriceV31()">${services}</select><div class="grid2"><div><label>Tamanho</label><select id="itemLengthV31" onchange="updateNewItemPriceV31()"><option>Curto</option><option selected>Médio</option><option>Longo</option></select></div><div><label>Quantidade</label><input id="itemQtyV31" type="number" min="1" value="1" onchange="updateNewItemPriceV31()"></div></div><label>Preço unitário</label><input id="itemPriceV31" type="number" step="0.01" value="0"><button class="btn full" type="button" onclick="addCommandItemV31()">＋ Adicionar serviço à comanda</button></div>
-    <div class="card"><h3>Cupom de desconto</h3><div class="coupon-input-row"><input id="cmdCouponV31" value="${escSafe(c.coupon||'')}" placeholder="COLE O CUPOM"><button class="btn" type="button" onclick="applyCommandCouponV31()">Aplicar</button></div><div id="cmdDiscountInfo"><p class="sub">Desconto atual: <b>${brlSafe(c.discount)}</b></p></div></div>
-    <div class="card"><div class="row"><span>Valor bruto</span><b>${brlSafe(c.grossAmount)}</b></div><div class="row"><span>Desconto</span><b class="money-discount">− ${brlSafe(c.discount)}</b></div><div class="row"><span>Total a pagar</span><b class="money-good">${brlSafe(c.netAmount)}</b></div></div>
-    <button class="btn primary full" type="button" onclick="saveCommandV31()">💾 Salvar comanda</button>
-    <button class="btn green full" type="button" onclick="saveAndPaymentV31()">💳 Salvar e enviar para pagamento</button>
-    <button class="btn full" type="button" onclick="closeCommandV31()">✓ Fechar comanda</button>
-    <button class="btn full" type="button" onclick="openSheet('commandsOngoing')">← Voltar às comandas</button>`;
-  }
-
-  window.updateNewItemPriceV31=function(){
-    const name=document.getElementById('itemServiceV31')?.value||'';
-    const len=document.getElementById('itemLengthV31')?.value||'Médio';
-    const p=document.getElementById('itemPriceV31'); if(p){const val=priceForSize(name,len); p.value=val;}
-  };
-  window.addCommandItemV31=function(){
-    const c=get(state.activeCommandId); if(!c){toastSafe('Abra uma comanda primeiro');return}
-    const service=document.getElementById('itemServiceV31')?.value||'';
-    const len=document.getElementById('itemLengthV31')?.value||'Médio';
-    const qty=Math.max(1,parseInt(document.getElementById('itemQtyV31')?.value||'1',10));
-    const price=Number(document.getElementById('itemPriceV31')?.value||0);
-    if(!service){toastSafe('Selecione um serviço');return}
-    if(price<0){toastSafe('Preço inválido');return}
-    c.items=Array.isArray(c.items)?c.items:[];
-    c.items.push({service,hairLength:len,qty,price});
-    c.service=c.items[0]?.service||service; c.hairLength=c.items[0]?.hairLength||len;
-    c.grossAmount=totalItems(c); c.netAmount=Math.max(0,c.grossAmount-Number(c.discount||0));
-    persist(c); renderCmdEdit(); toastSafe('Serviço adicionado à comanda');
-  };
-  window.removeCommandItemV31=function(idx){
-    const c=get(state.activeCommandId); if(!c)return;
-    c.items.splice(idx,1); c.grossAmount=totalItems(c); c.netAmount=Math.max(0,c.grossAmount-Number(c.discount||0));
-    if(c.items[0]){c.service=c.items[0].service;c.hairLength=c.items[0].hairLength}
-    persist(c); renderCmdEdit(); toastSafe('Item removido');
-  };
-  window.applyCommandCouponV31=function(){
-    const c=get(state.activeCommandId); if(!c)return;
-    const code=(document.getElementById('cmdCouponV31')?.value||'').trim().toUpperCase();
-    const cp=(state.coupons||[]).find(x=>x.code===code);
-    if(!cp||cp.status!=='Disponível'){toastSafe('Cupom inválido, utilizado ou não encontrado');return}
-    let d=0;
-    if(cp.type==='percent')d=Math.min(c.grossAmount,c.grossAmount*Number(cp.value||0)/100);
-    else if(cp.type==='fixed')d=Math.min(c.grossAmount,Number(cp.value||0));
-    else if(cp.type==='service'){if(cp.service && !c.items.some(i=>String(i.service).toLowerCase()===String(cp.service).toLowerCase())){toastSafe('Este cupom é válido para outro serviço');return} d=Number(cp.value||0);}
-    c.coupon=cp.code;c.discount=d;c.netAmount=Math.max(0,c.grossAmount-d);persist(c);
-    toastSafe('Cupom aplicado: − '+brlSafe(d)); renderCmdEdit();
-  };
-  window.saveCommandV31=function(){
-    const c=get(state.activeCommandId); if(!c)return;
-    c.client=document.getElementById('cmdClient')?.value||c.client;
-    c.notes=document.getElementById('cmdNotes')?.value||'';
-    if(!c.items.length){toastSafe('Adicione pelo menos um serviço');return}
-    c.isDraft=false; c.status='Em andamento'; c.grossAmount=totalItems(c); c.netAmount=Math.max(0,c.grossAmount-Number(c.discount||0));
-    persist(c); toastSafe('Comanda '+c.id+' salva com sucesso'); openSheet('commandsOngoing');
-  };
-  window.saveAndPaymentV31=function(){
-    const c=get(state.activeCommandId); if(!c)return;
-    c.client=document.getElementById('cmdClient')?.value||c.client;c.notes=document.getElementById('cmdNotes')?.value||'';
-    if(!c.items.length){toastSafe('Adicione pelo menos um serviço');return}
-    c.isDraft=false;c.status='Aguardando pagamento';c.grossAmount=totalItems(c);c.netAmount=Math.max(0,c.grossAmount-Number(c.discount||0));persist(c);
-    toastSafe('Comanda salva e liberada para pagamento'); openSheet('commandPaymentV31');
-  };
-  window.closeCommandV31=function(){
-    const c=get(state.activeCommandId); if(!c)return;
-    c.client=document.getElementById('cmdClient')?.value||c.client;c.notes=document.getElementById('cmdNotes')?.value||'';
-    if(!c.items.length){toastSafe('Adicione pelo menos um serviço');return}
-    c.isDraft=false;c.status='Fechada';c.closedAt=new Date().toISOString();c.grossAmount=totalItems(c);c.netAmount=Math.max(0,c.grossAmount-Number(c.discount||0));persist(c);
-    toastSafe('Comanda fechada no modo de teste'); openSheet('commandsOngoing');
-  };
-
-  views.commandNew=function(){const c=newDraft();return renderCmdEdit()};
-  views.commandEdit=function(){return renderCmdEdit()};
-  views.commandsOngoing=function(){
-    const list=(state.commands||[]).filter(c=>!c.isDraft && c.status!=='Pago' && c.status!=='Fechada');
-    return `<h2>Comandas em andamento</h2><p class="sub">Abra uma comanda para adicionar serviços, editar, aplicar cupom ou enviar para pagamento.</p>${list.map(c=>`<button class="option" type="button" onclick="openCommandV31('${escSafe(c.id)}')"><span><b>${escSafe(c.client)} · ${escSafe(c.service)}</b><small>${escSafe(c.status)} · Total ${brlSafe(c.netAmount)}</small></span><b>›</b></button>`).join('')||'<div class="card"><p class="sub">Nenhuma comanda em andamento.</p></div>'}<button class="btn primary full" type="button" onclick="openSheet('commandNew')">＋ Lançar nova comanda</button><button class="btn full" type="button" onclick="openSheet('command')">← Central de comandas</button>`;
-  };
-  window.openCommandV31=function(id){if(!get(id)){toastSafe('Comanda não encontrada');return}state.activeCommandId=id;sync(get(id));openSheet('commandEdit')};
-  views.commandPaymentV31=function(){
-    const c=get(state.activeCommandId); if(!c)return '<h2>Comanda não encontrada</h2>';
-    return `<h2>Pagamento da comanda</h2><p class="sub">A comanda foi salva e está aguardando pagamento. No teste, o pagamento pode ser aprovado sem cobrança real.</p><div class="card"><div class="row"><span>Cliente</span><b>${escSafe(c.client)}</b></div><div class="row"><span>Valor bruto</span><b>${brlSafe(c.grossAmount)}</b></div><div class="row"><span>Desconto</span><b class="money-discount">− ${brlSafe(c.discount)}</b></div><div class="row"><span>Total a pagar</span><b class="money-good">${brlSafe(c.netAmount)}</b></div></div><button class="btn primary full" type="button" onclick="approvePaymentV31()">💳 Aprovar pagamento de teste</button><button class="btn full" type="button" onclick="openSheet('commandEdit')">← Voltar para editar</button>`;
-  };
-  window.approvePaymentV31=function(){
-    const c=get(state.activeCommandId);if(!c)return;
-    c.status='Pago';c.paidAt=new Date().toISOString();persist(c);
-    state.financial=state.financial||{grossSales:0,loyaltyDiscounts:0,netSales:0};
-    state.financial.grossSales+=Number(c.grossAmount||0);state.financial.loyaltyDiscounts+=Number(c.discount||0);state.financial.netSales+=Number(c.netAmount||0);
-    if(c.coupon){const cp=(state.coupons||[]).find(x=>x.code===c.coupon);if(cp){cp.status='Utilizado';cp.usedAt=new Date().toISOString();cp.commandId=c.id;}}
-    toastSafe('Pagamento aprovado e comanda fechada: '+brlSafe(c.netAmount));openSheet('financialReconciliation');
-  };
-  views.command=function(){return `<h2>Central de Comandas</h2><p class="sub">Escolha uma ação. Você poderá lançar, editar, salvar, adicionar serviços, aplicar cupom e enviar para pagamento.</p><button class="command-tile" type="button" onclick="openSheet('commandNew')"><b>＋ Lançar nova comanda</b><small>Abra a ficha completa de lançamento.</small></button><button class="command-tile" type="button" onclick="openSheet('commandsOngoing')"><b>▣ Comandas em andamento</b><small>Abra uma comanda existente para editar e finalizar.</small></button>`};
-
-  /* TERMOS — envio permanece pendente até assinatura do cliente. */
-  window.signTermFromClientV31=function(id){
-    const t=(state.terms||[]).find(x=>x.id===id);if(!t)return;
-    t.status='Assinado';const d=new Date();t.signedAt=d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-    toastSafe('Termo '+id+' assinado. O profissional já recebeu a baixa automaticamente.');
-    render('documents');
-  };
-  views.documents=function(){
-    const terms=(state.terms||[]).slice().reverse();
-    return `<h2>Meus documentos</h2><p class="sub">Documentos, termos e histórico do cliente.</p><div class="option" type="button"><span><b>Anamnese e histórico</b><small>Documento digital do atendimento</small></span>›</div><h3>Termos de responsabilidade</h3>${terms.map(t=>`<div class="option"><span><b>${escSafe(t.id)}</b><small>Enviado: ${escSafe(t.sentAt||'—')} · ${t.status==='Assinado'?'Assinado: '+escSafe(t.signedAt):'Aguardando assinatura'}</small></span>${t.status==='Assinado'?'<b class="badge-ok">Assinado</b>':`<button class="btn primary" type="button" onclick="signTermFromClientV31('${escSafe(t.id)}')">✍️ Assinar termo</button>`}</div>`).join('')||'<div class="card"><p class="sub">Nenhum termo enviado ainda.</p></div>'}`;
-  };
-  /* A tela profissional continua mostrando Pendente até o cliente assinar. */
-  if(typeof views.termsManager==='function'){
-    const baseTerms=views.termsManager;
-    views.termsManager=function(){return baseTerms()};
-  }
-})();
-</script>
-
-<script>
-/* V32 — correção final: comandas, seleção de cliente em cupons e privacidade da fórmula */
-(function(){
-  'use strict';
-  const E=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  const B=v=>'R$ '+Number(v||0).toFixed(2).replace('.',',');
-  const clients=[
-    ['Mariana','(11) 99999-0001'],['Juliana','(11) 99999-0002'],['Camila','(11) 99999-0003'],
-    ['Renata','(11) 99999-0004'],['Paula','(11) 99999-0005'],['Fernanda','(11) 99999-0006']
-  ];
-  const phoneOf=n=>(clients.find(x=>x[0]===n)||[])[1]||'';
-  const services=()=>Array.isArray(window.EDDU_SERVICES)?window.EDDU_SERVICES:[];
-  const svc=n=>services().find(x=>String(x.name).toLowerCase()===String(n||'').toLowerCase());
-  const price=(n,len)=>{const x=svc(n);return x?(len==='Longo'?Number(x.long||0):Number(x.base||0)):0};
-  const get=id=>state.commands.find(c=>c.id===id)||null;
-  const total=c=>(c.items||[]).reduce((a,i)=>a+Number(i.price||0)*Math.max(1,Number(i.qty||1)),0);
-  const toast2=m=>{try{toast(m)}catch(e){alert(m)}};
-  const persist=c=>{
-    c.grossAmount=total(c);
-    c.discount=Math.min(Math.max(0,Number(c.discount||0)),c.grossAmount);
-    c.netAmount=Math.max(0,c.grossAmount-c.discount);
-    const i=state.commands.findIndex(x=>x.id===c.id);
-    if(i>=0)state.commands[i]=c;else state.commands.push(c);
-    state.activeCommandId=c.id;
-    if(typeof syncLegacy==='function')syncLegacy(c);
-  };
-  function nextId(){let n=state.commands.reduce((m,c)=>Math.max(m,parseInt(String(c.id||'').replace(/\D/g,''))||0),0)+1;let id='CMD-'+String(n).padStart(3,'0');while(get(id)){n++;id='CMD-'+String(n).padStart(3,'0')}return id}
-  function newCommand(){
-    const id=nextId();
-    const first=svc('Corte Fem');
-    const p=price('Corte Fem','Médio') || Number(first?.base||0) || 0;
-    const c={id,client:'Mariana',phone:phoneOf('Mariana'),service:'Corte Fem',hairLength:'Médio',grossAmount:p,discount:0,netAmount:p,coupon:'',items:[{service:'Corte Fem',hairLength:'Médio',qty:1,price:p}],notes:'',status:'Em andamento',isDraft:true};
-    state.commands.push(c);state.activeCommandId=id;if(typeof syncLegacy==='function')syncLegacy(c);return c;
-  }
-  function renderCommand(){
-    const c=get(state.activeCommandId);if(!c){openSheet('command');return ''}
-    if(!Array.isArray(c.items))c.items=[];
-    c.grossAmount=total(c);c.netAmount=Math.max(0,c.grossAmount-Number(c.discount||0));
-    const opts=services().map(x=>`<option value="${E(x.name)}">${E(x.name)}</option>`).join('');
-    const selected= c.items.length?c.items[0].service:(c.service||services()[0]?.name||'');
-    const firstPrice=price(selected,c.hairLength||'Médio');
-    const itemRows=c.items.length?c.items.map((i,k)=>`<div class="option"><span><b>${E(i.service)}</b><small>${E(i.hairLength||'Médio')} · ${Math.max(1,Number(i.qty||1))} × ${B(i.price)} = ${B(Number(i.price||0)*Math.max(1,Number(i.qty||1)))}</small></span><button class="btn" type="button" onclick="removeCommandItemV32(${k})">Excluir</button></div>`).join(''):'<p class="sub">Nenhum serviço lançado ainda.</p>';
-    const clientOpts=clients.map(([n,p])=>`<option value="${E(n)}" ${c.client===n?'selected':''}>${E(n)}</option>`).join('');
-    return `<h2>${c.isDraft?'Lançar nova comanda':'Editar comanda'}</h2>
-      <p class="sub">Adicione vários serviços, aplique cupons e escolha como finalizar. Informações internas não aparecem para o cliente.</p>
-      <div class="card"><label>Cliente</label><select id="cmdClientV32" onchange="syncCommandClientV32()">${clientOpts}</select><label>Observações</label><textarea id="cmdNotesV32" rows="3" placeholder="Observações para a comanda">${E(c.notes||'')}</textarea></div>
-      <div class="card"><h3>Itens da comanda</h3>${itemRows}<hr>
-        <label>Novo serviço/venda</label><select id="itemServiceV32" onchange="updateNewItemPriceV32()">${services().map(x=>`<option value="${E(x.name)}" ${x.name===selected?'selected':''}>${E(x.name)}</option>`).join('')}</select>
-        <div class="grid2"><div><label>Tamanho</label><select id="itemLengthV32" onchange="updateNewItemPriceV32()"><option ${c.hairLength==='Curto'?'selected':''}>Curto</option><option ${c.hairLength==='Médio'?'selected':''}>Médio</option><option ${c.hairLength==='Longo'?'selected':''}>Longo</option></select></div><div><label>Quantidade</label><input id="itemQtyV32" type="number" min="1" value="1"></div></div>
-        <label>Preço unitário</label><input id="itemPriceV32" type="number" step="0.01" value="${firstPrice}">
-        <button class="btn full" type="button" onclick="addCommandItemV32()">＋ Adicionar serviço à comanda</button>
-      </div>
-      <div class="card"><h3>Cupom de desconto</h3><div class="coupon-input-row"><input id="cmdCouponV32" value="${E(c.coupon||'')}" placeholder="COLE O CUPOM"><button class="btn" type="button" onclick="applyCommandCouponV32()">Aplicar</button></div><p class="sub">Desconto atual: <b>${B(c.discount)}</b></p></div>
-      <div class="card"><div class="row"><span>Valor bruto</span><b>${B(c.grossAmount)}</b></div><div class="row"><span>Desconto</span><b class="money-discount">− ${B(c.discount)}</b></div><div class="row"><span>Total a pagar</span><b class="money-good">${B(c.netAmount)}</b></div></div>
-      <button class="btn primary full" type="button" onclick="saveCommandV32()">💾 Salvar comanda</button>
-      <button class="btn green full" type="button" onclick="saveAndPaymentV32()">💳 Salvar e enviar para pagamento</button>
-      <button class="btn full" type="button" onclick="closeCommandV32()">✓ Fechar comanda</button>
-      <button class="btn full" type="button" onclick="openSheet('commandsOngoing')">← Voltar às comandas</button>`;
-  }
-  window.syncCommandClientV32=function(){const c=get(state.activeCommandId);if(!c)return;const n=document.getElementById('cmdClientV32')?.value||c.client;c.client=n;c.phone=phoneOf(n);persist(c)};
-  window.updateNewItemPriceV32=function(){const n=document.getElementById('itemServiceV32')?.value||'';const l=document.getElementById('itemLengthV32')?.value||'Médio';const p=document.getElementById('itemPriceV32');if(p)p.value=price(n,l)};
-  window.addCommandItemV32=function(){
-    const c=get(state.activeCommandId);if(!c){toast2('Abra uma comanda primeiro.');return}
-    const service=document.getElementById('itemServiceV32')?.value||'';const len=document.getElementById('itemLengthV32')?.value||'Médio';
-    const qty=Math.max(1,parseInt(document.getElementById('itemQtyV32')?.value||'1',10));
-    const input=document.getElementById('itemPriceV32');const entered=Number(input?.value||0);const auto=price(service,len);const finalPrice=entered>0?entered:auto;
-    if(!service){toast2('Selecione um serviço.');return} if(finalPrice<0){toast2('Preço inválido.');return}
-    c.items=Array.isArray(c.items)?c.items:[];c.items.push({service,hairLength:len,qty,price:finalPrice});c.isDraft=true;c.service=c.items[0].service;c.hairLength=c.items[0].hairLength;
-    persist(c);renderCmd();toast2('Serviço adicionado à comanda.');
-  };
-  window.removeCommandItemV32=function(i){const c=get(state.activeCommandId);if(!c)return;c.items.splice(i,1);if(c.items[0]){c.service=c.items[0].service;c.hairLength=c.items[0].hairLength}persist(c);renderCmd();toast2('Item removido.')};
-  window.applyCommandCouponV32=function(){
-    const c=get(state.activeCommandId);if(!c)return;const code=(document.getElementById('cmdCouponV32')?.value||'').trim().toUpperCase();
-    const cp=(state.coupons||[]).find(x=>String(x.code).toUpperCase()===code);
-    if(!cp||cp.status!=='Disponível'){toast2('Cupom inválido, utilizado ou não encontrado.');return}
-    if(cp.client&&cp.client!==c.client){toast2('Este cupom está vinculado a outro cliente.');return}
-    let d=0;if(cp.type==='percent')d=Math.min(c.grossAmount,c.grossAmount*Number(cp.value||0)/100);else if(cp.type==='fixed')d=Math.min(c.grossAmount,Number(cp.value||0));else if(cp.type==='service'){const ok=c.items.some(i=>String(i.service).toLowerCase()===String(cp.service).toLowerCase());if(!ok){toast2('Este cupom é válido para outro serviço.');return}d=Math.min(c.grossAmount,Number(cp.value||0));}
-    c.coupon=cp.code;c.discount=d;persist(c);toast2('Cupom aplicado: − '+B(d));renderCmd();
-  };
-  function readCommandFields(c){c.client=document.getElementById('cmdClientV32')?.value||c.client;c.phone=phoneOf(c.client);c.notes=document.getElementById('cmdNotesV32')?.value||c.notes||'';}
-  window.saveCommandV32=function(){const c=get(state.activeCommandId);if(!c)return;readCommandFields(c);if(!c.items.length){toast2('Adicione pelo menos um serviço.');return}c.isDraft=false;c.status='Em andamento';persist(c);toast2('Comanda '+c.id+' salva com sucesso.');openSheet('commandsOngoing')};
-  window.saveAndPaymentV32=function(){const c=get(state.activeCommandId);if(!c)return;readCommandFields(c);if(!c.items.length){toast2('Adicione pelo menos um serviço.');return}c.isDraft=false;c.status='Aguardando pagamento';persist(c);toast2('Comanda salva e enviada para pagamento.');openSheet('commandPaymentV32')};
-  window.closeCommandV32=function(){const c=get(state.activeCommandId);if(!c)return;readCommandFields(c);if(!c.items.length){toast2('Adicione pelo menos um serviço.');return}c.isDraft=false;c.status='Fechada';c.closedAt=new Date().toISOString();persist(c);toast2('Comanda fechada no modo de teste.');openSheet('commandsOngoing')};
-  function renderCmd(){document.getElementById('view').innerHTML=renderCommand()}
-  views.commandNew=function(){newCommand();return renderCommand()};
-  views.commandEdit=function(){return renderCommand()};
-  views.commandsOngoing=function(){const list=(state.commands||[]).filter(c=>!c.isDraft&&c.status!=='Pago'&&c.status!=='Fechada');return `<h2>Comandas em andamento</h2><p class="sub">Toque em uma comanda para editar, adicionar serviços, aplicar cupom ou enviar para pagamento.</p>${list.map(c=>`<button class="option" type="button" onclick="openCommandV32('${E(c.id)}')"><span><b>${E(c.client)} · ${E(c.service)}</b><small>${E(c.status)} · Total ${B(c.netAmount)}</small></span><b>›</b></button>`).join('')||'<div class="card"><p class="sub">Nenhuma comanda em andamento.</p></div>'}<button class="btn primary full" type="button" onclick="openSheet('commandNew')">＋ Lançar nova comanda</button><button class="btn full" type="button" onclick="openSheet('command')">← Central de comandas</button>`};
-  window.openCommandV32=function(id){const c=get(id);if(!c){toast2('Comanda não encontrada.');return}state.activeCommandId=id;if(typeof syncLegacy==='function')syncLegacy(c);openSheet('commandEdit')};
-  views.commandPaymentV32=function(){const c=get(state.activeCommandId);if(!c)return '<h2>Comanda não encontrada</h2>';return `<h2>Pagamento da comanda</h2><p class="sub">Pagamento em modo de teste, sem cobrança real.</p><div class="card"><div class="row"><span>Cliente</span><b>${E(c.client)}</b></div><div class="row"><span>Valor bruto</span><b>${B(c.grossAmount)}</b></div><div class="row"><span>Desconto</span><b>− ${B(c.discount)}</b></div><div class="row"><span>Total a pagar</span><b class="money-good">${B(c.netAmount)}</b></div></div><button class="btn primary full" type="button" onclick="approvePaymentV32()">💳 Aprovar pagamento de teste</button><button class="btn full" type="button" onclick="openSheet('commandEdit')">← Voltar para editar</button>`};
-  window.approvePaymentV32=function(){const c=get(state.activeCommandId);if(!c)return;c.status='Pago';c.paidAt=new Date().toISOString();persist(c);state.financial=state.financial||{grossSales:0,loyaltyDiscounts:0,netSales:0};state.financial.grossSales+=Number(c.grossAmount||0);state.financial.loyaltyDiscounts+=Number(c.discount||0);state.financial.netSales+=Number(c.netAmount||0);if(c.coupon){const cp=(state.coupons||[]).find(x=>x.code===c.coupon);if(cp){cp.status='Utilizado';cp.usedAt=new Date().toISOString();cp.commandId=c.id}}toast2('Pagamento aprovado e comanda fechada: '+B(c.netAmount));openSheet('financialReconciliation')};
-  views.command=function(){return `<h2>Central de Comandas</h2><p class="sub">Escolha uma ação para trabalhar com as comandas.</p><button class="command-tile" type="button" onclick="openSheet('commandNew')"><b>＋ Lançar nova comanda</b><small>Abra a ficha completa de lançamento.</small></button><button class="command-tile" type="button" onclick="openSheet('commandsOngoing')"><b>▣ Comandas em andamento</b><small>Abra e edite uma comanda existente.</small></button>`};
-
-  // Cupons: cliente agora é uma lista dos clientes cadastrados; campo continua opcional.
-  const couponView=()=>{
-    const list=(state.coupons||[]).slice().reverse().slice(0,30);const ss=services().map(s=>`<option value="${E(s.name)}">${E(s.name)}</option>`).join('');
-    const cs=clients.map(([n])=>`<option value="${E(n)}">${E(n)}</option>`).join('');
-    return `<h2>Cupons de desconto</h2><p class="sub">Use a mesma base de 5.000 códigos únicos. O cliente é opcional.</p><div class="card"><h3>Novo cupom</h3><label>Tipo de benefício</label><select id="couponType" onchange="toggleCouponFields()"><option value="percent">Percentual (%)</option><option value="fixed">Valor (R$)</option><option value="service">Serviço</option></select><div id="couponValueWrap"><label>Desconto percentual</label><input id="couponValue" type="number" min="1" max="100" step="1" placeholder="Ex.: 20"></div><div id="couponServiceWrap" style="display:none"><label>Serviço concedido</label><select id="couponService"><option value="">Selecione</option>${ss}</select></div><label>Vincular a cliente (opcional)</label><select id="couponClient"><option value="">Uso geral — nenhum cliente vinculado</option>${cs}</select><label>Validade (opcional)</label><input id="couponExpiry" type="date"><button class="btn primary full" type="button" onclick="createManualCouponV32()">＋ Gerar cupom</button></div><h3>Cupons gerados</h3>${list.length?list.map(c=>{const b=c.type==='percent'?c.value+'% de desconto':c.type==='fixed'?B(c.value)+' de desconto':'Serviço: '+E(c.service);return `<div class="option"><span><b>${E(c.code)}</b><small>${b} · ${E(c.client||'Uso geral')} · ${E(c.status)}</small></span><div><button class="btn" type="button" onclick="copyManagedCoupon('${E(c.code)}')">Copiar</button> <button class="btn" type="button" onclick="shareCouponV32('${E(c.code)}')">WhatsApp</button></div></div>`}).join(''):'<div class="card"><p class="sub">Nenhum cupom manual gerado ainda.</p></div>'}`;
-  };
-  views.coupons=couponView;
-  window.createManualCouponV32=function(){const type=document.getElementById('couponType')?.value;const value=document.getElementById('couponValue')?.value;const service=document.getElementById('couponService')?.value||'';const client=document.getElementById('couponClient')?.value||'';const expires=document.getElementById('couponExpiry')?.value||'';if(type==='service'&&!service){toast2('Selecione o serviço.');return}const c=typeof makeCoupon==='function'?makeCoupon({type,value,service,client,source:'Manual',expires}):null;if(!c)return;render('coupons');toast2('Cupom '+c.code+' gerado com sucesso.')};
-  window.shareCouponV32=function(code){const c=(state.coupons||[]).find(x=>x.code===code);if(!c){toast2('Cupom não encontrado.');return}const benefit=c.type==='percent'?c.value+'% de desconto':c.type==='fixed'?B(c.value)+' de desconto':'serviço: '+c.service;const phone=phoneOf(c.client);const msg='🎁 ED & DU | Terapia da Beleza\n\nVocê recebeu um benefício especial!\n\nCupom: '+c.code+'\nBenefício: '+benefit+'\n'+(c.expiresAt?'Validade: '+c.expiresAt+'\n':'')+'\nUse este cupom no checkout do seu próximo atendimento.';if(typeof openWA==='function')openWA(phone,msg);else window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');toast2('WhatsApp preparado com o cupom '+c.code)};
-
-  // Anamnese: fórmula e cor ficam exclusivamente na área privada.
-  window.newAnamnesis=function(n){document.getElementById('view').innerHTML=`<h2>Nova anamnese — ${E(n)}</h2><p class="sub">A análise clínica/atendimento fica no histórico. Fórmula, cor e anotações internas são privadas e não aparecem na área do cliente.</p><label>Objetivo / queixa</label><input id="anamObjective" placeholder="Descreva o objetivo do cliente"><label>Análise profissional</label><textarea id="anamText" style="width:100%;min-height:115px;margin-top:5px;border:1px solid #dcd0e3;border-radius:11px;padding:12px;font:inherit" placeholder="Avaliação técnica, observações e conduta"></textarea><div class="private-note"><b>🔒 ÁREA PRIVADA DO PROFISSIONAL</b><br><br><label>Cor / fórmula utilizada</label><textarea id="anamFormula" style="width:100%;min-height:90px;margin-top:5px;border:1px solid #dcd0e3;border-radius:11px;padding:12px;font:inherit" placeholder="Cor, tonalidade, fórmula, proporção, oxidante e observações"></textarea><label>Anotações do profissional</label><textarea id="anamPrivate" style="width:100%;min-height:110px;margin-top:5px;border:1px solid #dcd0e3;border-radius:11px;padding:12px;font:inherit" placeholder="Anotações internas"></textarea><p class="sub">Esses dois campos são estritamente profissionais e não são disponibilizados em documentos, comprovantes ou área do cliente.</p></div><div class="attach-box"><b>📎 Anexo — foto ou arquivo</b><p class="sub">Anexe documentos, imagens ou arquivos relacionados à análise.</p><input id="anamFiles" type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" multiple></div><button class="btn primary full" type="button" onclick="saveAnamV32('${E(n)}')">✓ Salvar anamnese</button><button class="btn full" type="button" onclick="clientFile('${E(n)}')">← Voltar à ficha</button>`};
-  window.saveAnamV32=function(n){const objective=document.getElementById('anamObjective')?.value.trim();if(!objective){toast2('Informe o objetivo / queixa.');return}const files=[...(document.getElementById('anamFiles')?.files||[])];const data={client:n,objective,analysis:document.getElementById('anamText')?.value||'',privateFormula:document.getElementById('anamFormula')?.value||'',privateNotes:document.getElementById('anamPrivate')?.value||'',files:files.map(f=>f.name),savedAt:new Date().toISOString()};localStorage.setItem('eddu_last_anamnesis',JSON.stringify(data));toast2('Anamnese salva. Fórmula/cor permanecem privadas.');setTimeout(()=>clientFile(n),250)};
-})();
-</script>
 
 <style id="finance-v33">
 .fin33{display:grid;gap:12px}
