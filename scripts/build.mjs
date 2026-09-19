@@ -18,7 +18,7 @@ if(bytes.length !== lock.byteLength)
   throw new Error(`V33 VISUAL LOCK FAILED: byte length ${bytes.length} != ${lock.byteLength}.`);
 
 const gitBlobSha=createHash('sha1')
-  .update(Buffer.from(`blob ${bytes.length}\\0`,'utf8'))
+  .update(Buffer.from(`blob ${bytes.length}\0`,'utf8'))
   .update(bytes)
   .digest('hex');
 
@@ -29,7 +29,7 @@ const sha256=createHash('sha256').update(bytes).digest('hex');
 if(lock.sha256 && sha256 !== lock.sha256)
   throw new Error(`V33 VISUAL LOCK FAILED: SHA-256 ${sha256} != ${lock.sha256}.`);
 
-if(/https?:\\/\\/[^"'\\s]*supabase|@supabase|VITE_SUPABASE|supabase\\.co/i.test(html))
+if(/https?:\/\/[^"'\s]*supabase|@supabase|VITE_SUPABASE|supabase\.co/i.test(html))
   throw new Error('Legacy Supabase reference found.');
 
 async function walk(dir){
@@ -42,7 +42,7 @@ async function walk(dir){
   }
   return out;
 }
-const trackedRuntimeFiles=(await walk(root)).filter(p=>/\\.html?$/i.test(p));
+const trackedRuntimeFiles=(await walk(root)).filter(p=>/\.html?$/i.test(p));
 const unexpectedHtml=trackedRuntimeFiles.filter(p=>p!==source);
 if(unexpectedHtml.length)
   throw new Error(`V33 VISUAL LOCK FAILED: unexpected HTML runtime files: ${unexpectedHtml.join(', ')}`);
