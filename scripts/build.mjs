@@ -1,6 +1,6 @@
-import {cp, mkdir, readFile, writeFile} from 'node:fs/promises';
+import {cp, mkdir, readFile, writeFile, readdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
-import {resolve} from 'node:path';
+import {resolve, join} from 'node:path';
 
 const root=process.cwd();
 const dist=resolve(root,'dist');
@@ -18,29 +18,50 @@ if(bytes.length !== lock.byteLength)
   throw new Error(`V33 VISUAL LOCK FAILED: byte length ${bytes.length} != ${lock.byteLength}.`);
 
 const gitBlobSha=createHash('sha1')
-  .update(Buffer.from(`blob ${bytes.length}\0`,'utf8'))
+  .update(Buffer.from(`blob ${bytes.length}\\0`,'utf8'))
   .update(bytes)
   .digest('hex');
 
 if(gitBlobSha !== lock.gitBlobSha)
   throw new Error(`V33 VISUAL LOCK FAILED: index.html is not the approved baseline (blob ${gitBlobSha}).`);
 
+const sha256=createHash('sha256').update(bytes).digest('hex');
+if(lock.sha256 && sha256 !== lock.sha256)
+  throw new Error(`V33 VISUAL LOCK FAILED: SHA-256 ${sha256} != ${lock.sha256}.`);
+
 if(/https?:\\/\\/[^"'\\s]*supabase|@supabase|VITE_SUPABASE|supabase\\.co/i.test(html))
   throw new Error('Legacy Supabase reference found.');
 
-if(process.argv.includes('--check')) {
+async function walk(dir){
+  const out=[];
+  for(const entry of await readdir(dir,{withFileTypes:true})){
+    if(entry.name==='.git'||entry.name==='node_modules'||entry.name==='dist') continue;
+    const p=join(dir,entry.name);
+    if(entry.isDirectory()) out.push(...await walk(p));
+    else out.push(p);
+  }
+  return out;
+}
+const trackedRuntimeFiles=(await walk(root)).filter(p=>/\\.html?$/i.test(p));
+const unexpectedHtml=trackedRuntimeFiles.filter(p=>p!==source);
+if(unexpectedHtml.length)
+  throw new Error(`V33 VISUAL LOCK FAILED: unexpected HTML runtime files: ${unexpectedHtml.join(', ')}`);
+
+if(process.argv.includes('--check')){
   console.log('V33 VISUAL LOCK: PASS');
-  console.log(`Baseline: ${lock.version} | blob ${lock.gitBlobSha}`);
+  console.log(`Baseline: ${lock.version} | blob ${lock.gitBlobSha} | sha256 ${lock.sha256}`);
   process.exit(0);
 }
 
 await mkdir(dist,{recursive:true});
 await cp(source,resolve(dist,'index.html'));
-await writeFile(resolve(dist,'_redirects'),'/* /index.html 200\n');
+await writeFile(resolve(dist,'_redirects'),'/* /index.html 200\\n');
 await writeFile(resolve(dist,'version.json'),JSON.stringify({
   version:lock.version,
   name:'ED & DU | Terapia da Beleza',
-  visualBaseline:'IMMUTABLE-V33'
+  visualBaseline:'IMMUTABLE-V33',
+  gitBlobSha:lock.gitBlobSha,
+  sha256:lock.sha256
 }));
 
 console.log('Built approved V33 master.');
