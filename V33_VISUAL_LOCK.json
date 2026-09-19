@@ -1,8 +1,9 @@
 {
-  "version":"33.0.0",
-  "visualBaseline":"IMMUTABLE-V33",
-  "gitBlobSha":"597d94ced915256d0f567fe5d4fbb7a68e4e231d",
-  "byteLength":3504106,
-  "source":"index.html",
-  "rule":"index.html is the immutable V33 visual baseline. Functional implementations must be additive and must not replace, rewrite, or regenerate this file."
+  "version": "33.0.0",
+  "visualBaseline": "IMMUTABLE-V33",
+  "gitBlobSha": "6cb8a4d8b1c9471938c861016b2691c240b4ac15",
+  "sha256": "56c09e2a0bb50e0cd904103fe58f096427ff4f47db2c4bd1499342aa25532e0d",
+  "byteLength": 3504108,
+  "source": "index.html",
+  "rule": "index.html is the immutable V33 visual baseline. Functional implementations must be additive and must not replace, rewrite, or regenerate this file."
 }

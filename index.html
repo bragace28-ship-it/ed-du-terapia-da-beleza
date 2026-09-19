@@ -997,7 +997,8 @@ body.sheet-open .hot{
         </div>
         <div class="fp-summary-card">
           <b id="fpPendingSummary">R$ 0,00</b>
-          <small>Compromissos pendentes</small>        </div>
+          <small>Compromissos pendentes</small>
+        </div>
       </section>
     </main>
   </div>
@@ -1996,7 +1997,8 @@ views.newClient=()=>`<h2>Novo cliente</h2><p class="sub">Cadastre os dados bási
     const open=F.payables.filter(x=>x.status!=='Paga');
     return {open:sum(open,x=>x.amount),month:sum(F.payables,x=>x.amount),paid:sum(F.payables.filter(x=>x.status==='Paga'),x=>x.amount)}
   }
-  function receivableTotals(){    return {total:sum(F.receivables,x=>x.total),received:sum(F.receivables,x=>x.paid),open:sum(F.receivables,x=>Math.max(0,x.total-x.paid))}
+  function receivableTotals(){
+    return {total:sum(F.receivables,x=>x.total),received:sum(F.receivables,x=>x.paid),open:sum(F.receivables,x=>Math.max(0,x.total-x.paid))}
   }
   function financeDashboard(){
     const p=payableTotals(),r=receivableTotals(),bal=sum(F.accounts,x=>x.balance),ins=sum(F.installments,x=>Math.max(0,x.total-x.paid));
