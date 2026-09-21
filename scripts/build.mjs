@@ -61,7 +61,7 @@ await mkdir(dist,{recursive:true});
 await cp(source,resolve(dist,'index.html'));
 const built=await readFile(resolve(dist,'index.html'),'utf8');
 const builtBytes=Buffer.from(built,'utf8');
-const builtSha=createHash('sha1').update(Buffer.from(`blob ${builtBytes.length}\\0`,'utf8')).update(builtBytes).digest('hex');
+const builtSha=createHash('sha1').update(Buffer.from(`blob ${builtBytes.length}\0`,'utf8')).update(builtBytes).digest('hex');
 if(builtBytes.length !== lock.byteLength || builtSha !== lock.gitBlobSha) throw new Error(`CLEAN DEPLOYMENT BLOCKED: dist/index.html does not exactly match immutable V33 (${builtSha}).`);
 const distFiles=await readdir(dist);
 const expectedDistFiles=new Set(['index.html','_redirects','version.json']);
