@@ -7,6 +7,9 @@ const dist=resolve(root,'dist');
 const source=resolve(root,'index.html');
 const lockPath=resolve(root,'V33_VISUAL_LOCK.json');
 
+const cloudflareBranch=process.env.CF_PAGES_BRANCH;
+if(cloudflareBranch && cloudflareBranch !== 'cloudflare-production') throw new Error(`CLEAN DEPLOYMENT BLOCKED: Cloudflare branch '${cloudflareBranch}' is not approved.`);
+
 const html=await readFile(source,'utf8');
 const bytes=Buffer.from(html,'utf8');
 const lock=JSON.parse(await readFile(lockPath,'utf8'));
@@ -55,6 +58,10 @@ if(process.argv.includes('--check')){
 
 await mkdir(dist,{recursive:true});
 await cp(source,resolve(dist,'index.html'));
+const built=await readFile(resolve(dist,'index.html'),'utf8');
+const builtBytes=Buffer.from(built,'utf8');
+const builtSha=createHash('sha1').update(Buffer.from(`blob ${builtBytes.length}\\0`,'utf8')).update(builtBytes).digest('hex');
+if(builtBytes.length !== lock.byteLength || builtSha !== lock.gitBlobSha) throw new Error(`CLEAN DEPLOYMENT BLOCKED: dist/index.html does not exactly match immutable V33 (${builtSha}).`);
 await writeFile(resolve(dist,'_redirects'),'/* /index.html 200\\n');
 await writeFile(resolve(dist,'version.json'),JSON.stringify({
   version:lock.version,
