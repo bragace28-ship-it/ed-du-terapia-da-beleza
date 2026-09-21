@@ -63,10 +63,6 @@ const built=await readFile(resolve(dist,'index.html'),'utf8');
 const builtBytes=Buffer.from(built,'utf8');
 const builtSha=createHash('sha1').update(Buffer.from(`blob ${builtBytes.length}\0`,'utf8')).update(builtBytes).digest('hex');
 if(builtBytes.length !== lock.byteLength || builtSha !== lock.gitBlobSha) throw new Error(`CLEAN DEPLOYMENT BLOCKED: dist/index.html does not exactly match immutable V33 (${builtSha}).`);
-const distFiles=await readdir(dist);
-const expectedDistFiles=new Set(['index.html','_redirects','version.json']);
-if(distFiles.length !== expectedDistFiles.size || distFiles.some(name=>!expectedDistFiles.has(name)))
-  throw new Error(`CLEAN DEPLOYMENT BLOCKED: dist contains unexpected files: ${distFiles.join(', ')}`);
 await writeFile(resolve(dist,'_redirects'),'/* /index.html 200\\n');
 await writeFile(resolve(dist,'version.json'),JSON.stringify({
   version:lock.version,
@@ -75,5 +71,9 @@ await writeFile(resolve(dist,'version.json'),JSON.stringify({
   gitBlobSha:lock.gitBlobSha,
   sha256:lock.sha256
 }));
+const distFiles=await readdir(dist);
+const expectedDistFiles=new Set(['index.html','_redirects','version.json']);
+if(distFiles.length !== expectedDistFiles.size || distFiles.some(name=>!expectedDistFiles.has(name)))
+  throw new Error(`CLEAN DEPLOYMENT BLOCKED: dist contains unexpected files: ${distFiles.join(', ')}`);
 
 console.log('Built approved V33 master.');
