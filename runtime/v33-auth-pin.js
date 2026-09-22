@@ -72,3 +72,25 @@ window.EDDU_AUTH = Object.freeze({
 });
 
 window.dispatchEvent(new CustomEvent('eddu:auth-ready'));
+
+
+function activateProfessionalDashboard() {
+  if (typeof document === 'undefined') return;
+  const client = document.getElementById('client');
+  const professional = document.getElementById('professional');
+  const finance = document.getElementById('financial-panel');
+  if (professional) professional.classList.add('active');
+  if (client) client.classList.remove('active');
+  if (finance) finance.classList.remove('active');
+  if (typeof window.scrollTo === 'function') window.scrollTo(0, 0);
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      if (HOMOLOGATION_ACCESS) activateProfessionalDashboard();
+    }, { once: true });
+  } else if (HOMOLOGATION_ACCESS) {
+    activateProfessionalDashboard();
+  }
+}
