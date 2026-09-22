@@ -30,6 +30,27 @@ jobs:
       - name: Static application QA
         run: node scripts/qa.mjs
 
+      - name: Runtime surface inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          html=Path('index.html').read_text(encoding='utf-8')
+          srcs=re.findall(r'<script[^>]+src=["\']([^"\']+)["\']',html,re.I)
+          print('script_src_count=',len(srcs))
+          for x in srcs: print('script_src=',x)
+          for label,pat in [
+              ('fetch_calls',r'\bfetch\s*\('),
+              ('api_paths',r'["\'](/(?:api|auth|functions|supabase)/[^"\']+)'),
+              ('neon_refs',r'neon(?:\.tech|\.com|auth)|@neondatabase'),
+              ('supabase_refs',r'supabase(?:\.co|\.com)|@supabase'),
+              ('vercel_refs',r'\.vercel\.app'),
+          ]:
+              print(label,'=',len(re.findall(pat,html,re.I)))
+          PY
+
       - name: Verify built HTTP assets
         shell: bash
         run: |
