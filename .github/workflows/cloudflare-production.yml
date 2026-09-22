@@ -88,7 +88,7 @@ jobs:
           account=os.environ['CLOUDFLARE_ACCOUNT_ID']
           token=os.environ['CLOUDFLARE_API_TOKEN']
           project='ed-du-terapia-da-beleza'
-          keep_sha='6cb8a4d8b1c9471938c861016b2691c240b4ac15'
+          keep_sha=os.environ['GITHUB_SHA']
           base=f'https://api.cloudflare.com/client/v4/accounts/{account}/pages/projects/{project}/deployments'
 
           def req(url, method='GET'):
@@ -100,37 +100,36 @@ jobs:
                   return json.load(resp)
 
           deployments=[]
-          page=1
-          while True:
-              data=req(base+'?'+urllib.parse.urlencode({'per_page':100,'page':page}))
-              if not data.get('success'):
-                  raise SystemExit(data)
-              batch=data.get('result') or []
-              deployments.extend(batch)
-              info=data.get('result_info') or {}
-              if not batch or page >= int(info.get('total_pages',page)):
-                  break
-              page += 1
+          for env in ('production','preview'):
+              page=1
+              while True:
+                  qs=urllib.parse.urlencode({'env':env,'page':page,'per_page':20})
+                  data=req(base+'?'+qs)
+                  if not data.get('success'):
+                      raise SystemExit(data)
+                  batch=data.get('result') or []
+                  deployments.extend(batch)
+                  info=data.get('result_info') or {}
+                  total_pages=int(info.get('total_pages', page))
+                  if not batch or page >= total_pages:
+                      break
+                  page += 1
 
           keep=None
           for d in deployments:
               meta=((d.get('deployment_trigger') or {}).get('metadata') or {})
-              if meta.get('commit_hash') == os.environ['GITHUB_SHA']:
+              if meta.get('commit_hash') == keep_sha and d.get('environment') == 'production':
                   keep=d
                   break
 
           if not keep:
-              for d in deployments:
-                  if d.get('id'):
-                      keep=d
-                      break
-
-          if not keep:
-              raise SystemExit('No deployment found to preserve')
+              raise SystemExit('Approved production deployment not found in Cloudflare API')
 
           keep_id=keep.get('id')
           print('Preserving approved production deployment:', keep_id)
 
+          retained=0
+          deleted=0
           for d in deployments:
               ident=d.get('id')
               if not ident or ident == keep_id:
@@ -138,11 +137,17 @@ jobs:
               url=base+'/'+urllib.parse.quote(ident, safe='')+'?force=true'
               try:
                   out=req(url, method='DELETE')
-                  print('DELETED', ident, out.get('success'))
+                  if out.get('success'):
+                      deleted += 1
+                      print('DELETED', ident, d.get('environment'), d.get('deployment_trigger',{}).get('metadata',{}).get('branch'))
+                  else:
+                      retained += 1
+                      print('RETAINED', ident, out)
               except Exception as e:
+                  retained += 1
                   print('RETAINED', ident, str(e))
 
-          print('Cleanup pass finished. Preserved:', keep_id)
+          print(f'Cloudflare cleanup complete. deleted={deleted} retained={retained} preserved={keep_id}')
           PY
 
       - name: Verify release identity
