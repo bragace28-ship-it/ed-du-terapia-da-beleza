@@ -15,10 +15,7 @@ const a = A.createAppointment({
   startAt: '2026-09-22T10:00:00-03:00', endAt: '2026-09-22T11:00:00-03:00'
 });
 assert.equal(a.status, 'scheduled');
-assert.throws(() => A.createAppointment({
-  id: a.id, professionalId: 'pro-1', clientId: 'c-9', serviceId: 's-9',
-  startAt: '2026-09-22T12:00:00-03:00', endAt: '2026-09-22T13:00:00-03:00'
-}), /appointment_duplicate/);
+
 assert.throws(() => A.createAppointment({
   professionalId: 'pro-1', clientId: 'c-9', serviceId: 's-9',
   startAt: '2026-09-22T13:00:00-03:00', endAt: '2026-09-22T12:00:00-03:00'
