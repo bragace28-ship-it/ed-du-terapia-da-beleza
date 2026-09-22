@@ -28,6 +28,7 @@ jobs:
           CF_PAGES_BRANCH: cloudflare-production
         run: npm run build
 
+      # Production deployment intentionally omits --branch so Wrangler targets the production alias.
       - name: Deploy approved V33 to Cloudflare Pages production
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
