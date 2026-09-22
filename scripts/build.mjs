@@ -71,7 +71,7 @@ await mkdir(dist,{recursive:true});
 await cp(source,resolve(dist,'index.html'));
 const builtSource=await readFile(resolve(dist,'index.html'),'utf8');
 const builtSourceBytes=Buffer.from(builtSource,'utf8');
-const builtSourceSha=createHash('sha1').update(Buffer.from(`blob ${builtSourceBytes.length}\\0`,'utf8')).update(builtSourceBytes).digest('hex');
+const builtSourceSha=createHash('sha1').update(Buffer.from(`blob ${builtSourceBytes.length}\0`,'utf8')).update(builtSourceBytes).digest('hex');
 if(builtSourceBytes.length !== lock.byteLength || builtSourceSha !== lock.gitBlobSha)
   throw new Error(`CLEAN DEPLOYMENT BLOCKED: dist source does not exactly match immutable V33 (${builtSourceSha}).`);
 
