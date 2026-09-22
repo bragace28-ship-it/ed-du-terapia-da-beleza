@@ -8,6 +8,11 @@ const source=resolve(root,'index.html');
 const lockPath=resolve(root,'V33_VISUAL_LOCK.json');
 
 function applyApprovedStartup(html){
+  // The financial module has an explicit V33 CSS rule that otherwise forces it
+  // visible even without the .active class. Keep it hidden until its module is opened.
+  html=html.replace('#financial-panel.screen{\\n  display:block;', '#financial-panel.screen{\\n  display:none;');
+  html=html.replace('.fp-header{', '#financial-panel.screen.active{display:block}\\n.fp-header{');
+
   const oldSection='<section id="financial-panel" class="screen active" aria-label="Painel Financeiro">';
   const newSection='<section id="financial-panel" class="screen" aria-label="Painel Financeiro">';
   const oldBoot="if(client) client.classList.remove('active');\n    if(professional) professional.classList.remove('active');\n    if(finance) finance.classList.add('active');\n    renderFinancialPanel();";
