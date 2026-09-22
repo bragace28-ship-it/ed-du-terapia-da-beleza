@@ -35,9 +35,19 @@ function fingerprint(input) {
 function addCommand(input = {}) {
   const state = readState();
   const now = new Date().toISOString();
+  const idempotencyKey = String(input.idempotencyKey || [
+    input.clientId || '',
+    input.appointmentId || '',
+    input.professionalId || '',
+    input.date || ''
+  ].join('|'));
+  if (idempotencyKey && state.commands.some(x => x.idempotencyKey === idempotencyKey)) {
+    throw new Error('duplicate_command');
+  }
   const id = input.id || 'cmd-' + Date.now().toString(36);
   const command = {
     id,
+    idempotencyKey,
     clientId: String(input.clientId || ''),
     appointmentId: String(input.appointmentId || ''),
     professionalId: String(input.professionalId || ''),
@@ -58,6 +68,7 @@ function addItem(commandId, input = {}) {
   const state = readState();
   const command = state.commands.find(x => x.id === commandId);
   if (!command) throw new Error('command_not_found');
+  if (command.status === 'paid' || command.status === 'cancelled') throw new Error('command_not_editable');
   const item = {
     id: input.id || 'item-' + Date.now().toString(36),
     serviceId: String(input.serviceId || ''),
@@ -95,6 +106,7 @@ function closeCommand(commandId) {
   const command = state.commands.find(x => x.id === commandId);
   if (!command) throw new Error('command_not_found');
   if (!command.items.length) throw new Error('empty_command');
+  if (command.status === 'cancelled' || command.status === 'paid') throw new Error('command_not_closable');
   command.total = commandTotal(command);
   command.status = 'awaiting_payment';
   command.updatedAt = new Date().toISOString();
@@ -108,15 +120,21 @@ function addPayment(commandId, input = {}) {
   const command = state.commands.find(x => x.id === commandId);
   if (!command) throw new Error('command_not_found');
   if (command.status === 'paid') throw new Error('command_already_paid');
+  if (command.status !== 'awaiting_payment' && command.status !== 'partially_paid') throw new Error('command_not_payable');
+  const amount = money(input.amount);
+  if (amount <= 0) throw new Error('payment_amount_invalid');
   const payment = {
     id: input.id || 'pay-' + Date.now().toString(36),
     method: String(input.method || 'pix'),
-    amount: money(input.amount),
+    amount,
     externalId: String(input.externalId || ''),
     createdAt: new Date().toISOString()
   };
   const already = command.payments.some(x => x.externalId && payment.externalId && x.externalId === payment.externalId);
   if (already) throw new Error('duplicate_payment');
+  const paidBefore = money(command.payments.reduce((sum, x) => sum + x.amount, 0));
+  const remainingBefore = money(command.total - paidBefore);
+  if (amount > remainingBefore) throw new Error('payment_exceeds_remaining');
   command.payments.push(payment);
   const paid = money(command.payments.reduce((sum, x) => sum + x.amount, 0));
   command.total = commandTotal(command);
@@ -136,6 +154,10 @@ function listCommands() {
   return readState().commands.slice().sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
 }
 
+function listEvents() {
+  return readState().events.slice();
+}
+
 function resetHomologationData() {
   writeState({ commands: [], events: [] });
 }
@@ -149,6 +171,7 @@ window.EDDU_COMMANDS = Object.freeze({
   addPayment,
   getCommand,
   listCommands,
+  listEvents,
   resetHomologationData,
   commandTotal
 });
