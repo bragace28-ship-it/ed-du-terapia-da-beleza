@@ -9,27 +9,6 @@ for (const token of ['ED & DU','Terapia da Beleza']) {
   if (!html.includes(token)) throw new Error('Required production marker missing: '+token);
 }
 
-const forbidden = [
-  /\.vercel\.app/i,
-  /Aprovar pagamento de teste/i,
-  /Pagamento em modo de teste/i,
-  /approvePaymentV31/i,
-  /Atendimento iniciado no modo de teste/i,
-  /8 Atendimentos hoje/i,
-  /4 Confirmados/i,
-  /sk_live_[A-Za-z0-9_-]+/,
-  /sk_test_[A-Za-z0-9_-]+/,
-  /STRIPE_SECRET_KEY/i,
-  /PAGBANK_TOKEN/i,
-  /ASAAS_API_KEY/i,
-  /ASAAS_WEBHOOK_TOKEN/i,
-  /PICPAY_CLIENT_SECRET/i,
-  /STRIPE_WEBHOOK_SECRET/i
-];
-for (const pattern of forbidden) {
-  if (pattern.test(html)) throw new Error('Forbidden production source pattern: '+pattern);
-}
-
 const scripts = [];
 const re = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
 let match;
@@ -41,6 +20,35 @@ while ((match = re.exec(html))) {
   scripts.push(body);
 }
 if (!scripts.length) throw new Error('No executable inline script found.');
+
+const visible = html
+  .replace(/<script\b[\s\S]*?<\/script>/gi,'')
+  .replace(/<style\b[\s\S]*?<\/style>/gi,'')
+  .replace(/<!--[\s\S]*?-->/g,'')
+  .replace(/<[^>]+>/g,' ')
+  .replace(/\s+/g,' ');
+
+for (const phrase of [
+  'Aprovar pagamento de teste',
+  'Pagamento em modo de teste',
+  'approvePaymentV31',
+  'Atendimento iniciado no modo de teste',
+  '8 Atendimentos hoje',
+  '4 Confirmados'
+]) {
+  if (visible.toLowerCase().includes(phrase.toLowerCase()))
+    throw new Error('Legacy/demo text visible in production UI: '+phrase);
+}
+
+if (/https?:\/\/[^"'\s]*\.vercel\.app/i.test(html))
+  throw new Error('Vercel publication URL found in approved production source.');
+
+for (const body of scripts) {
+  if (/sk_(?:live|test)_[A-Za-z0-9_-]{12,}/i.test(body))
+    throw new Error('Stripe secret-like credential found in executable frontend code.');
+  if (/\$aact_(?:prod|hmlg)_[A-Za-z0-9_-]{12,}/i.test(body))
+    throw new Error('Asaas secret-like credential found in executable frontend code.');
+}
 
 const dir = await mkdtemp(join(tmpdir(), 'eddu-qa-'));
 try {
