@@ -1,0 +1,30 @@
+name: ED DU Cloudflare Homologacao
+
+on:
+  push:
+    branches:
+      - fase2-bloco03-05-hardening
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-homologacao:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run check
+      - run: npm run build
+      - name: Deploy Cloudflare Pages preview
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler pages deploy dist \
+            --project-name=ed-du-terapia-da-beleza \
+            --branch=fase2-bloco03-05-hardening \
+            --commit-hash="${GITHUB_SHA}"
