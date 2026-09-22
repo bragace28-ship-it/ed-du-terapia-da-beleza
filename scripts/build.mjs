@@ -90,7 +90,7 @@ await writeFile(resolve(dist,'index.html'),built);
 
 const functionalJs=resolve(root,'runtime/v33-entry.js');
 const functionalCss=resolve(root,'runtime/v33-functional.css');
-const functionalFiles=['runtime/v33-entry.js','runtime/v33-auth-pin.js','runtime/v33-block03-comandas.js','runtime/v33-block04-gateways.js'];
+const functionalFiles=['runtime/v33-entry.js','runtime/v33-auth-pin.js','runtime/v33-block03-comandas.js','runtime/v33-block04-gateways.js','runtime/v33-block06-08-agenda-financeiro.js'];
 const functionalSource=(await Promise.all(functionalFiles.map(async p=>readFile(resolve(root,p),'utf8')))).join('\n');
 const functionalStyles=await readFile(functionalCss,'utf8');
 if(/<style|document\\.write|innerHTML|outerHTML|insertAdjacentHTML|\\.style\\s*=|location\\.replace/i.test(functionalSource))
