@@ -22,8 +22,24 @@ function applyApprovedStartup(html){
   if(!html.includes(financialCss)) throw new Error('V33 startup patch: financial CSS marker not found.');
   const roleOverride="if(professional) professional.classList.remove('active');\n    if(finance) finance.classList.toggle('active',role==='professional');";
   const roleOverrideFixed="if(professional) professional.classList.toggle('active',role==='professional');\n    if(finance) finance.classList.remove('active');";
-  const finalFinanceBoot="document.addEventListener('DOMContentLoaded',function(){\n    const client=document.getElementById('client');\n    const professional=document.getElementById('professional');\n    const finance=document.getElementById('financial-panel');\n    if(client) client.classList.remove('active');\n    if(professional) professional.classList.remove('active');\n    if(finance) finance.classList.add('active');\n    renderFinancialPanel();\n  });";\n  const finalFinanceBootFixed="document.addEventListener('DOMContentLoaded',function(){\n    const client=document.getElementById('client');\n    const professional=document.getElementById('professional');\n    const finance=document.getElementById('financial-panel');\n    if(client) client.classList.remove('active');\n    if(professional) professional.classList.add('active');\n    if(finance) finance.classList.remove('active');\n  });";\n  if(!html.includes(finalFinanceBoot)) throw new Error('V33 startup patch: final finance boot block not found.');
-  if(!html.includes(roleOverride)) throw new Error('V33 startup patch: financial role override not found.');
+  const finalFinanceBoot=`document.addEventListener('DOMContentLoaded',function(){
+    const client=document.getElementById('client');
+    const professional=document.getElementById('professional');
+    const finance=document.getElementById('financial-panel');
+    if(client) client.classList.remove('active');
+    if(professional) professional.classList.remove('active');
+    if(finance) finance.classList.add('active');
+    renderFinancialPanel();
+  });`;
+  const finalFinanceBootFixed=`document.addEventListener('DOMContentLoaded',function(){
+    const client=document.getElementById('client');
+    const professional=document.getElementById('professional');
+    const finance=document.getElementById('financial-panel');
+    if(client) client.classList.remove('active');
+    if(professional) professional.classList.add('active');
+    if(finance) finance.classList.remove('active');
+  });`;
+  if(!html.includes(finalFinanceBoot)) throw new Error('V33 startup patch: final finance boot block not found.');
   return html.replace(oldSection,newSection).replace(oldBoot,newBoot).replace(financialCss,financialCssFixed).replace(roleOverride,roleOverrideFixed).replace(finalFinanceBoot,finalFinanceBootFixed);
 }
 
