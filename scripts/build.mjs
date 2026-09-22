@@ -94,7 +94,8 @@ const functionalSource=await readFile(functionalJs,'utf8');
 const functionalStyles=await readFile(functionalCss,'utf8');
 if(/<style|document\\.write|innerHTML|outerHTML|insertAdjacentHTML|\\.style\\s*=|location\\.replace/i.test(functionalSource))
   throw new Error('V33 FUNCTIONAL FIREWALL FAILED: runtime JS contains forbidden direct visual/HTML mutation.');
-if(!/^\\s*(?:\\.eddu-fn-[a-z0-9_-]+)[\\s\\S]*$/i.test(functionalStyles))
+const cssSelectors=functionalStyles.split('{').slice(0,-1).map(x=>x.split('}').pop().trim()).filter(Boolean);
+if(cssSelectors.some(selector=>selector.split(',').some(part=>part.trim() && !part.trim().startsWith('.eddu-fn-'))))
   throw new Error('V33 FUNCTIONAL FIREWALL FAILED: runtime CSS must be namespaced under .eddu-fn-.');
 
 await execFileAsync(process.execPath,[resolve(root,'node_modules','esbuild','bin','esbuild'),functionalJs,'--bundle','--format=iife','--platform=browser','--target=es2020','--outfile='+resolve(dist,'eddu-functional-v33.js')]);
