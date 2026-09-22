@@ -1,0 +1,154 @@
+const STORAGE_KEY = 'eddu_v33_block03_comandas';
+
+function readState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return { commands: [], events: [] };
+}
+
+function writeState(state) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  return state;
+}
+
+function money(value) {
+  return Math.round((Number(value) || 0) * 100) / 100;
+}
+
+function commandTotal(command) {
+  return money((command.items || []).reduce((sum, item) => sum + money(item.unitPrice) * Math.max(0, Number(item.quantity) || 0), 0));
+}
+
+function fingerprint(input) {
+  return [
+    input.clientId || '',
+    input.appointmentId || '',
+    input.serviceId || '',
+    Number(input.quantity) || 0,
+    money(input.unitPrice),
+    input.date || ''
+  ].join('|');
+}
+
+function addCommand(input = {}) {
+  const state = readState();
+  const now = new Date().toISOString();
+  const id = input.id || 'cmd-' + Date.now().toString(36);
+  const command = {
+    id,
+    clientId: String(input.clientId || ''),
+    appointmentId: String(input.appointmentId || ''),
+    professionalId: String(input.professionalId || ''),
+    status: 'open',
+    notes: String(input.notes || ''),
+    items: [],
+    payments: [],
+    createdAt: now,
+    updatedAt: now
+  };
+  state.commands.push(command);
+  state.events.push({ type: 'command_created', commandId: id, at: now });
+  writeState(state);
+  return command;
+}
+
+function addItem(commandId, input = {}) {
+  const state = readState();
+  const command = state.commands.find(x => x.id === commandId);
+  if (!command) throw new Error('command_not_found');
+  const item = {
+    id: input.id || 'item-' + Date.now().toString(36),
+    serviceId: String(input.serviceId || ''),
+    description: String(input.description || 'Serviço'),
+    size: String(input.size || ''),
+    quantity: Math.max(1, Number(input.quantity) || 1),
+    unitPrice: money(input.unitPrice),
+    fingerprint: fingerprint(input)
+  };
+  if (command.items.some(x => x.fingerprint === item.fingerprint)) {
+    throw new Error('duplicate_command_item');
+  }
+  command.items.push(item);
+  command.updatedAt = new Date().toISOString();
+  command.total = commandTotal(command);
+  state.events.push({ type: 'command_item_added', commandId, itemId: item.id, at: command.updatedAt });
+  writeState(state);
+  return item;
+}
+
+function removeItem(commandId, itemId) {
+  const state = readState();
+  const command = state.commands.find(x => x.id === commandId);
+  if (!command) throw new Error('command_not_found');
+  command.items = command.items.filter(x => x.id !== itemId);
+  command.total = commandTotal(command);
+  command.updatedAt = new Date().toISOString();
+  state.events.push({ type: 'command_item_removed', commandId, itemId, at: command.updatedAt });
+  writeState(state);
+  return command;
+}
+
+function closeCommand(commandId) {
+  const state = readState();
+  const command = state.commands.find(x => x.id === commandId);
+  if (!command) throw new Error('command_not_found');
+  if (!command.items.length) throw new Error('empty_command');
+  command.total = commandTotal(command);
+  command.status = 'awaiting_payment';
+  command.updatedAt = new Date().toISOString();
+  state.events.push({ type: 'command_ready_for_payment', commandId, total: command.total, at: command.updatedAt });
+  writeState(state);
+  return command;
+}
+
+function addPayment(commandId, input = {}) {
+  const state = readState();
+  const command = state.commands.find(x => x.id === commandId);
+  if (!command) throw new Error('command_not_found');
+  if (command.status === 'paid') throw new Error('command_already_paid');
+  const payment = {
+    id: input.id || 'pay-' + Date.now().toString(36),
+    method: String(input.method || 'pix'),
+    amount: money(input.amount),
+    externalId: String(input.externalId || ''),
+    createdAt: new Date().toISOString()
+  };
+  const already = command.payments.some(x => x.externalId && payment.externalId && x.externalId === payment.externalId);
+  if (already) throw new Error('duplicate_payment');
+  command.payments.push(payment);
+  const paid = money(command.payments.reduce((sum, x) => sum + x.amount, 0));
+  command.total = commandTotal(command);
+  if (paid >= command.total) command.status = 'paid';
+  else command.status = 'partially_paid';
+  command.updatedAt = payment.createdAt;
+  state.events.push({ type: 'payment_registered', commandId, paymentId: payment.id, method: payment.method, amount: payment.amount, at: payment.createdAt });
+  writeState(state);
+  return command;
+}
+
+function getCommand(commandId) {
+  return readState().commands.find(x => x.id === commandId) || null;
+}
+
+function listCommands() {
+  return readState().commands.slice().sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+}
+
+function resetHomologationData() {
+  writeState({ commands: [], events: [] });
+}
+
+window.EDDU_COMMANDS = Object.freeze({
+  homologation: true,
+  addCommand,
+  addItem,
+  removeItem,
+  closeCommand,
+  addPayment,
+  getCommand,
+  listCommands,
+  resetHomologationData,
+  commandTotal
+});
