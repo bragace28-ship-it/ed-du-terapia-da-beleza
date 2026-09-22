@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 const index = await readFile('index.html','utf8');
 const lock = JSON.parse(await readFile('V33_VISUAL_LOCK.json','utf8'));
 const bytes = Buffer.from(index,'utf8');
-const blob = createHash('sha1').update(Buffer.from('blob '+bytes.length+'\\0')).update(bytes).digest('hex');
+const blob = createHash('sha1').update(Buffer.from('blob '+bytes.length+'\0')).update(bytes).digest('hex');
 const sha256 = createHash('sha256').update(bytes).digest('hex');
 assert.equal(blob, lock.gitBlobSha);
 assert.equal(sha256, lock.sha256);
