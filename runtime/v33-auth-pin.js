@@ -5,7 +5,7 @@ const DATA_API_URL = 'https://ep-sweet-meadow-b43jne0i.apirest.c-6.us-east-2.aws
 
 // Homologação: login/PIN ficam bypassados somente em branches de desenvolvimento.
 // O build de produção recusa este modo; não há credencial privilegiada no navegador.
-export const HOMOLOGATION_ACCESS = true;
+export const HOMOLOGATION_ACCESS = false;
 const auth = createAuthClient(AUTH_URL);
 const demoUser = Object.freeze({ id: '00000000-0000-0000-0000-000000000033', name: 'Mariana', email: 'homologacao@eddu.local' });
 const demoProfile = Object.freeze({ id: demoUser.id, full_name: 'Mariana', role: 'professional', active: true });
