@@ -98,7 +98,7 @@ const cssSelectors=functionalStyles.split('{').slice(0,-1).map(x=>x.split('}').p
 if(cssSelectors.some(selector=>selector.split(',').some(part=>part.trim() && !part.trim().startsWith('.eddu-fn-'))))
   throw new Error('V33 FUNCTIONAL FIREWALL FAILED: runtime CSS must be namespaced under .eddu-fn-.');
 
-await execFileAsync(process.execPath,[resolve(root,'node_modules','esbuild','bin','esbuild'),functionalJs,'--bundle','--format=iife','--platform=browser','--target=es2020','--outfile='+resolve(dist,'eddu-functional-v33.js')]);
+await execFileAsync(resolve(root,'node_modules','esbuild','bin','esbuild'),[functionalJs,'--bundle','--format=iife','--platform=browser','--target=es2020','--outfile='+resolve(dist,'eddu-functional-v33.js')]);
 await writeFile(resolve(dist,'eddu-functional-v33.css'),functionalStyles);
 const releaseHtml=await readFile(resolve(dist,'index.html'),'utf8');
 const injected=releaseHtml.replace('</head>','<link rel="stylesheet" href="/eddu-functional-v33.css"></head>').replace('</body>','<script src="/eddu-functional-v33.js"></script></body>');
