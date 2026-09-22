@@ -15,7 +15,8 @@ await import('../runtime/v33-block03-comandas.js');
 const C = globalThis.window.EDDU_COMMANDS;
 assert.equal(C.homologation, true);
 
-const command = C.addCommand({ clientId: 'client-1', professionalId: 'pro-1' });
+const command = C.addCommand({ clientId: 'client-1', professionalId: 'pro-1', idempotencyKey: 'homolog-command-1' });
+assert.throws(() => C.addCommand({ clientId: 'client-1', professionalId: 'pro-1', idempotencyKey: 'homolog-command-1' }), /duplicate_command/);
 assert.equal(command.status, 'open');
 
 C.addItem(command.id, { serviceId: 'svc-1', description: 'Corte', quantity: 2, unitPrice: 80, date: '2026-09-22' });
@@ -30,6 +31,7 @@ C.closeCommand(command.id);
 assert.equal(C.getCommand(command.id).status, 'awaiting_payment');
 
 C.addPayment(command.id, { method: 'pix', amount: 100, externalId: 'evt-1' });
+assert.throws(() => C.addPayment(command.id, { method: 'pix', amount: 61, externalId: 'evt-over' }), /payment_exceeds_remaining/);
 assert.equal(C.getCommand(command.id).status, 'partially_paid');
 
 C.addPayment(command.id, { method: 'pix', amount: 60, externalId: 'evt-2' });
