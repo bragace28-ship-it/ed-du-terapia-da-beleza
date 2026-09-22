@@ -9,7 +9,7 @@ const blob = createHash('sha1').update(Buffer.from('blob '+bytes.length+'\\0')).
 const sha256 = createHash('sha256').update(bytes).digest('hex');
 assert.equal(blob, lock.gitBlobSha);
 assert.equal(sha256, lock.sha256);
-assert.doesNotMatch(index, /https?:\\/\\/[^"'\\s]*supabase|@supabase|VITE_SUPABASE|supabase\\.co/i);
+assert.doesNotMatch(index, /https?:\/\/[^"'\s]*supabase|@supabase|VITE_SUPABASE|supabase\.co/i);
 assert.doesNotMatch(index, /vercel\.app/i);
 
 const matrix = await readFile('docs/BLOCO_01_MATRIZ_V33.md','utf8');
@@ -35,10 +35,10 @@ const sources = await Promise.all([
 ].map(p=>readFile(p,'utf8')));
 const all = sources.join('\\n');
 assert.doesNotMatch(all, /document\.write|innerHTML|outerHTML|insertAdjacentHTML|\.style\s*=|location\.replace/);
-assert.match(all, /HOMOLOGATION_ACCESS\\s*=\\s*true/);
+assert.match(all, /HOMOLOGATION_ACCESS\s*=\s*true/);
 
 const build = await readFile('scripts/build.mjs','utf8');
 assert.match(build, /cloudflare-production/);
-assert.match(build, /homologation login\\/PIN bypass must be disabled/);
+assert.match(build, /homologation login\/PIN bypass must be disabled/);
 
 console.log('BLOCK 18 REGRESSION: PASS — 86/86 matrix ids, immutable V33, runtime firewall and production bypass gate verified');
