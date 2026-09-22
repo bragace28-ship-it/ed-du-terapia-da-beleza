@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "check": "node scripts/build.mjs --check",
-    "test": "node scripts/block03.test.mjs && node scripts/block04.test.mjs",
+    "test": "node scripts/block03.test.mjs && node scripts/block04.test.mjs && node scripts/block06-08.test.mjs",
     "check:functional": "npm test"
   },
   "engines": {
