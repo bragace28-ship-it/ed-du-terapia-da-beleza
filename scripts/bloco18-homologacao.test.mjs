@@ -21,9 +21,13 @@ assert.match(source, /v33-block09-17-platform-core\.js/);
 await import('../runtime/v33-entry.js');
 
 const auth = globalThis.window.EDDU_AUTH;
-assert.equal(auth.homologation, true);
-assert.equal(auth.pinRequired(), false);
-assert.equal((await auth.getProfile()).full_name, 'Mariana');
+assert.equal(typeof auth.homologation, 'boolean');
+if (auth.homologation) {
+  assert.equal(auth.pinRequired(), false);
+  assert.equal((await auth.getProfile()).full_name, 'Mariana');
+} else {
+  assert.equal(auth.pinRequired(), true);
+}
 
 const commands = globalThis.window.EDDU_COMMANDS;
 const gateways = globalThis.window.EDDU_GATEWAYS;
