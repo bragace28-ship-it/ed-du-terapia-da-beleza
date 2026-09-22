@@ -88,12 +88,15 @@ if(builtSourceBytes.length !== lock.byteLength || builtSourceSha !== lock.gitBlo
 const built=applyApprovedStartup(builtSource);
 await writeFile(resolve(dist,'index.html'),built);
 
-const functionalJs=resolve(root,'runtime/v33-auth-pin.js');
+const functionalJs=resolve(root,'runtime/v33-entry.js');
 const functionalCss=resolve(root,'runtime/v33-functional.css');
-const functionalSource=await readFile(functionalJs,'utf8');
+const functionalFiles=['runtime/v33-entry.js','runtime/v33-auth-pin.js','runtime/v33-block03-comandas.js'];
+const functionalSource=(await Promise.all(functionalFiles.map(async p=>readFile(resolve(root,p),'utf8')))).join('\n');
 const functionalStyles=await readFile(functionalCss,'utf8');
 if(/<style|document\\.write|innerHTML|outerHTML|insertAdjacentHTML|\\.style\\s*=|location\\.replace/i.test(functionalSource))
   throw new Error('V33 FUNCTIONAL FIREWALL FAILED: runtime JS contains forbidden direct visual/HTML mutation.');
+if(cloudflareBranch === 'cloudflare-production' && /HOMOLOGATION_ACCESS\\s*=\\s*true/.test(functionalSource))
+  throw new Error('PRODUCTION BLOCKED: homologation login/PIN bypass must be disabled before release.');
 const cssSelectors=functionalStyles.split('{').slice(0,-1).map(x=>x.split('}').pop().trim()).filter(Boolean);
 if(cssSelectors.some(selector=>selector.split(',').some(part=>part.trim() && !part.trim().startsWith('.eddu-fn-'))))
   throw new Error('V33 FUNCTIONAL FIREWALL FAILED: runtime CSS must be namespaced under .eddu-fn-.');
