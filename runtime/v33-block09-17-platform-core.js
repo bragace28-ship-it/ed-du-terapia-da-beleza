@@ -12,9 +12,11 @@ function id(prefix) { return prefix + '-' + Date.now().toString(36); }
 
 function createCommission(input = {}) {
   const s = state();
-  const sale = Math.max(0, Number(input.sale) || 0);
-  const rate = Math.max(0, Number(input.rate) || 0);
+  const sale = Number(input.sale);
+  const rate = Number(input.rate);
+  if (!Number.isFinite(sale) || sale < 0 || !Number.isFinite(rate) || rate < 0 || rate > 100) throw new Error('commission_invalid');
   const item = { id: input.id || id('com'), professionalId: String(input.professionalId || ''), sale, rate, amount: Math.round(sale * rate) / 100, status: 'pending' };
+  if (s.commissions.some(v => v.id === item.id)) throw new Error('commission_duplicate');
   s.commissions.push(item); save(s); return item;
 }
 
@@ -38,8 +40,9 @@ function upsertService(input = {}) {
 
 function createQuote(input = {}) {
   const s = state();
-  const subtotal = Math.max(0, Number(input.subtotal) || 0);
-  const discount = Math.min(subtotal, Math.max(0, Number(input.discount) || 0));
+  const subtotal = Number(input.subtotal);
+  const discount = Number(input.discount || 0);
+  if (!Number.isFinite(subtotal) || subtotal < 0 || !Number.isFinite(discount) || discount < 0 || discount > subtotal) throw new Error('quote_invalid');
   const total = Math.round((subtotal - discount) * 100) / 100;
   const item = { id: input.id || id('quote'), clientId: String(input.clientId || ''), subtotal, discount, total, status: 'draft', createdAt: new Date().toISOString() };
   s.quotes.push(item); save(s); return item;
@@ -61,13 +64,17 @@ function createGiftCard(input = {}) {
   const s = state();
   const code = String(input.code || id('gift')).toUpperCase();
   if (s.giftCards.some(v => v.code === code)) throw new Error('gift_card_duplicate');
-  const item = { id: id('gc'), code, value: Math.max(0, Number(input.value) || 0), status: 'active' };
+  const value = Number(input.value);
+  if (!Number.isFinite(value) || value <= 0) throw new Error('gift_card_value_invalid');
+  const item = { id: id('gc'), code, value, status: 'active' };
   s.giftCards.push(item); save(s); return item;
 }
 
 function createDocument(input = {}) {
   const s = state();
   const item = { id: input.id || id('doc'), clientId: String(input.clientId || ''), type: String(input.type || 'responsibility_term'), status: 'pending', acceptedAt: null };
+  if (!item.clientId) throw new Error('document_client_required');
+  if (s.documents.some(v => v.id === item.id)) throw new Error('document_duplicate');
   s.documents.push(item); save(s); return item;
 }
 
@@ -80,6 +87,8 @@ function acceptDocument(idValue) {
 function upsertUser(input = {}) {
   const s = state();
   const item = { id: input.id || id('usr'), name: String(input.name || ''), role: String(input.role || 'client'), active: input.active !== false };
+  if (!item.name) throw new Error('user_name_required');
+  if (!['admin','manager','professional','client'].includes(item.role)) throw new Error('user_role_invalid');
   const i = s.users.findIndex(v => v.id === item.id);
   if (i >= 0) s.users[i] = item; else s.users.push(item);
   save(s); return item;
