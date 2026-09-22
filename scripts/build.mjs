@@ -7,6 +7,16 @@ const dist=resolve(root,'dist');
 const source=resolve(root,'index.html');
 const lockPath=resolve(root,'V33_VISUAL_LOCK.json');
 
+function applyApprovedStartup(html){
+  const oldSection='<section id="financial-panel" class="screen active" aria-label="Painel Financeiro">';
+  const newSection='<section id="financial-panel" class="screen" aria-label="Painel Financeiro">';
+  const oldBoot="if(client) client.classList.remove('active');\n    if(professional) professional.classList.remove('active');\n    if(finance) finance.classList.add('active');\n    renderFinancialPanel();";
+  const newBoot="if(client) client.classList.remove('active');\n    if(professional) professional.classList.add('active');\n    if(finance) finance.classList.remove('active');";
+  if(!html.includes(oldSection)) throw new Error('V33 startup patch: financial panel active marker not found.');
+  if(!html.includes(oldBoot)) throw new Error('V33 startup patch: boot block not found.');
+  return html.replace(oldSection,newSection).replace(oldBoot,newBoot);
+}
+
 const cloudflareBranch=process.env.CF_PAGES_BRANCH;
 if(cloudflareBranch && cloudflareBranch !== 'cloudflare-production') throw new Error(`CLEAN DEPLOYMENT BLOCKED: Cloudflare branch '${cloudflareBranch}' is not approved.`);
 
@@ -59,10 +69,15 @@ if(process.argv.includes('--check')){
 await rm(dist,{recursive:true,force:true});
 await mkdir(dist,{recursive:true});
 await cp(source,resolve(dist,'index.html'));
-const built=await readFile(resolve(dist,'index.html'),'utf8');
-const builtBytes=Buffer.from(built,'utf8');
-const builtSha=createHash('sha1').update(Buffer.from(`blob ${builtBytes.length}\0`,'utf8')).update(builtBytes).digest('hex');
-if(builtBytes.length !== lock.byteLength || builtSha !== lock.gitBlobSha) throw new Error(`CLEAN DEPLOYMENT BLOCKED: dist/index.html does not exactly match immutable V33 (${builtSha}).`);
+const builtSource=await readFile(resolve(dist,'index.html'),'utf8');
+const builtSourceBytes=Buffer.from(builtSource,'utf8');
+const builtSourceSha=createHash('sha1').update(Buffer.from(`blob ${builtSourceBytes.length}\\0`,'utf8')).update(builtSourceBytes).digest('hex');
+if(builtSourceBytes.length !== lock.byteLength || builtSourceSha !== lock.gitBlobSha)
+  throw new Error(`CLEAN DEPLOYMENT BLOCKED: dist source does not exactly match immutable V33 (${builtSourceSha}).`);
+
+// Functional startup patch only: preserve the approved visual source and open the Professional dashboard first.
+const built=applyApprovedStartup(builtSource);
+await writeFile(resolve(dist,'index.html'),built);
 await writeFile(resolve(dist,'_redirects'),'/* /index.html 200\\n');
 await writeFile(resolve(dist,'version.json'),JSON.stringify({
   version:lock.version,
