@@ -12,7 +12,7 @@ function overlap(aStart, aEnd, bStart, bEnd) {
 function createAppointment(input = {}) {
   const s = state();
   const item = {
-    id: input.id || 'apt-' + Date.now().toString(36),
+    id: input.id || 'apt-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8),
     professionalId: String(input.professionalId || ''),
     clientId: String(input.clientId || ''),
     serviceId: String(input.serviceId || ''),
