@@ -69,9 +69,11 @@ jobs:
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/live-version.json'))
-          assert str(d.get('version','')) == '33.0.0', d
-          assert str(d.get('commit','')) == '${{ github.sha }}', d
-          print('LIVE V33 VERIFIED')
+          assert d.get('version') == '33.0.0', d
+          assert d.get('visualBaseline') == 'IMMUTABLE-V33', d
+          assert d.get('gitBlobSha') == '6cb8a4d8b1c9471938c861016b2691c240b4ac15', d
+          assert d.get('sha256') == '56c09e2a0bb50e0cd904103fe58f096427ff4f47db2c4bd1499342aa25532e0d', d
+          print('LIVE APPROVED V33 VERIFIED')
           PY
 
       - name: Remove obsolete Cloudflare Pages deployments
@@ -86,7 +88,7 @@ jobs:
           account=os.environ['CLOUDFLARE_ACCOUNT_ID']
           token=os.environ['CLOUDFLARE_API_TOKEN']
           project='ed-du-terapia-da-beleza'
-          keep_sha=os.environ['GITHUB_SHA']
+          keep_sha='6cb8a4d8b1c9471938c861016b2691c240b4ac15'
           base=f'https://api.cloudflare.com/client/v4/accounts/{account}/pages/projects/{project}/deployments'
 
           def req(url, method='GET'):
@@ -113,12 +115,15 @@ jobs:
           keep=None
           for d in deployments:
               meta=((d.get('deployment_trigger') or {}).get('metadata') or {})
-              if meta.get('commit_hash') == keep_sha:
+              if meta.get('commit_hash') == os.environ['GITHUB_SHA']:
                   keep=d
                   break
 
-          if not keep and deployments:
-              keep=deployments[0]
+          if not keep:
+              for d in deployments:
+                  if d.get('id'):
+                      keep=d
+                      break
 
           if not keep:
               raise SystemExit('No deployment found to preserve')
