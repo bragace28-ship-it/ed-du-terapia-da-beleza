@@ -27,5 +27,4 @@ jobs:
         run: |
           test -f dist/eddu-functional-v33.js
           test -f dist/eddu-functional-v33.css
-          ! grep -Eiq 'document\\.write|innerHTML|outerHTML|insertAdjacentHTML|\\.style[[:space:]]*=' runtime/v33-auth-pin.js
-          grep -Eq '^\\.eddu-fn-' runtime/v33-functional.css
+          node --input-type=module -e "import fs from 'node:fs'; const js=fs.readFileSync('runtime/v33-auth-pin.js','utf8'); if(/document\\\\.write|innerHTML|outerHTML|insertAdjacentHTML|\\\\.style\\\\s*=/.test(js)) process.exit(1); const css=fs.readFileSync('runtime/v33-functional.css','utf8'); const selectors=css.split('{').slice(0,-1).map(x=>x.split('}').pop().trim()).filter(Boolean); if(selectors.some(s=>s.split(',').some(p=>p.trim()&&!p.trim().startsWith('.eddu-fn-')))) process.exit(1);"
