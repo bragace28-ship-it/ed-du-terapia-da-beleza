@@ -1,0 +1,31 @@
+name: ED DU Fase 2 CI
+
+on:
+  push:
+    branches:
+      - 'fase2-*'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned build dependencies
+        run: npm install --no-audit --no-fund
+      - name: Visual Lock
+        run: npm run check
+      - name: Build functional layer
+        run: npm run build
+      - name: Verify runtime firewall
+        run: |
+          test -f dist/eddu-functional-v33.js
+          test -f dist/eddu-functional-v33.css
+          ! grep -Eiq 'document\\.write|innerHTML|outerHTML|insertAdjacentHTML|\\.style[[:space:]]*=' runtime/v33-auth-pin.js
+          grep -Eq '^\\.eddu-fn-' runtime/v33-functional.css
