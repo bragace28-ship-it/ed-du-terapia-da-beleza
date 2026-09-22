@@ -276,8 +276,8 @@ function initAgendaUi() {
   render();
 }
 
-if (document.readyState === 'loading') {
+if (typeof document !== 'undefined' && document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initAgendaUi, { once: true });
-} else {
+} else if (typeof document !== 'undefined') {
   initAgendaUi();
 }
