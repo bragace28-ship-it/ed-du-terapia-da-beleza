@@ -6,7 +6,8 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "check": "node scripts/build.mjs --check",
-    "test": "node scripts/build.mjs --check"
+    "test": "node scripts/block03.test.mjs",
+    "check:functional": "node scripts/block03.test.mjs"
   },
   "engines": {
     "node": ">=22"
