@@ -19,7 +19,13 @@ function applyApprovedStartup(html){
   const newBoot="if(client) client.classList.remove('active');\n    if(professional) professional.classList.add('active');\n    if(finance) finance.classList.remove('active');";
   if(!html.includes(oldSection)) throw new Error('V33 startup patch: financial panel active marker not found.');
   if(!html.includes(oldBoot)) throw new Error('V33 startup patch: boot block not found.');
-  return html.replace(oldSection,newSection).replace(oldBoot,newBoot);
+  const financialCss='#financial-panel.screen{\\n  display:block;';
+  const financialCssFixed='#financial-panel.screen{\\n  display:none;';
+  if(!html.includes(financialCss)) throw new Error('V33 startup patch: financial CSS marker not found.');
+  const roleOverride="if(professional) professional.classList.remove('active');\\n    if(finance) finance.classList.toggle('active',role==='professional');";
+  const roleOverrideFixed="if(professional) professional.classList.toggle('active',role==='professional');\\n    if(finance) finance.classList.remove('active');";
+  if(!html.includes(roleOverride)) throw new Error('V33 startup patch: financial role override not found.');
+  return html.replace(oldSection,newSection).replace(oldBoot,newBoot).replace(financialCss,financialCssFixed).replace(roleOverride,roleOverrideFixed);
 }
 
 const cloudflareBranch=process.env.CF_PAGES_BRANCH;
