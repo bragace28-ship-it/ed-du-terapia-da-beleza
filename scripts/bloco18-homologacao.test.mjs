@@ -7,7 +7,9 @@ globalThis.localStorage = {
   setItem: (key, value) => store.set(key, String(value)),
   removeItem: key => store.delete(key)
 };
-globalThis.window = {};
+globalThis.window = {
+  dispatchEvent: () => true
+};
 
 const source = await readFile('runtime/v33-entry.js','utf8');
 assert.match(source, /v33-auth-pin\.js/);
