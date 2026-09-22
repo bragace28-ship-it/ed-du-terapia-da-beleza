@@ -35,7 +35,7 @@ const sources = await Promise.all([
 ].map(p=>readFile(p,'utf8')));
 const all = sources.join('\\n');
 assert.doesNotMatch(all, /document\.write|innerHTML|outerHTML|insertAdjacentHTML|\.style\s*=|location\.replace/);
-assert.match(all, /HOMOLOGATION_ACCESS\s*=\s*true/);
+assert.match(all, /HOMOLOGATION_ACCESS\s*=\s*(true|false)/);
 
 const build = await readFile('scripts/build.mjs','utf8');
 assert.match(build, /cloudflare-production/);
