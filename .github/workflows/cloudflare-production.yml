@@ -20,6 +20,9 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Install build dependencies
+        run: npm install --no-audit --no-fund
+
       - name: Validate immutable V33
         run: npm run check
 
