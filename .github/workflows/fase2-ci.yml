@@ -23,6 +23,8 @@ jobs:
         run: npm run check
       - name: Build functional layer
         run: npm run build
+      - name: Block 03 functional tests
+        run: npm test
       - name: Verify runtime firewall
         run: |
           test -f dist/eddu-functional-v33.js
