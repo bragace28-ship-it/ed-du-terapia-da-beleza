@@ -1,6 +1,9 @@
 import {cp, mkdir, rm, readFile, writeFile, readdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve, join} from 'node:path';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+const execFileAsync=promisify(execFile);
 
 const root=process.cwd();
 const dist=resolve(root,'dist');
@@ -84,6 +87,22 @@ if(builtSourceBytes.length !== lock.byteLength || builtSourceSha !== lock.gitBlo
 // Functional startup patch only: preserve the approved visual source and open the Professional dashboard first.
 const built=applyApprovedStartup(builtSource);
 await writeFile(resolve(dist,'index.html'),built);
+
+const functionalJs=resolve(root,'runtime/v33-auth-pin.js');
+const functionalCss=resolve(root,'runtime/v33-functional.css');
+const functionalSource=await readFile(functionalJs,'utf8');
+const functionalStyles=await readFile(functionalCss,'utf8');
+if(/<style|document\\.write|innerHTML|outerHTML|insertAdjacentHTML|\\.style\\s*=|location\\.replace/i.test(functionalSource))
+  throw new Error('V33 FUNCTIONAL FIREWALL FAILED: runtime JS contains forbidden direct visual/HTML mutation.');
+if(!/^\\s*(?:\\.eddu-fn-[a-z0-9_-]+)[\\s\\S]*$/i.test(functionalStyles))
+  throw new Error('V33 FUNCTIONAL FIREWALL FAILED: runtime CSS must be namespaced under .eddu-fn-.');
+
+await execFileAsync(process.execPath,[resolve(root,'node_modules','esbuild','bin','esbuild'),functionalJs,'--bundle','--format=iife','--platform=browser','--target=es2020','--outfile='+resolve(dist,'eddu-functional-v33.js')]);
+await writeFile(resolve(dist,'eddu-functional-v33.css'),functionalStyles);
+const releaseHtml=await readFile(resolve(dist,'index.html'),'utf8');
+const injected=releaseHtml.replace('</head>','<link rel="stylesheet" href="/eddu-functional-v33.css"></head>').replace('</body>','<script src="/eddu-functional-v33.js"></script></body>');
+await writeFile(resolve(dist,'index.html'),injected);
+
 await writeFile(resolve(dist,'_redirects'),'/* /index.html 200\\n');
 await writeFile(resolve(dist,'version.json'),JSON.stringify({
   version:lock.version,
@@ -93,7 +112,7 @@ await writeFile(resolve(dist,'version.json'),JSON.stringify({
   sha256:lock.sha256
 }));
 const distFiles=await readdir(dist);
-const expectedDistFiles=new Set(['index.html','_redirects','version.json']);
+const expectedDistFiles=new Set(['index.html','_redirects','version.json','eddu-functional-v33.js','eddu-functional-v33.css']);
 if(distFiles.length !== expectedDistFiles.size || distFiles.some(name=>!expectedDistFiles.has(name)))
   throw new Error(`CLEAN DEPLOYMENT BLOCKED: dist contains unexpected files: ${distFiles.join(', ')}`);
 
