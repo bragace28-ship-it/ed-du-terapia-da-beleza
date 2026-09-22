@@ -21,6 +21,10 @@ function createAppointment(input = {}) {
     status: 'scheduled'
   };
   if (!item.startAt || !item.endAt) throw new Error('appointment_time_required');
+  const startMs = new Date(item.startAt).getTime();
+  const endMs = new Date(item.endAt).getTime();
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || startMs >= endMs) throw new Error('appointment_time_invalid');
+  if (s.appointments.some(x => x.id === item.id)) throw new Error('appointment_duplicate');
   const conflict = s.appointments.find(x =>
     x.professionalId === item.professionalId &&
     x.status !== 'cancelled' &&
@@ -47,13 +51,13 @@ function createPayable(input = {}) {
     id: input.id || 'pay-' + Date.now().toString(36),
     supplier: String(input.supplier || ''),
     description: String(input.description || ''),
-    amount: Math.abs(Number(input.amount) || 0),
+    amount: Number(input.amount),
     dueDate: String(input.dueDate || ''),
     status: 'open',
     recurring: Boolean(input.recurring),
     source: String(input.source || 'manual')
   };
-  if (!item.amount || !item.dueDate) throw new Error('payable_invalid');
+  if (!Number.isFinite(item.amount) || item.amount <= 0 || !item.dueDate) throw new Error('payable_invalid');
   s.payables.push(item);
   save(s);
   return item;
@@ -65,12 +69,12 @@ function createReceivable(input = {}) {
     id: input.id || 'rec-' + Date.now().toString(36),
     clientId: String(input.clientId || ''),
     commandId: String(input.commandId || ''),
-    amount: Math.abs(Number(input.amount) || 0),
+    amount: Number(input.amount),
     dueDate: String(input.dueDate || ''),
     status: 'open',
     installments: Math.max(1, Number(input.installments) || 1)
   };
-  if (!item.amount || !item.dueDate) throw new Error('receivable_invalid');
+  if (!Number.isFinite(item.amount) || item.amount <= 0 || !item.dueDate) throw new Error('receivable_invalid');
   s.receivables.push(item);
   save(s);
   return item;
