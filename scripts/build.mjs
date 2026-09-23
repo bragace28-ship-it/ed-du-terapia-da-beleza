@@ -107,6 +107,8 @@ await writeFile(resolve(dist,'index.html'),built);
 
 const functionalJs=resolve(root,'runtime/v33-entry.js');
 const functionalCss=resolve(root,'runtime/v33-functional.css');
+const clientHeaderJs=resolve(root,'runtime/v33-client-header.js');
+const clientHeaderCss=resolve(root,'runtime/v33-client-header.css');
 const functionalFiles=['runtime/v33-entry.js','runtime/v33-auth-pin.js','runtime/v33-block03-comandas.js','runtime/v33-block04-gateways.js','runtime/v33-block06-08-agenda-financeiro.js','runtime/v33-block09-17-platform-core.js'];
 const functionalSource=(await Promise.all(functionalFiles.map(async p=>readFile(resolve(root,p),'utf8')))).join('\n');
 const functionalStyles=await readFile(functionalCss,'utf8');
@@ -119,9 +121,11 @@ if(cssSelectors.some(selector=>selector.split(',').some(part=>part.trim() && !pa
   throw new Error('V33 FUNCTIONAL FIREWALL FAILED: runtime CSS must be namespaced under .eddu-fn-.');
 
 await execFileAsync(resolve(root,'node_modules','esbuild','bin','esbuild'),[functionalJs,'--bundle','--format=iife','--platform=browser','--target=es2020','--outfile='+resolve(dist,'eddu-functional-v33.js')]);
+await execFileAsync(resolve(root,'node_modules','esbuild','bin','esbuild'),[clientHeaderJs,'--bundle','--format=iife','--platform=browser','--target=es2020','--outfile='+resolve(dist,'eddu-client-header-v33.js')]);
 await writeFile(resolve(dist,'eddu-functional-v33.css'),functionalStyles);
+await cp(clientHeaderCss,resolve(dist,'eddu-client-header-v33.css'));
 const releaseHtml=await readFile(resolve(dist,'index.html'),'utf8');
-const injected=releaseHtml.replace('</head>','<link rel="stylesheet" href="/eddu-functional-v33.css"></head>').replace('</body>','<script src="/eddu-functional-v33.js"></script></body>');
+const injected=releaseHtml.replace('</head>','<link rel="stylesheet" href="/eddu-functional-v33.css"><link rel="stylesheet" href="/eddu-client-header-v33.css"></head>').replace('</body>','<script src="/eddu-functional-v33.js"></script><script src="/eddu-client-header-v33.js"></script></body>');
 await writeFile(resolve(dist,'index.html'),injected);
 
 await writeFile(resolve(dist,'_redirects'),'/* /index.html 200\\n');
@@ -133,7 +137,7 @@ await writeFile(resolve(dist,'version.json'),JSON.stringify({
   sha256:lock.sha256
 }));
 const distFiles=await readdir(dist);
-const expectedDistFiles=new Set(['index.html','_redirects','version.json','eddu-functional-v33.js','eddu-functional-v33.css']);
+const expectedDistFiles=new Set(['index.html','_redirects','version.json','eddu-functional-v33.js','eddu-functional-v33.css','eddu-client-header-v33.js','eddu-client-header-v33.css']);
 if(distFiles.length !== expectedDistFiles.size || distFiles.some(name=>!expectedDistFiles.has(name)))
   throw new Error(`CLEAN DEPLOYMENT BLOCKED: dist contains unexpected files: ${distFiles.join(', ')}`);
 
