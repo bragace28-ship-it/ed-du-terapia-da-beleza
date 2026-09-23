@@ -1,0 +1,27 @@
+/* V33 client header — approved balanced composition */
+.eddu-client-header{position:absolute;left:0;top:4.9%;width:100%;height:6.7%;z-index:120;background:linear-gradient(90deg,#fff 0%,#faf8ff 52%,#fff 100%);border-bottom:1px solid #e6deea;display:flex;align-items:center;padding:0 3.6%;box-sizing:border-box;pointer-events:none;}
+.eddu-client-brand{height:100%;width:42%;display:flex;align-items:center;gap:7px;pointer-events:none;}
+.eddu-client-lotus{width:39px;height:39px;flex:0 0 39px;display:flex;align-items:center;justify-content:center;color:#7620b7;font-size:34px;line-height:1;}
+.eddu-client-brand-copy{display:flex;flex-direction:column;justify-content:center;line-height:1;white-space:nowrap;}
+.eddu-client-brand-copy b{font-size:22px;letter-spacing:-.5px;color:#6420a1;font-weight:900;}
+.eddu-client-brand-copy small{margin-top:4px;font-size:8px;letter-spacing:2.2px;color:#75687c;font-weight:700;}
+.eddu-client-actions{margin-left:auto;height:100%;display:flex;align-items:center;gap:8px;pointer-events:auto;}
+.eddu-client-wa{height:66%;min-width:116px;padding:0 14px;border:0;border-radius:999px;background:#25d366;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:900;font-size:12px;box-shadow:0 3px 8px rgba(0,0,0,.12);cursor:pointer;}
+.eddu-client-wa .wa-symbol{width:31px;height:31px;border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;line-height:1;}
+.eddu-client-icon{position:relative;width:52px;height:52px;border:1px solid #e1d6e8;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:#6420a1;box-shadow:0 3px 10px rgba(0,0,0,.08);cursor:pointer;}
+.eddu-client-icon.profile{background:#fbf4ff;}
+.eddu-client-icon .icon{font-size:28px;line-height:1;}
+.eddu-client-icon .badge{position:absolute;right:-2px;top:-4px;min-width:22px;height:22px;padding:0 5px;border-radius:999px;background:#d51f68;color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;box-sizing:border-box;}
+.eddu-client-icon.profile .online{position:absolute;right:3px;top:4px;width:8px;height:8px;border-radius:50%;background:#35c46a;border:2px solid #fff;}
+.eddu-client-header button:focus-visible{outline:3px solid #7620b7;outline-offset:2px;}
+.eddu-client-overlay{position:fixed;inset:0;z-index:500;display:none;align-items:flex-end;background:rgba(31,20,37,.35);}
+.eddu-client-overlay.is-open{display:flex;}
+.eddu-client-sheet{width:min(100vw,681px);max-height:82vh;overflow:auto;margin:0 auto;background:#fff;border-radius:28px 28px 0 0;padding:22px 18px 28px;box-shadow:0 -10px 40px rgba(0,0,0,.2);position:relative;}
+.eddu-client-sheet h2{margin:4px 48px 8px 0;color:#61209a;font-size:26px;}
+.eddu-client-sheet .eddu-close{position:absolute;right:18px;top:14px;width:42px;height:42px;border:0;border-radius:50%;background:#f0e5f5;color:#6420a1;font-size:25px;font-weight:900;}
+.eddu-client-sheet .eddu-row{border:1px solid #e5dbe9;border-radius:15px;padding:13px;margin:9px 0;background:#fff;}
+.eddu-client-sheet .eddu-muted{color:#706777;font-size:13px;line-height:1.45;}
+.eddu-client-sheet .eddu-input{width:100%;padding:12px;border:1px solid #dcd0e3;border-radius:11px;margin:5px 0 10px;box-sizing:border-box;}
+.eddu-client-sheet .eddu-primary{width:100%;border:0;border-radius:14px;padding:13px;background:linear-gradient(90deg,#7623b7,#a83af0);color:#fff;font-weight:900;cursor:pointer;margin-top:8px;}
+.eddu-notification-unread{border-left:4px solid #7620b7;}
+@media(max-width:520px){.eddu-client-header{padding:0 3%;}.eddu-client-brand{width:35%;gap:4px}.eddu-client-lotus{width:30px;height:30px;flex-basis:30px;font-size:27px}.eddu-client-brand-copy b{font-size:18px}.eddu-client-brand-copy small{font-size:6.5px;letter-spacing:1.5px}.eddu-client-actions{gap:6px}.eddu-client-wa{min-width:106px;height:64%;font-size:11px;padding:0 10px}.eddu-client-wa .wa-symbol{width:28px;height:28px;font-size:17px}.eddu-client-icon{width:48px;height:48px}.eddu-client-icon .icon{font-size:25px}.eddu-client-sheet{padding-left:15px;padding-right:15px;}}
