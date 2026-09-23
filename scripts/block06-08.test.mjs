@@ -20,8 +20,12 @@ assert.equal(sundayRule.exceptional, true);
 
 const long17 = A.agendaNormalRule('2026-09-23', '17:00', '19:00');
 assert.equal(long17.exceptional, false);
-assert.equal(long17.ok, false);
-assert.equal(long17.reason, 'long_procedure_last_normal_17');
+assert.equal(long17.ok, true);
+
+const tooLateLong = A.agendaNormalRule('2026-09-23', '17:30', '19:30');
+assert.equal(tooLateLong.exceptional, false);
+assert.equal(tooLateLong.ok, false);
+assert.equal(tooLateLong.reason, 'long_procedure_last_normal_17');
 
 const exceptional18 = A.agendaNormalRule('2026-09-23', '18:00', '20:00');
 assert.equal(exceptional18.exceptional, true);
