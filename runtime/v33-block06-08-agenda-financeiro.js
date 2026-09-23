@@ -281,3 +281,54 @@ if (typeof document !== 'undefined' && document.readyState === 'loading') {
 } else if (typeof document !== 'undefined') {
   initAgendaUi();
 }
+
+
+function uuidAgenda() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  return '00000000-0000-4000-8000-' + String(Date.now()).padStart(12, '0');
+}
+
+async function createAppointmentNeon(input = {}) {
+  if (!window.EDDU_NEON) throw new Error('neon_bridge_unavailable');
+  const startMs = new Date(input.startAt || '').getTime();
+  const endMs = new Date(input.endAt || '').getTime();
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || startMs >= endMs) throw new Error('appointment_time_invalid');
+  const existing = await window.EDDU_NEON.select('appointments',
+    '?select=id&professional_id=eq.' + encodeURIComponent(String(input.professionalId || '')) +
+    '&start_at=lt.' + encodeURIComponent(String(input.endAt || '')) +
+    '&end_at=gt.' + encodeURIComponent(String(input.startAt || '')) +
+    '&status=neq.cancelled&limit=1'
+  );
+  if (Array.isArray(existing) && existing.length) throw new Error('professional_schedule_conflict');
+  const row = {
+    id: input.id || uuidAgenda(),
+    professional_id: String(input.professionalId || ''),
+    client_id: String(input.clientId || ''),
+    service_id: String(input.serviceId || ''),
+    start_at: String(input.startAt || ''),
+    end_at: String(input.endAt || ''),
+    status: 'scheduled'
+  };
+  const result = await window.EDDU_NEON.insert('appointments', row);
+  return Array.isArray(result) ? result[0] : result;
+}
+
+async function createPayableNeon(input = {}) {
+  if (!window.EDDU_NEON) throw new Error('neon_bridge_unavailable');
+  const amount=Number(input.amount);
+  if (!Number.isFinite(amount) || amount<=0 || !input.dueDate) throw new Error('payable_invalid');
+  const row={id:input.id||uuidAgenda(),supplier:String(input.supplier||''),description:String(input.description||''),amount,due_date:String(input.dueDate),status:'open',recurring:Boolean(input.recurring),source:String(input.source||'manual')};
+  const result=await window.EDDU_NEON.insert('financial_transactions',row);
+  return Array.isArray(result)?result[0]:result;
+}
+
+async function createReceivableNeon(input = {}) {
+  if (!window.EDDU_NEON) throw new Error('neon_bridge_unavailable');
+  const amount=Number(input.amount);
+  if (!Number.isFinite(amount) || amount<=0 || !input.dueDate) throw new Error('receivable_invalid');
+  const row={id:input.id||uuidAgenda(),client_id:input.clientId?String(input.clientId):null,command_id:input.commandId?String(input.commandId):null,amount,due_date:String(input.dueDate),status:'open',type:'receivable'};
+  const result=await window.EDDU_NEON.insert('financial_transactions',row);
+  return Array.isArray(result)?result[0]:result;
+}
+
+window.EDDU_AGENDA_FINANCE_NEON=Object.freeze({createAppointmentNeon,createPayableNeon,createReceivableNeon});
