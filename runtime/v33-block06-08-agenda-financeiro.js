@@ -112,13 +112,15 @@ function agendaNormalRule(dateValue, start, end) {
   if (dow === 0 || dow === 1) {
     return { ok: true, exceptional: true, reason: 'exceptional_day' };
   }
-  if (sm < 480 || em > 1080) {
+  if (sm < 480) {
     return { ok: false, exceptional: false, reason: 'outside_normal_hours' };
   }
-  if (duration >= 2 && sm > 1020) {
+  if (duration >= 2) {
     if (sm === 1080) return { ok: true, exceptional: true, reason: 'exceptional_18_for_long_procedure' };
-    return { ok: false, exceptional: false, reason: 'long_procedure_last_normal_17' };
+    if (sm > 1020) return { ok: false, exceptional: false, reason: 'long_procedure_last_normal_17' };
+    return { ok: true, exceptional: false, reason: 'normal' };
   }
+  if (em > 1080) return { ok: false, exceptional: false, reason: 'outside_normal_hours' };
   return { ok: true, exceptional: false, reason: 'normal' };
 }
 function agendaStorage() {
