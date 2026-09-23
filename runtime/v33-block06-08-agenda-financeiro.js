@@ -237,12 +237,24 @@ function initAgendaUi() {
   overlay.addEventListener('click', event => {
     if (event.target === overlay) close();
   });
-  saveButton.addEventListener('click', () => {
+  saveButton.addEventListener('click', async () => {
     error.textContent = '';
-    if (!dialog.querySelector('input:invalid')) {
-      try {
-        const startAt = fields.date.value + 'T' + fields.start.value;
-        const endAt = fields.date.value + 'T' + fields.end.value;
+    if (dialog.querySelector('input:invalid')) {
+      error.textContent = 'Preencha todos os campos.';
+      return;
+    }
+    try {
+      const startAt = fields.date.value + 'T' + fields.start.value;
+      const endAt = fields.date.value + 'T' + fields.end.value;
+      if (window.EDDU_AGENDA_FINANCE_NEON?.createAppointmentNeon) {
+        await window.EDDU_AGENDA_FINANCE_NEON.createAppointmentNeon({
+          clientId: fields.clientId.value.trim(),
+          professionalId: fields.professionalId.value.trim(),
+          serviceId: fields.serviceId.value.trim(),
+          startAt,
+          endAt
+        });
+      } else {
         window.EDDU_AGENDA_FINANCE.createAppointment({
           clientId: fields.clientId.value.trim(),
           professionalId: fields.professionalId.value.trim(),
@@ -250,18 +262,16 @@ function initAgendaUi() {
           startAt,
           endAt
         });
-        render();
-        close();
-      } catch (err) {
-        const messages = {
-          appointment_time_invalid: 'Confira a data e os horários.',
-          professional_schedule_conflict: 'Esse profissional já possui atendimento nesse horário.',
-          appointment_duplicate: 'Este agendamento já existe.'
-        };
-        error.textContent = messages[err?.message] || 'Não foi possível salvar o agendamento.';
       }
-    } else {
-      error.textContent = 'Preencha todos os campos.';
+      render();
+      close();
+    } catch (err) {
+      const messages = {
+        appointment_time_invalid: 'Confira a data e os horários.',
+        professional_schedule_conflict: 'Esse profissional já possui atendimento nesse horário.',
+        appointment_duplicate: 'Este agendamento já existe.'
+      };
+      error.textContent = messages[err?.message] || 'Neon: ' + (err?.body?.message || err?.message || 'não foi possível salvar o agendamento.');
     }
   });
 
