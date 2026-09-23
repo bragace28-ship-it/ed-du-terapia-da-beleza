@@ -22,41 +22,6 @@ function overlap(aStart, aEnd, bStart, bEnd) {
   return new Date(aStart).getTime() < new Date(bEnd).getTime() && new Date(bStart).getTime() < new Date(aEnd).getTime();
 }
 
-function createAppointment(input = {}) {
-  const s = state();
-  const item = {
-    id: input.id || 'apt-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8),
-    professionalId: String(input.professionalId || ''),
-    clientId: String(input.clientId || ''),
-    serviceId: String(input.serviceId || ''),
-    startAt: String(input.startAt || ''),
-    endAt: String(input.endAt || ''),
-    status: 'scheduled'
-  };
-  if (!item.startAt || !item.endAt) throw new Error('appointment_time_required');
-  const startMs = new Date(item.startAt).getTime();
-  const endMs = new Date(item.endAt).getTime();
-  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || startMs >= endMs) throw new Error('appointment_time_invalid');
-  if (s.appointments.some(x => x.id === item.id)) throw new Error('appointment_duplicate');
-  const conflict = s.appointments.find(x =>
-    x.professionalId === item.professionalId &&
-    x.status !== 'cancelled' &&
-    overlap(x.startAt, x.endAt, item.startAt, item.endAt)
-  );
-  if (conflict) throw new Error('professional_schedule_conflict');
-  s.appointments.push(item);
-  save(s);
-  return item;
-}
-
-function cancelAppointment(id) {
-  const s = state();
-  const item = s.appointments.find(x => x.id === id);
-  if (!item) throw new Error('appointment_not_found');
-  item.status = 'cancelled';
-  save(s);
-  return item;
-}
 
 function createPayable(input = {}) {
   const s = state();
