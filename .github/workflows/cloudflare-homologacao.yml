@@ -31,6 +31,6 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           npx wrangler pages deploy dist \
-            --project-name=ed-du-terapia-da-beleza \
+            --project-name=ed-du-terapia-da-beleza-homologacao \
             --branch=fase2-bloco03-05-hardening \
             --commit-hash="${GITHUB_SHA}"
