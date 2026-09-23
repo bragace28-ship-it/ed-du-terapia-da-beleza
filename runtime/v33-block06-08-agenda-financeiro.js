@@ -1,10 +1,23 @@
 const KEY = 'eddu_v33_blocks06_08';
 
 function state() {
-  try { return JSON.parse(localStorage.getItem(KEY) || '{"appointments":[],"payables":[],"receivables":[]}'); }
-  catch { return { appointments: [], payables: [], receivables: [] }; }
+  try {
+    const parsed = JSON.parse(localStorage.getItem(KEY) || '{}');
+    return {
+      appointments: Array.isArray(parsed.appointments) ? parsed.appointments : [],
+      payables: Array.isArray(parsed.payables) ? parsed.payables : [],
+      receivables: Array.isArray(parsed.receivables) ? parsed.receivables : [],
+      blocks: Array.isArray(parsed.blocks) ? parsed.blocks : []
+    };
+  } catch {
+    return { appointments: [], payables: [], receivables: [], blocks: [] };
+  }
 }
-function save(s) { localStorage.setItem(KEY, JSON.stringify(s)); return s; }
+function save(s) {
+  if (!Array.isArray(s.blocks)) s.blocks = [];
+  localStorage.setItem(KEY, JSON.stringify(s));
+  return s;
+}
 function overlap(aStart, aEnd, bStart, bEnd) {
   return new Date(aStart).getTime() < new Date(bEnd).getTime() && new Date(bStart).getTime() < new Date(aEnd).getTime();
 }
