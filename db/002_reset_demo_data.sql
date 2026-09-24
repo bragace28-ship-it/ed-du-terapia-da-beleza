@@ -7,6 +7,13 @@ begin;
 
 truncate table
   audit_logs,
+  account_actions,
+  loyalty_transactions,
+  loyalty_accounts,
+  credit_alerts,
+  credit_accounts,
+  recurring_payments,
+  ocr_documents,
   finance_pin_credentials,
   notifications,
   push_subscriptions,
