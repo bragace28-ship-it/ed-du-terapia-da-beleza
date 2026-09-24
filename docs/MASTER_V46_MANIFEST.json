@@ -1,0 +1,18 @@
+{
+  "source": "V33_MASTER_TESTE_LOCAL_V46_PERFIL_SEM_CAMADA.html",
+  "version": "V46",
+  "size_bytes": 3683299,
+  "sha256": "ac3ce3d392030654d645151e695abbad5b7ed5683056b45efc12483bf8deadb4",
+  "syntax": "19 inline script blocks parsed by Node.js --check; 0 syntax errors",
+  "agenda": [
+    "monthly calendar",
+    "day selection",
+    "busy/free indicators",
+    "add appointment",
+    "edit appointment",
+    "block time",
+    "conflict validation",
+    "professional selection"
+  ],
+  "note": "This manifest records the isolated V46 master used for homologation. It does not replace index.html until the exact V46 artifact is committed and verified."
+}
