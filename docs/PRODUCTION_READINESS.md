@@ -30,6 +30,11 @@ It does not seed passwords or PINs. Neon Auth identities must be created first a
 
 The 86-item matrix is a homologation contract, not proof that every item is production-integrated. A production PASS requires the corresponding UI action, backend persistence/API behavior, and relevant external integration to be exercised without error.
 
+## Current preparation status
+
+- Immutable V33 checks remain green on the pull request branch.
+- Neon/Asaas server-side files are present, but live credentials and live database mutation have intentionally not been performed yet.
+
 ## Remaining credential-dependent steps
 
 1. Neon production branch/connection string available to Cloudflare as `NEON_DATABASE_URL`.
