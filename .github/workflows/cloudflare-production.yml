@@ -28,6 +28,20 @@ jobs:
           CF_PAGES_BRANCH: cloudflare-production
         run: npm run build
 
+      - name: Cloud production preflight
+        env:
+          ALLOW_PRODUCTION_DEPLOY: '1'
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          ASAAS_API_KEY: ${{ secrets.ASAAS_API_KEY }}
+        run: npm run cloud:preflight
+
+      - name: Configure Neon secret on Pages
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: printf '%s' "$NEON_DATABASE_URL" | npx wrangler@latest pages secret put NEON_DATABASE_URL --project-name=ed-du-terapia-da-beleza
+
       - name: Deploy approved V33 to Cloudflare Pages production
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
