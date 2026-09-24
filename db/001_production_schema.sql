@@ -329,3 +329,78 @@ create index if not exists idx_receivables_status_due on receivables(status, due
 create index if not exists idx_payables_status_due on payables(status, due_at);
 create index if not exists idx_notifications_user_created on notifications(user_id, created_at desc);
 create index if not exists idx_audit_logs_created on audit_logs(created_at desc);
+
+
+create table if not exists loyalty_accounts (
+  id uuid primary key default gen_random_uuid(),
+  client_id uuid not null unique references clients(id) on delete cascade,
+  points_balance integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists loyalty_transactions (
+  id uuid primary key default gen_random_uuid(),
+  loyalty_account_id uuid not null references loyalty_accounts(id) on delete cascade,
+  points integer not null,
+  reason text not null,
+  referral_id uuid references referrals(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists credit_accounts (
+  id uuid primary key default gen_random_uuid(),
+  client_id uuid not null unique references clients(id) on delete cascade,
+  credit_limit numeric(12,2) not null default 0,
+  balance numeric(12,2) not null default 0,
+  status text not null default 'Ativo',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists credit_alerts (
+  id uuid primary key default gen_random_uuid(),
+  client_id uuid references clients(id) on delete cascade,
+  type text not null,
+  message text not null,
+  status text not null default 'Aberto',
+  created_at timestamptz not null default now(),
+  resolved_at timestamptz
+);
+
+create table if not exists recurring_payments (
+  id uuid primary key default gen_random_uuid(),
+  client_id uuid references clients(id) on delete set null,
+  provider text not null,
+  external_id text,
+  amount numeric(12,2) not null default 0,
+  interval text not null,
+  status text not null default 'Ativa',
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists ocr_documents (
+  id uuid primary key default gen_random_uuid(),
+  payable_id uuid references payables(id) on delete set null,
+  source_ref text,
+  extracted_data jsonb not null default '{}'::jsonb,
+  confidence numeric(5,4),
+  human_confirmed boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists account_actions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references app_users(id) on delete cascade,
+  action text not null,
+  status text not null default 'pending',
+  payload jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  completed_at timestamptz
+);
+
+create index if not exists idx_loyalty_transactions_account_created on loyalty_transactions(loyalty_account_id, created_at desc);
+create index if not exists idx_credit_alerts_client_status on credit_alerts(client_id, status);
+create index if not exists idx_recurring_payments_client_status on recurring_payments(client_id, status);
