@@ -1,0 +1,351 @@
+{
+  "artifact": "MASTER-V46",
+  "visualBaseline": "IMMUTABLE-V33",
+  "count": 86,
+  "items": [
+    {
+      "id": "001",
+      "name": "Regras de engenharia"
+    },
+    {
+      "id": "002",
+      "name": "Reativação — primeiro bug confirmado"
+    },
+    {
+      "id": "003",
+      "name": "Desempenho comercial / reativação"
+    },
+    {
+      "id": "004",
+      "name": "Minha Agenda profissional"
+    },
+    {
+      "id": "005",
+      "name": "Bloqueio de agenda"
+    },
+    {
+      "id": "006",
+      "name": "Comandas"
+    },
+    {
+      "id": "007",
+      "name": "Nova comanda — total"
+    },
+    {
+      "id": "008",
+      "name": "Fechar comanda → pagamento"
+    },
+    {
+      "id": "009",
+      "name": "PIX"
+    },
+    {
+      "id": "010",
+      "name": "Cartão"
+    },
+    {
+      "id": "011",
+      "name": "PDV"
+    },
+    {
+      "id": "012",
+      "name": "Crédito interno ED & DU"
+    },
+    {
+      "id": "013",
+      "name": "Checkout / envio"
+    },
+    {
+      "id": "014",
+      "name": "Antiduplicação"
+    },
+    {
+      "id": "015",
+      "name": "Conciliação financeira"
+    },
+    {
+      "id": "016",
+      "name": "Lista de pagamentos"
+    },
+    {
+      "id": "017",
+      "name": "Abrir pagamento"
+    },
+    {
+      "id": "018",
+      "name": "Status do pagamento"
+    },
+    {
+      "id": "019",
+      "name": "Relatórios"
+    },
+    {
+      "id": "020",
+      "name": "Visão financeira"
+    },
+    {
+      "id": "021",
+      "name": "Relatório baixável"
+    },
+    {
+      "id": "022",
+      "name": "Gráficos"
+    },
+    {
+      "id": "023",
+      "name": "Meus documentos"
+    },
+    {
+      "id": "024",
+      "name": "Contas a receber"
+    },
+    {
+      "id": "025",
+      "name": "Pendências a receber"
+    },
+    {
+      "id": "026",
+      "name": "Nova cobrança / comanda retroativa"
+    },
+    {
+      "id": "027",
+      "name": "Contas a pagar"
+    },
+    {
+      "id": "028",
+      "name": "OCR"
+    },
+    {
+      "id": "029",
+      "name": "Conta paga / devida"
+    },
+    {
+      "id": "030",
+      "name": "Recorrência / cartão"
+    },
+    {
+      "id": "031",
+      "name": "Fatura de cartão"
+    },
+    {
+      "id": "032",
+      "name": "Contas a pagar cartão"
+    },
+    {
+      "id": "033",
+      "name": "Ajuste específico de UI"
+    },
+    {
+      "id": "034",
+      "name": "Ações da conta"
+    },
+    {
+      "id": "035",
+      "name": "Comissões"
+    },
+    {
+      "id": "036",
+      "name": "Pagamento de comissão"
+    },
+    {
+      "id": "037",
+      "name": "Pagamentos parciais"
+    },
+    {
+      "id": "038",
+      "name": "Comissão + CPV"
+    },
+    {
+      "id": "039",
+      "name": "Open Finance"
+    },
+    {
+      "id": "040",
+      "name": "Configurações"
+    },
+    {
+      "id": "041",
+      "name": "Configuração de agenda"
+    },
+    {
+      "id": "042",
+      "name": "Gestão de usuários"
+    },
+    {
+      "id": "043",
+      "name": "Acesso do cliente"
+    },
+    {
+      "id": "044",
+      "name": "Redefinição de senha"
+    },
+    {
+      "id": "045",
+      "name": "Profissionais"
+    },
+    {
+      "id": "046",
+      "name": "Níveis de acesso"
+    },
+    {
+      "id": "047",
+      "name": "Status de usuário"
+    },
+    {
+      "id": "048",
+      "name": "PIN financeiro"
+    },
+    {
+      "id": "049",
+      "name": "Comportamento do PIN"
+    },
+    {
+      "id": "050",
+      "name": "Onde PIN não deve ser solicitado"
+    },
+    {
+      "id": "051",
+      "name": "Dashboard profissional"
+    },
+    {
+      "id": "052",
+      "name": "Atendimentos do dia"
+    },
+    {
+      "id": "053",
+      "name": "Clientes da semana"
+    },
+    {
+      "id": "054",
+      "name": "Faturamento"
+    },
+    {
+      "id": "055",
+      "name": "Avaliação média"
+    },
+    {
+      "id": "056",
+      "name": "Smart Gateway"
+    },
+    {
+      "id": "057",
+      "name": "Parcelas"
+    },
+    {
+      "id": "058",
+      "name": "Taxa de simulação"
+    },
+    {
+      "id": "059",
+      "name": "Orçamento"
+    },
+    {
+      "id": "060",
+      "name": "Orçamento PDF"
+    },
+    {
+      "id": "061",
+      "name": "Compartilhar orçamento"
+    },
+    {
+      "id": "062",
+      "name": "Mensagem WhatsApp do orçamento"
+    },
+    {
+      "id": "063",
+      "name": "Descontos no orçamento"
+    },
+    {
+      "id": "064",
+      "name": "Mensagem de fidelidade"
+    },
+    {
+      "id": "065",
+      "name": "Mensagem de novo cliente"
+    },
+    {
+      "id": "066",
+      "name": "Catálogo de serviços"
+    },
+    {
+      "id": "067",
+      "name": "Programa de indicação"
+    },
+    {
+      "id": "068",
+      "name": "Envio individual"
+    },
+    {
+      "id": "069",
+      "name": "Envio em massa"
+    },
+    {
+      "id": "070",
+      "name": "Gift Card"
+    },
+    {
+      "id": "071",
+      "name": "Pontos de indicação"
+    },
+    {
+      "id": "072",
+      "name": "Popup de indicação"
+    },
+    {
+      "id": "073",
+      "name": "Home do cliente"
+    },
+    {
+      "id": "074",
+      "name": "Sino"
+    },
+    {
+      "id": "075",
+      "name": "Notificações"
+    },
+    {
+      "id": "076",
+      "name": "Push"
+    },
+    {
+      "id": "077",
+      "name": "Alertas de crédito"
+    },
+    {
+      "id": "078",
+      "name": "Deep link de pagamento"
+    },
+    {
+      "id": "079",
+      "name": "Regra de integridade"
+    },
+    {
+      "id": "080",
+      "name": "Ordem de implementação"
+    },
+    {
+      "id": "081",
+      "name": "Matriz de testes"
+    },
+    {
+      "id": "082",
+      "name": "Critério “funcionando”"
+    },
+    {
+      "id": "083",
+      "name": "Confirmado funcionando"
+    },
+    {
+      "id": "084",
+      "name": "Ainda precisa testar"
+    },
+    {
+      "id": "085",
+      "name": "Pontos validados"
+    },
+    {
+      "id": "086",
+      "name": "Regra da fase final"
+    }
+  ]
+}
