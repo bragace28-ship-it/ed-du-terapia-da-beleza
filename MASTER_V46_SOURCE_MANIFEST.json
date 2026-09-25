@@ -1,0 +1,20 @@
+{
+  "artifact": "V33_MASTER_TESTE_LOCAL_V46_PERFIL_SEM_CAMADA.html",
+  "role": "MASTER-V46-HOMOLOGATION-SOURCE",
+  "bytes": 3683299,
+  "sha256": "ac3ce3d392030654d645151e695abbad5b7ed5683056b45efc12483bf8deadb4",
+  "scriptBlocks": 19,
+  "javascriptSyntax": "PASS",
+  "functionalMatrixIds": 86,
+  "functionalMatrixRange": "001-086",
+  "agenda": {
+    "calendar": true,
+    "addAppointment": true,
+    "editAppointment": true,
+    "blockTime": true,
+    "conflictValidation": true,
+    "localPersistence": true
+  },
+  "v33VisualLock": "PRESERVE-UNCHANGED",
+  "deploymentStatus": "ARTIFACT-TRANSFER-PENDING"
+}
