@@ -11,11 +11,11 @@ const lock=JSON.parse(await readFile(resolve(root,'V33_VISUAL_LOCK.json'),'utf8'
 const html=await readFile(source,'utf8');
 const bytes=Buffer.from(html);
 if(!html.includes('ED & DU') || !html.includes('Terapia da Beleza')) throw new Error('MASTER V46 identity markers missing.');
-if(/https?:\/\/[^"'\\s]*supabase|@supabase|VITE_SUPABASE|supabase\\.co/i.test(html)) throw new Error('Legacy Supabase reference found in Master V46.');
-const ids=new Set((html.match(/(?<!\\d)(?:00[1-9]|0[1-7]\\d|08[0-6])(?!\\d)/g)||[]));
+if(/supabase|@supabase|VITE_SUPABASE/i.test(html)) throw new Error('Legacy Supabase reference found in Master V46.');
+const ids=new Set((html.match(/(?<!\d)(?:00[1-9]|0[1-7]\d|08[0-6])(?!\d)/g)||[]));
 if(ids.size!==86) throw new Error(\`MASTER V46 matrix incomplete: \${ids.size}/86 IDs.\`);
 const dir=await mkdtemp(join(tmpdir(),'eddu-master-v46-'));
-const matches=[...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)];
+const matches=[...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
 for(let i=0;i<matches.length;i++) await writeFile(join(dir,\`block-\${i+1}.js\`),matches[i][1]);
 for(let i=0;i<matches.length;i++) await exec(process.execPath,['--check',join(dir,\`block-\${i+1}.js\`)]);
 await rm(dir,{recursive:true,force:true});
