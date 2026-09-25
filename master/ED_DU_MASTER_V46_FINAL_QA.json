@@ -1,0 +1,13 @@
+{
+  "master_version":"46.0.0",
+  "status":"HOMOLOGACAO_READY_FOR_FUNCTIONAL_TESTS",
+  "sha256":"2c32c26b4fdec73f3c2efac06f435f9e4311a1f038ac5e65b31aaab5d7f0e44d",
+  "size_bytes":3744727,
+  "matrix_items":86,
+  "matrix_range_ok":true,
+  "supabase_runtime_refs":0,
+  "script_blocks":21,
+  "v48_layer_syntax":"PASS",
+  "production_status":"NOT_DEPLOYED",
+  "v33_status":"UNCHANGED"
+}
