@@ -1,8 +1,8 @@
 {
   "artifact": "V33_MASTER_TESTE_LOCAL_V46_PERFIL_SEM_CAMADA.html",
   "role": "MASTER-V46-HOMOLOGATION-SOURCE",
-  "bytes": 3683299,
-  "sha256": "ac3ce3d392030654d645151e695abbad5b7ed5683056b45efc12483bf8deadb4",
+  "bytes": 3742865,
+  "sha256": "4fa44b750d9e178dd6eaee7ae1099e8746eea5fcd962b26d177dc411c79a5f7f",
   "scriptBlocks": 19,
   "javascriptSyntax": "PASS",
   "functionalMatrixIds": 86,
@@ -16,5 +16,6 @@
     "localPersistence": true
   },
   "v33VisualLock": "PRESERVE-UNCHANGED",
-  "deploymentStatus": "ARTIFACT-TRANSFER-PENDING"
+  "deploymentStatus": "HOMOLOGATION-READY / PRODUCTION-NOT-DEPLOYED",
+  "runtimeFixes": "master/v46-runtime-fixes.js"
 }
