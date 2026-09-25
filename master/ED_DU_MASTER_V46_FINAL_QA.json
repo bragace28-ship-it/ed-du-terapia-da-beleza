@@ -1,13 +1,15 @@
 {
   "master_version":"46.0.0",
-  "status":"HOMOLOGACAO_READY_FOR_FUNCTIONAL_TESTS",
-  "sha256":"2c32c26b4fdec73f3c2efac06f435f9e4311a1f038ac5e65b31aaab5d7f0e44d",
-  "size_bytes":3744727,
+  "status":"NAVIGATION_FIX_APPLIED_READY_FOR_BROWSER_HOMOLOGATION",
+  "sha256":"8669b0861c09d1a53e9747ea016b33df0b5d2d1ac1320c97000e6f81833c4701",
+  "size_bytes":3749147,
   "matrix_items":86,
   "matrix_range_ok":true,
   "supabase_runtime_refs":0,
-  "script_blocks":21,
-  "v48_layer_syntax":"PASS",
+  "script_blocks":23,
+  "javascript_syntax":"PASS_23_BLOCKS",
+  "navigation_hardening":"APPLIED",
+  "sheet_visibility_hardening":"APPLIED",
   "production_status":"NOT_DEPLOYED",
   "v33_status":"UNCHANGED"
 }
