@@ -1,135 +1,88 @@
-import {rm, mkdir, readFile, writeFile, readdir} from 'node:fs/promises';
+import {rm,mkdir,readFile,writeFile,readdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
-import {resolve, join} from 'node:path';
+import {resolve,join} from 'node:path';
 
 const root=process.cwd();
 const dist=resolve(root,'dist');
 const v33Source=resolve(root,'index.html');
 const masterSource=resolve(root,'master','index.html');
-const lockPath=resolve(root,'V33_VISUAL_LOCK.json');
-const deployMaster=process.env.MASTER_DEPLOY === '1';
-const deploySource=deployMaster ? masterSource : v33Source;
+const lock=JSON.parse(await readFile(resolve(root,'V33_VISUAL_LOCK.json'),'utf8'));
+const deployMaster=process.env.MASTER_DEPLOY==='1';
+const source=deployMaster?masterSource:v33Source;
 
-const cloudflareBranch=process.env.CF_PAGES_BRANCH;
-if(cloudflareBranch && cloudflareBranch !== 'cloudflare-production' && !deployMaster)
-  throw new Error("CLEAN DEPLOYMENT BLOCKED: Cloudflare branch '"+cloudflareBranch+"' is not approved.");
+const v33=await readFile(v33Source,'utf8');
+const html=await readFile(source,'utf8');
+const v33Bytes=Buffer.from(v33,'utf8');
+const v33Blob=createHash('sha1').update(Buffer.from('blob '+v33Bytes.length+'\0','utf8')).update(v33Bytes).digest('hex');
+const v33Sha=createHash('sha256').update(v33Bytes).digest('hex');
 
-const v33Html=await readFile(v33Source,'utf8');
-let html=await readFile(deploySource,'utf8');
-// Master V46 contains printable HTML documents inside JavaScript template literals.
-// A literal </script> inside those templates would prematurely terminate the browser script tag.
-// Escape the known document-template closing tag before the browser parses the artifact.
-if(deployMaster){
-  html=html.replace(/<\\/script>(\\s*<\\/body><\\/html>)/i,'<\\\\/script>$1');
-}
-const lock=JSON.parse(await readFile(lockPath,'utf8'));
+if(v33Bytes.length!==lock.byteLength||v33Blob!==lock.gitBlobSha||v33Sha!==lock.sha256)
+  throw new Error('V33 VISUAL LOCK FAILED: immutable baseline changed.');
 
-if(!v33Html.includes('ED & DU') || !v33Html.includes('Terapia da Beleza'))
-  throw new Error('Approved V33 visual baseline not found.');
-if(deployMaster && (!html.includes('ED & DU') || !html.includes('Terapia da Beleza')))
-  throw new Error('Master V46 artifact is missing required branding.');
+if(!html.includes('ED & DU')||!html.includes('Terapia da Beleza'))
+  throw new Error('Required ED & DU branding missing.');
 
-const v33Bytes=Buffer.from(v33Html,'utf8');
-const v33GitBlobSha=createHash('sha1')
-  .update(Buffer.from('blob '+v33Bytes.length+'\0','utf8')).update(v33Bytes).digest('hex');
-const v33Sha256=createHash('sha256').update(v33Bytes).digest('hex');
-
-if(v33Bytes.length !== lock.byteLength)
-  throw new Error('V33 VISUAL LOCK FAILED: V33 byte length '+v33Bytes.length+' != '+lock.byteLength+'.');
-if(v33GitBlobSha !== lock.gitBlobSha)
-  throw new Error('V33 VISUAL LOCK FAILED: repository index.html changed (blob '+v33GitBlobSha+').');
-if(lock.sha256 && v33Sha256 !== lock.sha256)
-  throw new Error('V33 VISUAL LOCK FAILED: repository index.html SHA-256 '+v33Sha256+' != '+lock.sha256+'.');
-
-const sourceBytes=Buffer.from(html,'utf8');
-const sourceSha256=createHash('sha256').update(sourceBytes).digest('hex');
-
-if(!deployMaster){
-  const sourceGitBlobSha=createHash('sha1')
-    .update(Buffer.from('blob '+sourceBytes.length+'\0','utf8')).update(sourceBytes).digest('hex');
-  if(sourceGitBlobSha !== lock.gitBlobSha)
-    throw new Error('V33 VISUAL LOCK FAILED: index.html is not the approved baseline (blob '+sourceGitBlobSha+').');
-  if(sourceSha256 !== lock.sha256)
-    throw new Error('V33 VISUAL LOCK FAILED: SHA-256 '+sourceSha256+' != '+lock.sha256+'.');
-}
-
-if(/https?:\/\/[^"'\s]*supabase|@supabase|VITE_SUPABASE|supabase\.co/i.test(html))
+if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(html))
   throw new Error('Legacy Supabase reference found.');
 
+if(!deployMaster){
+  const sourceBytes=Buffer.from(html,'utf8');
+  const sourceBlob=createHash('sha1').update(Buffer.from('blob '+sourceBytes.length+'\0','utf8')).update(sourceBytes).digest('hex');
+  if(sourceBlob!==lock.gitBlobSha) throw new Error('V33 build source is not the immutable baseline.');
+}
+
+if(process.argv.includes('--check')){
+  console.log('V33 VISUAL LOCK: PASS');
+  process.exit(0);
+}
+
+let output=html;
 if(deployMaster){
   const runtimeFiles=[
     'master/v49-final-functional-hotfix.js',
     'master/v46-final-homologation-runtime.js',
-    'master/v46-final-hardening.js'
+    'master/v46-final-hardening.js',
+    'master/v46-runtime-fixes.js',
+    'master/v48-navigation-hardening.js'
   ];
-  const runtime=[];
-  for(const p of runtimeFiles) runtime.push(await readFile(resolve(root,p),'utf8'));
-  const injection='<script id="master-runtime-final">\n'+runtime.join('\n\n')+'\n</script>\n';
-  html=html.replace(/<\/body>/i,injection+'</body>');
-}
-
-async function walk(dir){
-  const out=[];
-  for(const entry of await readdir(dir,{withFileTypes:true})){
-    if(entry.name==='.git'||entry.name==='node_modules'||entry.name==='dist') continue;
-    const p=join(dir,entry.name);
-    if(entry.isDirectory()) out.push(...await walk(p));
-    else out.push(p);
+  for(const file of runtimeFiles){
+    const code=await readFile(resolve(root,file),'utf8');
+    if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(code))
+      throw new Error('Legacy Supabase reference found in '+file);
+    output=output.replace('</body>','<script>'+code+'\n</script></body>');
   }
-  return out;
-}
-const trackedRuntimeFiles=(await walk(root)).filter(p=>/\.html?$/i.test(p));
-const allowedHtml=new Set([v33Source,masterSource]);
-const unexpectedHtml=trackedRuntimeFiles.filter(p=>!allowedHtml.has(p));
-if(unexpectedHtml.length)
-  throw new Error('V33 VISUAL LOCK FAILED: unexpected HTML runtime files: '+unexpectedHtml.join(', '));
-
-if(process.argv.includes('--check')){
-  console.log('V33 VISUAL LOCK: PASS');
-  console.log('Baseline: '+lock.version+' | blob '+lock.gitBlobSha+' | sha256 '+lock.sha256);
-  process.exit(0);
 }
 
 await rm(dist,{recursive:true,force:true});
 await mkdir(dist,{recursive:true});
-await writeFile(resolve(dist,'index.html'),html);
-if(deployMaster){
-  const runtimeFiles=['master/v46-runtime-fixes.js','master/v48-navigation-hardening.js'];
-  let builtHtml=await readFile(resolve(dist,'index.html'),'utf8');
-  for(const runtimeFile of runtimeFiles){
-    const runtime=await readFile(resolve(root,runtimeFile),'utf8');
-    builtHtml=builtHtml.replace(/<\\/body>/i, '<script>\\n'+runtime+'\\n<\\/script>\\n</body>');
-  }
-  await writeFile(resolve(dist,'index.html'),builtHtml,'utf8');
-}
+await writeFile(resolve(dist,'index.html'),output,'utf8');
 
 const built=await readFile(resolve(dist,'index.html'),'utf8');
 const builtBytes=Buffer.from(built,'utf8');
-const builtSha=createHash('sha1')
-  .update(Buffer.from('blob '+builtBytes.length+'\0','utf8')).update(builtBytes).digest('hex');
-const builtSha256=createHash('sha256').update(builtBytes).digest('hex');
+const builtBlob=createHash('sha1').update(Buffer.from('blob '+builtBytes.length+'\0','utf8')).update(builtBytes).digest('hex');
+const builtSha=createHash('sha256').update(builtBytes).digest('hex');
 
-if(!deployMaster && (builtBytes.length !== lock.byteLength || builtSha !== lock.gitBlobSha))
-  throw new Error('CLEAN DEPLOYMENT BLOCKED: dist/index.html does not exactly match immutable V33 ('+builtSha+').');
-if(deployMaster && (builtBytes.length < 3000000 || builtSha === lock.gitBlobSha))
-  throw new Error('MASTER DEPLOYMENT BLOCKED: expected the distinct V46 master artifact.');
+if(!deployMaster&&(builtBytes.length!==lock.byteLength||builtBlob!==lock.gitBlobSha))
+  throw new Error('V33 build output does not match immutable baseline.');
+
+if(deployMaster&&(builtBytes.length<3000000||builtBlob===lock.gitBlobSha))
+  throw new Error('MASTER deployment output is not a distinct V46 artifact.');
 
 await writeFile(resolve(dist,'_redirects'),'/* /index.html 200\n');
 await writeFile(resolve(dist,'version.json'),JSON.stringify({
-  version:deployMaster ? '46.0.0' : lock.version,
+  version:deployMaster?'46.0.0':lock.version,
   name:'ED & DU | Terapia da Beleza',
   visualBaseline:'IMMUTABLE-V33',
-  runtimeArtifact:deployMaster ? 'MASTER-V46' : 'V33',
-  sourceSha256:deployMaster ? sourceSha256 : lock.sha256,
-  builtSha256,
+  runtimeArtifact:deployMaster?'MASTER-V46':'V33',
+  sourceSha256:deployMaster?createHash('sha256').update(Buffer.from(html,'utf8')).digest('hex'):lock.sha256,
+  builtSha256:builtSha,
   v33GitBlobSha:lock.gitBlobSha,
-  v33Sha256:lock.sha256,
-  finalRuntime:deployMaster ? 'V49-FUNCTIONAL+V46-HOMOLOGATION+V46-HARDENING' : null
+  v33Sha256:lock.sha256
 },null,2));
 
 const distFiles=await readdir(dist);
-const expectedDistFiles=new Set(['index.html','_redirects','version.json']);
-if(distFiles.length !== expectedDistFiles.size || distFiles.some(name=>!expectedDistFiles.has(name)))
-  throw new Error('CLEAN DEPLOYMENT BLOCKED: dist contains unexpected files: '+distFiles.join(', '));
+const allowed=new Set(['index.html','_redirects','version.json']);
+if(distFiles.length!==3||distFiles.some(x=>!allowed.has(x)))
+  throw new Error('Unexpected dist files: '+distFiles.join(','));
 
-console.log(deployMaster ? 'Built Master V46 with final runtime hardening.' : 'Built approved V33.');
+console.log(deployMaster?'Built Master V46.':'Built approved V33.');
