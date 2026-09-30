@@ -22,6 +22,16 @@ if(v33Bytes.length!==lock.byteLength||v33Blob!==lock.gitBlobSha||v33Sha!==lock.s
 if(!html.includes('ED & DU')||!html.includes('Terapia da Beleza'))
   throw new Error('Required ED & DU branding missing.');
 
+if(deployMaster){
+  // Repair the legacy Master V46 artifact's duplicated script/body bridge before browser parsing.
+  // The first IIFE already closes before this bridge; everything through the legacy report assignment is stale glue.
+  const bridgeAt=html.indexOf('</script>',html.indexOf('<script id="v48-final-functional-fixes">'));
+  const bridgeEnd=html.indexOf('window.v8PrintReport=window.v47PrintFinancialReport;',bridgeAt);
+  if(bridgeAt>=0 && bridgeEnd>bridgeAt){
+    html=html.slice(0,bridgeAt)+'\\n'+html.slice(bridgeEnd+'window.v8PrintReport=window.v47PrintFinancialReport;'.length);
+  }
+}
+
 if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(html))
   throw new Error('Legacy Supabase reference found.');
 
