@@ -1,15 +1,19 @@
 {
-  "status":"MASTER_V46_NEON_BRIDGE",
+  "status":"MASTER_V46_NEON_SCHEMA_APPLIED",
   "master":"V46.0.0",
   "baseline":"V33 immutable",
   "matrix_items":86,
   "production":false,
-  "cloud_tests":false,
+  "cloud_preview":"deployed",
+  "cloud_neon_health":"blocked_missing_cloudflare_preview_secret",
   "neon_project":"divine-dew-72623617",
   "neon_branch":"production",
+  "neon_schema":"production_applied_additive_only",
+  "neon_data_preserved":true,
   "neon_auth":"enabled",
   "data_api":"active",
-  "schema_compatibility":"prepared_and_validated_on_temporary_branch",
   "live_bridge":"committed",
-  "next_gate":"apply_schema_migration_then_cloud_neon_homologation"
+  "asaas":"endpoint_prepared_secret_not_verified",
+  "google_calendar":"pending_credentials_endpoint",
+  "next_gate":"configure_cloudflare_preview_neon_secret_then_live_86_item_browser_homologation"
 }
