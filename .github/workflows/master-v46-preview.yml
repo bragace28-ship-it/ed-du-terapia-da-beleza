@@ -2,7 +2,7 @@ name: ED DU Master V46 Preview
 
 on:
   push:
-    branches: [master-v46-implementation-2026-09-25]
+    branches: [master-v46-final-homologation-2026-09-30]
   workflow_dispatch:
 
 permissions:
