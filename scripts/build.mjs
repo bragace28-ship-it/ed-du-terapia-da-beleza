@@ -47,7 +47,7 @@ if(!deployMaster){
     throw new Error('V33 VISUAL LOCK FAILED: SHA-256 '+sourceSha256+' != '+lock.sha256+'.');
 }
 
-if(/https?:\/\/[^"'\\s]*supabase|@supabase|VITE_SUPABASE|supabase\.co/i.test(html))
+if(/https?:\/\/[^"'\s]*supabase|@supabase|VITE_SUPABASE|supabase\.co/i.test(html))
   throw new Error('Legacy Supabase reference found.');
 
 if(deployMaster){
