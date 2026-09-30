@@ -87,6 +87,15 @@ if(process.argv.includes('--check')){
 await rm(dist,{recursive:true,force:true});
 await mkdir(dist,{recursive:true});
 await writeFile(resolve(dist,'index.html'),html);
+if(deployMaster){
+  const runtimeFiles=['master/v46-runtime-fixes.js','master/v48-navigation-hardening.js'];
+  let builtHtml=await readFile(resolve(dist,'index.html'),'utf8');
+  for(const runtimeFile of runtimeFiles){
+    const runtime=await readFile(resolve(root,runtimeFile),'utf8');
+    builtHtml=builtHtml.replace(/<\\/body>/i, '<script>\\n'+runtime+'\\n</script>\\n</body>');
+  }
+  await writeFile(resolve(dist,'index.html'),builtHtml,'utf8');
+}
 
 const built=await readFile(resolve(dist,'index.html'),'utf8');
 const builtBytes=Buffer.from(built,'utf8');
