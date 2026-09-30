@@ -23,21 +23,14 @@ if(!html.includes('ED & DU')||!html.includes('Terapia da Beleza'))
   throw new Error('Required ED & DU branding missing.');
 
 if(deployMaster){
-  // Repair the legacy Master V46 artifact's duplicated script/body bridge before browser parsing.
-  // The first IIFE already closes before this bridge; everything through the legacy report assignment is stale glue.
-  const bridgeAt=html.indexOf('</script>',html.indexOf('<script id="v48-final-functional-fixes">'));
-  const bridgeEnd=html.indexOf('window.v8PrintReport=window.v47PrintFinancialReport;',bridgeAt);
-  if(bridgeAt>=0 && bridgeEnd>bridgeAt){
-    html=html.slice(0,bridgeAt)+'\\n'+html.slice(bridgeEnd+'window.v8PrintReport=window.v47PrintFinancialReport;'.length);
-  }
+  // The legacy V48 source block contains an invalid duplicated HTML/script bridge.
+  // Remove that entire legacy block; clean additive runtime layers are injected below.
   const v48Start=html.indexOf('<script id="v48-final-functional-fixes">');
-  const v48Close=html.indexOf('</script>',v48Start);
-  const v48FinalClose=html.lastIndexOf('\\n})();',v48Close);
-  if(v48Start>=0 && v48FinalClose>v48Close){
-    html=html.slice(0,v48FinalClose)+html.slice(v48FinalClose+'\\n})();'.length);
+  const v48End=v48Start>=0 ? html.lastIndexOf('</script>') : -1;
+  if(v48Start>=0 && v48End>v48Start){
+    html=html.slice(0,v48Start)+html.slice(v48End+'<\\/script>'.length);
   }
 }
-
 if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(html))
   throw new Error('Legacy Supabase reference found.');
 
