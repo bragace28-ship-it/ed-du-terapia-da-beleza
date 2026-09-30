@@ -46,7 +46,7 @@
     ];
   };
   function clientOptions(selected){
-    return '<option value="">＋ Adicionar novo cliente</option>'+
+    return '<option value="__NEW__">＋ Adicionar novo cliente</option>'+
       clients().map(c=>'<option value="'+esc(c.name)+'" '+(c.name===selected?'selected':'')+'>'+esc(c.name)+'</option>').join('');
   }
   window.openAgendaAddM=function(day){
