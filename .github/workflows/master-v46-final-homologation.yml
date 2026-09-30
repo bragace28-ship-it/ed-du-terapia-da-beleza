@@ -40,11 +40,14 @@ jobs:
       - name: Configure Neon secret on preview
         env:
           NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          ASAAS_API_KEY: ${{ secrets.ASAAS_API_KEY }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           test -n "$NEON_DATABASE_URL"
           printf '%s' "$NEON_DATABASE_URL" | npx wrangler@latest pages secret put NEON_DATABASE_URL --project-name=ed-du-terapia-da-beleza
+          test -n "$ASAAS_API_KEY"
+          printf '%s' "$ASAAS_API_KEY" | npx wrangler@latest pages secret put ASAAS_API_KEY --project-name=ed-du-terapia-da-beleza
       - name: Deploy Cloudflare preview
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
