@@ -11,7 +11,7 @@ const deployMaster=process.env.MASTER_DEPLOY==='1';
 const source=deployMaster?masterSource:v33Source;
 
 const v33=await readFile(v33Source,'utf8');
-const html=await readFile(source,'utf8');
+let html=await readFile(source,'utf8');
 const v33Bytes=Buffer.from(v33,'utf8');
 const v33Blob=createHash('sha1').update(Buffer.from('blob '+v33Bytes.length+'\0','utf8')).update(v33Bytes).digest('hex');
 const v33Sha=createHash('sha256').update(v33Bytes).digest('hex');
@@ -52,7 +52,8 @@ if(deployMaster){
     'master/v46-final-homologation-runtime.js',
     'master/v46-final-hardening.js',
     'master/v46-runtime-fixes.js',
-    'master/v48-navigation-hardening.js'
+    'master/v48-navigation-hardening.js',
+    'master/v50-navigation-final-bridge.js'
   ];
   for(const file of runtimeFiles){
     const code=await readFile(resolve(root,file),'utf8');
