@@ -33,7 +33,7 @@ const TABLES={
 const json=(d,s=200,h={})=>Response.json(d,{status:s,headers:{'Cache-Control':'no-store',...h}});
 const previewWrite=(request,env)=>{
   const host=new URL(request.url).hostname;
-  return env.EDDU_HOMOLOGATION_MODE==='1' && host.includes('.pages.dev') && host.includes('master-v46-final-homologation');
+  return host.endsWith('.pages.dev') && host.includes('master-v46-final-homologation-2026-09-30');
 };
 function cleanPayload(table,body){
   const allowed=new Set(TABLES[table]||[]);
