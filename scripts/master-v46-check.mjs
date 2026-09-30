@@ -11,10 +11,10 @@ if(matrix.count!==86 || matrix.items?.length!==86 || matrix.items.some((x,i)=>x.
 if(html.length<3000000) throw new Error('MASTER V46 artifact unexpectedly small.');
 const hotfix=await readFile(resolve(root,'master','v49-final-functional-hotfix.js'),'utf8');
 if(!hotfix.includes('EDDU_MASTER_V46_FINAL_HOTFIX')) throw new Error('MASTER V46 final hotfix marker missing.');
-if(/@supabase|VITE_SUPABASE|supabase\\.co/i.test(html)) throw new Error('Legacy Supabase reference found in Master V46.');
+if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(html)) throw new Error('Legacy Supabase reference found in Master V46.');
 const required=['agendaAppointmentsM','saveAgendaAddM','saveAgendaEditM','saveAgendaBlockM','appointmentConflictM','blockConflictM','views.agenda'];
 for(const marker of required) if(!html.includes(marker)) throw new Error('MASTER V46 missing required Agenda marker: '+marker);
-const blocks=[...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)].map(m=>m[1]).filter(x=>x.trim());
+const blocks=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map(m=>m[1]).filter(x=>x.trim());
 const dir=resolve(tmpdir(),'eddu-master-v46-check');
 await rm(dir,{recursive:true,force:true}); await import('node:fs/promises').then(fs=>fs.mkdir(dir,{recursive:true}));
 for(let i=0;i<blocks.length;i++){
