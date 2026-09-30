@@ -1,0 +1,14 @@
+{
+  "status":"FINAL_HOMOLOGATION_GATE",
+  "master":"V46.0.0",
+  "baseline":"V33 immutable",
+  "matrix_items":86,
+  "production":false,
+  "cloud_tests":false,
+  "neon_schema":"prepared_not_applied",
+  "neon_auth":"pending",
+  "asaas":"prepared_not_homologated",
+  "google_calendar":"pending_credentials_endpoint",
+  "cloudflare":"preview_pipeline_prepared",
+  "next_gate":"browser_86_item_homologation_then_neon_cloud"
+}
