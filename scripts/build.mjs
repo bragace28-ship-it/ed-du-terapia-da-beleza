@@ -16,6 +16,12 @@ if(cloudflareBranch && cloudflareBranch !== 'cloudflare-production' && !deployMa
 
 const v33Html=await readFile(v33Source,'utf8');
 let html=await readFile(deploySource,'utf8');
+// Master V46 contains printable HTML documents inside JavaScript template literals.
+// A literal </script> inside those templates would prematurely terminate the browser script tag.
+// Escape the known document-template closing tag before the browser parses the artifact.
+if(deployMaster){
+  html=html.replace(/<\\/script>(\\s*<\\/body><\\/html>)/i,'<\\\\/script>$1');
+}
 const lock=JSON.parse(await readFile(lockPath,'utf8'));
 
 if(!v33Html.includes('ED & DU') || !v33Html.includes('Terapia da Beleza'))
