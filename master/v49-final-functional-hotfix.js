@@ -60,7 +60,7 @@
       '<label>Serviço</label><select id="aptService"><option>Limpeza de Pele</option><option>Spa Capilar</option><option>Corte + Secagem</option><option>Bio Nutrição</option></select>'+
       '<div class="row"><div><label>Data</label><input id="aptDate" type="date" value="'+d+'"></div><div><label>Início</label><input id="aptStart" type="time" value="10:00"></div></div>'+
       '<div class="row"><div><label>Término</label><input id="aptEnd" type="time" value="11:00"></div><div><label>Status</label><select id="aptStatus"><option>Confirmado</option><option>Pendente</option></select></div></div>'+
-      '<div class="action-row"><button class="btn primary full" onclick="saveAgendaAddM()">Salvar agendamento</button><button class="btn full" onclick="openSheet(\\'agenda\\')">Cancelar</button></div></div>';
+      '<div class="action-row"><button class="btn primary full" onclick="saveAgendaAddM()">Salvar agendamento</button><button class="btn full" onclick="openSheet(&quot;agenda&quot;)">Cancelar</button></div></div>';
     window.openSheet('agendaAdd');
     setTimeout(function(){
       const s=document.getElementById('aptClientSelect');
@@ -82,7 +82,7 @@
     if(typeof views==='undefined')return;
     views.agendaDayBlock=()=>'<h2>Bloquear dia inteiro</h2><p class="sub">Nenhum novo atendimento poderá ser criado neste dia.</p>'+
       '<div class="card"><label>Data</label><input id="dayBlkDate" type="date" value="'+d+'"><label>Motivo</label><input id="dayBlkReason" placeholder="Ex.: férias / folga / feriado"></div>'+
-      '<button class="btn primary full" onclick="saveAgendaDayBlockM()">🔒 Bloquear dia</button><button class="btn full" onclick="openSheet(\\'agenda\\')">Cancelar</button>';
+      '<button class="btn primary full" onclick="saveAgendaDayBlockM()">🔒 Bloquear dia</button><button class="btn full" onclick="openSheet(&quot;agenda&quot;)">Cancelar</button>';
     window.openSheet('agendaDayBlock');
   };
   window.saveAgendaDayBlockM=function(){
@@ -162,7 +162,7 @@
       '<label>Gateway</label><select id="gwProvider">'+Object.keys(rates).map(p=>'<option '+(p===selected.provider?'selected':'')+'>'+p+'</option>').join('')+'</select>'+
       '<label>Parcelas</label><select id="gwInstallments">'+Object.keys(rates.Asaas.card).map(n=>'<option value="'+n+'" '+(Number(n)===Number(selected.installments)?'selected':'')+'>'+n+'x</option>').join('')+'</select>'+
       '<button class="btn primary full" onclick="v46CalcGateway()">Calcular taxa e líquido</button><div id="gwResult"></div></div>'+
-      Object.keys(rates).map(gatewayTable).join('')+'<button class="btn full" onclick="openSheet(\\'finance\\')">← Financeiro</button>';
+      Object.keys(rates).map(gatewayTable).join('')+'<button class="btn full" onclick="openSheet(&quot;finance&quot;)">← Financeiro</button>';
   };
   window.v46CalcGateway=function(){
     const provider=document.getElementById('gwProvider')?.value||'Asaas',n=Math.max(1,Math.min(24,Number(document.getElementById('gwInstallments')?.value||1))),amount=Number(document.getElementById('gwAmount')?.value||0),rate=n===1?rates[provider].card[1]:rates[provider].card[n];
