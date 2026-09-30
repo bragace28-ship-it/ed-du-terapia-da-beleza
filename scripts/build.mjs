@@ -30,6 +30,12 @@ if(deployMaster){
   if(bridgeAt>=0 && bridgeEnd>bridgeAt){
     html=html.slice(0,bridgeAt)+'\\n'+html.slice(bridgeEnd+'window.v8PrintReport=window.v47PrintFinancialReport;'.length);
   }
+  const v48Start=html.indexOf('<script id="v48-final-functional-fixes">');
+  const v48Close=html.indexOf('</script>',v48Start);
+  const v48FinalClose=html.lastIndexOf('\\n})();',v48Close);
+  if(v48Start>=0 && v48FinalClose>v48Close){
+    html=html.slice(0,v48FinalClose)+html.slice(v48FinalClose+'\\n})();'.length);
+  }
 }
 
 if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(html))
