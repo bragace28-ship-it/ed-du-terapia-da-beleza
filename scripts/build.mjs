@@ -17,6 +17,11 @@ if(cloudflareBranch && cloudflareBranch !== 'cloudflare-production' && !deployMa
 
 const v33Html=await readFile(v33Source,'utf8');
 let html=await readFile(deploySource,'utf8');
+if(deployMaster){
+  const hotfix=await readFile(hotfixSource,'utf8');
+  const finalRuntime=await readFile(resolve(root,'master','v46-final-homologation-runtime.js'),'utf8');
+  html=html.replace('</body>','<script>\\n'+hotfix+'\\n'+finalRuntime+'\\n</script>\\n</body>');
+}
 const lock=JSON.parse(await readFile(lockPath,'utf8'));
 
 if(!v33Html.includes('ED & DU') || !v33Html.includes('Terapia da Beleza'))
