@@ -8,7 +8,7 @@ const read=function(k,d){try{return JSON.parse(localStorage.getItem(k)||JSON.str
 const write=function(k,v){localStorage.setItem(k,JSON.stringify(v))};
 
 function ascii(v){return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x20-\x7E]/g,'')}
-function pdfEscape(v){return ascii(v).replace(/\\/g,'\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)')}
+function pdfEscape(v){return ascii(v).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)')}
 function makePdf(title,lines){
   var perPage=44,pages=[],i;
   for(i=0;i<lines.length;i+=perPage)pages.push(lines.slice(i,i+perPage));
