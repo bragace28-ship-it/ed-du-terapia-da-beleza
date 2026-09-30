@@ -20,7 +20,7 @@ let html=await readFile(deploySource,'utf8');
 if(deployMaster){
   const hotfix=await readFile(hotfixSource,'utf8');
   const finalRuntime=await readFile(resolve(root,'master','v46-final-homologation-runtime.js'),'utf8');
-  html=html.replace('</body>','<script>\\n'+hotfix+'\\n'+finalRuntime+'\\n</script>\\n</body>');
+  html=html.replace('</body>','<script>\n'+hotfix+'\n'+finalRuntime+'\n</script>\n</body>');
 }
 const lock=JSON.parse(await readFile(lockPath,'utf8'));
 
@@ -59,7 +59,7 @@ if(deployMaster){
   const hotfix=await readFile(hotfixSource,'utf8');
   if(!hotfix.includes('EDDU_MASTER_V46_FINAL_HOTFIX'))
     throw new Error('Master final hotfix marker missing.');
-  html=html.replace(/<\/body>/i,`<script id="master-v49-final-functional-hotfix">\\n${hotfix}\\n<\\/script>\\n</body>`);
+  html=html.replace(/<\/body>/i,`<script id="master-v49-final-functional-hotfix">\n${hotfix}\n<\\/script>\n</body>`);
 }
 
 async function walk(dir){
@@ -98,7 +98,7 @@ if(!deployMaster && (builtBytes.length !== lock.byteLength || builtSha !== lock.
 if(deployMaster && (builtBytes.length < 3000000 || builtSha === lock.gitBlobSha))
   throw new Error('MASTER DEPLOYMENT BLOCKED: expected the distinct V46 master artifact.');
 
-await writeFile(resolve(dist,'_redirects'),'/* /index.html 200\\n');
+await writeFile(resolve(dist,'_redirects'),'/* /index.html 200\n');
 await writeFile(resolve(dist,'version.json'),JSON.stringify({
   version:deployMaster ? '46.0.0' : lock.version,
   name:'ED & DU | Terapia da Beleza',
