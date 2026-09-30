@@ -18,10 +18,10 @@ const blocks=[...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/gi)
 const dir=resolve(tmpdir(),'eddu-master-v46-check');
 await rm(dir,{recursive:true,force:true}); await import('node:fs/promises').then(fs=>fs.mkdir(dir,{recursive:true}));
 for(let i=0;i<blocks.length;i++){
-  const p=resolve(dir,\`script-${i+1}.js\`);
+  const p=resolve(dir,`script-${i+1}.js`);
   await writeFile(p,blocks[i]);
   const r=spawnSync(process.execPath,['--check',p],{encoding:'utf8'});
-  if(r.status!==0) throw new Error(\`MASTER V46 JS SYNTAX FAILED in script ${i+1}: ${r.stderr||r.stdout}\`);
+  if(r.status!==0) throw new Error(`MASTER V46 JS SYNTAX FAILED in script ${i+1}: ${r.stderr||r.stdout}`);
 }
 await rm(dir,{recursive:true,force:true});
-console.log(\`MASTER V46 CHECK: PASS | scripts=${blocks.length} | matrix=86 | bytes=${Buffer.byteLength(html)}\`);
+console.log(`MASTER V46 CHECK: PASS | scripts=${blocks.length} | matrix=86 | bytes=${Buffer.byteLength(html)}`);
