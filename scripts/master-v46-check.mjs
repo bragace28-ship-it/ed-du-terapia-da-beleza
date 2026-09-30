@@ -9,6 +9,8 @@ const matrix=JSON.parse(await readFile(resolve(root,'master','FEATURE_MATRIX_86.
 if(matrix.count!==86 || matrix.items?.length!==86 || matrix.items.some((x,i)=>x.id!==String(i+1).padStart(3,'0')))
   throw new Error('MASTER-86 MATRIX FAILED: expected exactly IDs 001-086.');
 if(html.length<3000000) throw new Error('MASTER V46 artifact unexpectedly small.');
+const hotfix=await readFile(resolve(root,'master','v49-final-functional-hotfix.js'),'utf8');
+if(!hotfix.includes('EDDU_MASTER_V46_FINAL_HOTFIX')) throw new Error('MASTER V46 final hotfix marker missing.');
 if(/@supabase|VITE_SUPABASE|supabase\\.co/i.test(html)) throw new Error('Legacy Supabase reference found in Master V46.');
 const required=['agendaAppointmentsM','saveAgendaAddM','saveAgendaEditM','saveAgendaBlockM','appointmentConflictM','blockConflictM','views.agenda'];
 for(const marker of required) if(!html.includes(marker)) throw new Error('MASTER V46 missing required Agenda marker: '+marker);
