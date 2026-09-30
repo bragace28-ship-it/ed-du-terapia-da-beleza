@@ -92,7 +92,7 @@ if(deployMaster){
   let builtHtml=await readFile(resolve(dist,'index.html'),'utf8');
   for(const runtimeFile of runtimeFiles){
     const runtime=await readFile(resolve(root,runtimeFile),'utf8');
-    builtHtml=builtHtml.replace(/<\\/body>/i, '<script>\\n'+runtime+'\\n</script>\\n</body>');
+    builtHtml=builtHtml.replace(/<\\/body>/i, '<script>\\n'+runtime+'\\n<\\/script>\\n</body>');
   }
   await writeFile(resolve(dist,'index.html'),builtHtml,'utf8');
 }
