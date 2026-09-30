@@ -53,7 +53,7 @@
     const d=day||window.selectedDayM||new Date().toISOString().slice(0,10);
     if(typeof views==='undefined')return;
     views.agendaAdd=()=>'<h2>Adicionar agendamento</h2><p class="sub">Novo atendimento diretamente na Agenda.</p>'+
-      '<div class="card"><label>Cliente</label><select id="aptClientSelect" onchange="if(this.value===\'__NEW__\'){openSheet(\\'newClient\\')}"><option value="">＋ Adicionar novo cliente</option>'+
+      '<div class="card"><label>Cliente</label><select id="aptClientSelect" onchange="if(this.value===&quot;__NEW__&quot;){openSheet(&quot;newClient&quot;)}"><option value="">＋ Adicionar novo cliente</option>'+
       clients().map(c=>'<option value="'+esc(c.name)+'">'+esc(c.name)+'</option>').join('')+
       '</select><input id="aptClient" type="hidden">'+
       '<label>Profissional</label><select id="aptProfessional"><option>Profissional ED</option><option>Profissional DU</option><option>ED</option><option>DU</option></select>'+
