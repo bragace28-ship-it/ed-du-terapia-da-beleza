@@ -1,6 +1,6 @@
 {
   "artifact": "EDDU_MASTER_CLEAN_STATE",
-  "generated_at": "2026-10-02",
+  "generated_at": "2026-10-02T09:50:00Z",
   "canonical_branch": "master-v46-final-homologation-2026-09-30",
   "canonical_release": "V46.0.0",
   "visual_baseline": "V33 immutable",
@@ -15,18 +15,20 @@
     "canonical_branch": "production",
     "nonproduction_branches_after_cleanup": 0,
     "schema_additive_preserved": true,
-    "existing_financial_transactions_preserved": 2,
+    "existing_financial_transactions_preserved": 0,
     "test_customer_data": 0,
     "test_appointments": 0,
     "test_commands": 0,
     "rls_core_tables": true,
-    "neon_auth_enabled": true
+    "neon_auth_enabled": true,
+    "obsolete_homologation_view_removed": true
   },
   "deployment": {
     "cloudflare_project": "ed-du-terapia-da-beleza",
     "canonical_preview_branch": "master-v46-final-homologation-2026-09-30",
-    "preview_runtime_verification": "pending_redeploy",
-    "vercel_runtime_authority": false
+    "preview_runtime_verification": "canonical_preview_currently_404_requires_clean_redeploy",
+    "vercel_runtime_authority": false,
+    "old_preview_cleanup": "legacy branch refs neutralized; Cloudflare deployment inventory requires Cloudflare account API access"
   },
   "rules": [
     "V33 visual baseline is immutable",
