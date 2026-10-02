@@ -15,7 +15,7 @@
     {"id":3,"gate":"Neon API hardening","status":"in_progress","checks":["schema-aligned fields","updated_at-safe PATCH","core catalog entities","production fail-closed"]},
     {"id":4,"gate":"Cloudflare Preview -> Neon","status":"ready_to_verify","checks":["Neon Data API reachable","/api/health returns ok:true service:neon","no database secret shipped to browser"]},
     {"id":5,"gate":"Core data bridge","status":"ready_to_verify","checks":["Neon Auth JWT","clients","professionals","services","products","appointments","commands","financial_transactions","agenda_blocks"]},
-    {"id":6,"gate":"Authentication and authorization","status":"required_before_production","checks":["Neon Auth session","API authorization","least privilege","sensitive-data protection"]},
+    {"id":6,"gate":"Authentication and authorization","status":"ready_to_verify","checks":["Neon Auth session","Neon Data API JWT","RLS/current_app_role","owner profile admin","server API remains fail-closed"]},
     {"id":7,"gate":"Asaas homologation","status":"pending_secret","checks":["ASAAS_API_KEY","ASAAS_WEBHOOK_TOKEN","PIX","card","installments","idempotency","webhook -> Neon"]},
     {"id":8,"gate":"Google Calendar","status":"pending","checks":["credentials","create","update","cancel","notifications","deduplication"]},
     {"id":9,"gate":"Module E2E","status":"pending","checks":["Agenda","Clients","Commands","Finance","Commercial","Client area","Notifications"]},
