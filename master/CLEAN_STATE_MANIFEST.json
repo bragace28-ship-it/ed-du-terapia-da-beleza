@@ -29,12 +29,13 @@
     "preview_runtime_verification": "canonical_preview_currently_404_requires_clean_redeploy",
     "vercel_runtime_authority": false,
     "old_preview_cleanup": "legacy branch refs neutralized; Cloudflare deployment inventory requires Cloudflare account API access",
-    "preview_trigger": "clean-state verification commit; redeploy trigger issued 2026-10-02",
+    "preview_trigger": "controlled PR CI trigger; no runtime/UI change",
     "redeploy_request": {
       "requested_at": "2026-10-02T09:00:00Z",
       "reason": "canonical Master V46 preview verification",
       "runtime_change": false
-    }
+    },
+    "ci_trigger_branch": "ci-preview-trigger-2026-10-02"
   },
   "rules": [
     "V33 visual baseline is immutable",
