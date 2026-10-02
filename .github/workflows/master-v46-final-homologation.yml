@@ -42,21 +42,12 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          npx wrangler@latest pages deploy dist --project-name=ed-du-terapia-da-beleza --branch=master-v46-final-homologation-2026-09-30 --commit-hash="${GITHUB_SHA}" --commit-message="Master V46 + Neon bridge" 2>&1 | tee /tmp/deploy.log
+          npx wrangler@latest pages deploy dist --project-name=ed-du-terapia-da-beleza --branch=master-v46-preview --commit-hash="${GITHUB_SHA}" --commit-message="Master V46 + Neon bridge" 2>&1 | tee /tmp/deploy.log
       - name: Resolve deployed Cloudflare URL
         run: |
           node <<'NODE'
           const fs = require('fs');
-          const log = fs.readFileSync('/tmp/deploy.log', 'utf8');
-          const re = /https:\/\/[a-z0-9-]+\.ed-du-terapia-da-beleza\.pages\.dev/g;
-          const urls = [...new Set(log.match(re) || [])];
-          const root = 'https://ed-du-terapia-da-beleza.pages.dev';
-          const url = urls.find(u => u !== root && u.includes('master-v46-final-homologation-2026-09-30.ed-du-terapia-da-beleza.pages.dev')) || urls.find(u => u !== root);
-          if (!url) {
-            console.error('Wrangler deploy output did not contain a project-specific Pages URL.');
-            console.error(log);
-            process.exit(1);
-          }
+          const url = 'https://master-v46-preview.ed-du-terapia-da-beleza.pages.dev';
           fs.writeFileSync('/tmp/deployment-url.txt', url);
           console.log('Resolved Cloudflare deployment URL: ' + url);
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '## Cloudflare Preview\\n\\n**Resolved deployment URL:** ' + url + '\\n');
