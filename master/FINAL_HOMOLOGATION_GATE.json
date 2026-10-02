@@ -1,5 +1,5 @@
 {
-  "status":"MASTER_V46_NEON_SCHEMA_APPLIED",
+  "status":"MASTER_V46_SAFE_HOMOLOGATION_FLOW_ACTIVE",
   "master":"V46.0.0",
   "baseline":"V33 immutable",
   "matrix_items":86,
@@ -12,8 +12,11 @@
   "neon_data_preserved":true,
   "neon_auth":"enabled",
   "data_api":"active",
-  "live_bridge":"committed",
+  "api_hardening":"committed_fail_closed_outside_homologation",
+  "live_bridge":"core_catalog_scope_committed",
   "asaas":"endpoint_prepared_secret_not_verified",
   "google_calendar":"pending_credentials_endpoint",
-  "next_gate":"configure_cloudflare_preview_neon_secret_then_live_86_item_browser_homologation"
+  "browser_e2e":"not_yet_verified",
+  "production_release":"blocked",
+  "next_gate":"configure_cloudflare_preview_neon_secret_then_run_core_e2e_and_86_item_homologation"
 }
