@@ -53,16 +53,18 @@ jobs:
           const fs = require('fs');
           const data = JSON.parse(fs.readFileSync('/tmp/deployments.json', 'utf8'));
           const deployments = Array.isArray(data) ? data : (data.result || data.deployments || []);
+          const get = (o, ...keys) => keys.reduce((v, k) => v ?? o?.[k], undefined);
           const sha = process.env.GITHUB_SHA;
           const branch = 'master-v46-final-homologation-2026-09-30';
           const candidates = deployments.filter(d => {
-            const meta = d.deployment_trigger?.metadata || d.deployment_trigger?.metadata || {};
-            return meta.commit_hash === sha || meta.commitHash === sha || meta.branch === branch || d.branch === branch;
+            const trigger = get(d, 'deployment_trigger', 'DeploymentTrigger') || {};
+            const meta = get(trigger, 'metadata', 'Metadata') || {};
+            return meta.commit_hash === sha || meta.CommitHash === sha || meta.commitHash === sha || meta.branch === branch || meta.Branch === branch || d.branch === branch || d.Branch === branch;
           });
           const d = candidates[0] || deployments[0];
           if (!d) throw new Error('No Cloudflare Pages deployment found.');
-          const aliases = Array.isArray(d.aliases) ? d.aliases : [];
-          const urls = [d.url, ...aliases].filter(Boolean).map(String);
+          const aliases = get(d, 'aliases', 'Aliases');
+          const urls = [get(d, 'url', 'Url'), ...(Array.isArray(aliases) ? aliases : [])].filter(Boolean).map(String);
           const root = 'https://ed-du-terapia-da-beleza.pages.dev';
           const branchAlias = urls.find(u => u !== root && u.includes('master-v46-final-homologation-2026-09-30.ed-du-terapia-da-beleza.pages.dev'));
           const previewAlias = urls.find(u => u !== root && u.endsWith('.ed-du-terapia-da-beleza.pages.dev'));
