@@ -57,6 +57,7 @@ jobs:
           }
           fs.writeFileSync('/tmp/deployment-url.txt', url);
           console.log('Resolved Cloudflare deployment URL: ' + url);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '## Cloudflare Preview\\n\\n**Resolved deployment URL:** ' + url + '\\n');
           NODE
       - name: Verify Cloudflare Neon health
         run: |
@@ -77,3 +78,4 @@ jobs:
           curl --fail --silent --show-error "$URL/version.json" | tee /tmp/version.json
           grep -q '"version": "46.0.0"' /tmp/version.json
           grep -q '"runtimeArtifact": "MASTER-V46"' /tmp/version.json
+          printf '\n**Release identity:** V46.0.0 / MASTER-V46\\n' >> "$GITHUB_STEP_SUMMARY"
