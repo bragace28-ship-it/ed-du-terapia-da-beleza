@@ -42,10 +42,12 @@ if(deployMaster){
   for(const file of runtimeFiles){
     const code=await readFile(resolve(root,file),'utf8');
     if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(code)) throw new Error('Legacy Supabase reference found in '+file);
-    output=output.replace('</body>','<script>'+code+'\n</script></body>');
+    const encoded=Buffer.from(code,'utf8').toString('base64');
+    output=output.replace('</body>','<script>(function(){try{(0,eval)(atob('${encoded}'));}catch(e){console.error("EDDU Master runtime load failed:",e);}})();</script></body>');
   }
   const authClient=await readFile(resolve(root,'master','neon-auth-client.js'),'utf8');
-  output=output.replace('</body>','<script type="module">'+authClient+'\n</script></body>');
+  const authEncoded=Buffer.from(authClient,'utf8').toString('base64');
+  output=output.replace('</body>','<script>(function(){try{(0,eval)(atob('${authEncoded}'));}catch(e){console.error("EDDU Neon Auth client load failed:",e);}})();</script></body>');
 }
 await rm(dist,{recursive:true,force:true});
 await mkdir(dist,{recursive:true});
