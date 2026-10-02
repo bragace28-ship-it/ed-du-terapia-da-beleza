@@ -49,7 +49,8 @@ jobs:
           const fs = require('fs');
           const log = fs.readFileSync('/tmp/deploy.log', 'utf8');
           const urls = [...log.matchAll(/https:\/\/[^\s"'<>]+\.pages\.dev/g)].map(m => m[0].replace(/[),.]+$/,''));
-          const url = urls.find(u => /ed-du-terapia-da-beleza\.pages\.dev$/.test(u)) || urls[urls.length - 1];
+          const root = 'https://ed-du-terapia-da-beleza.pages.dev';
+          const url = urls.find(u => u !== root && /\.ed-du-terapia-da-beleza\.pages\.dev$/.test(u)) || urls.find(u => u !== root) || urls[urls.length - 1];
           if (!url) {
             console.error('Wrangler did not return a Pages deployment URL.');
             console.error(log);
