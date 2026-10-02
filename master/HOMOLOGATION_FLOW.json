@@ -1,0 +1,26 @@
+{
+  "artifact":"MASTER-V46",
+  "baseline":"IMMUTABLE-V33",
+  "policy":{
+    "destructiveDatabaseChanges":false,
+    "productionWritesBeforeFinalGate":false,
+    "secretsInRepository":false,
+    "visualChanges":false,
+    "realCustomerDataDuringHomologation":false,
+    "rollback":"branch/commit based; no force push"
+  },
+  "flow":[
+    {"id":1,"gate":"Repository integrity","status":"ready","checks":["V33 visual lock","86-item matrix","Master V46 syntax","no Supabase runtime references"]},
+    {"id":2,"gate":"Neon production schema","status":"passed","checks":["50 public tables","additive migration","existing financial rows preserved"]},
+    {"id":3,"gate":"Neon API hardening","status":"in_progress","checks":["schema-aligned fields","updated_at-safe PATCH","core catalog entities","production fail-closed"]},
+    {"id":4,"gate":"Cloudflare Preview -> Neon","status":"blocked_secret","checks":["NEON_DATABASE_URL in Preview","/api/health returns ok:true service:neon"]},
+    {"id":5,"gate":"Core data bridge","status":"in_progress","checks":["clients","professionals","services","products","appointments","commands","financial_transactions","agenda_blocks"]},
+    {"id":6,"gate":"Authentication and authorization","status":"required_before_production","checks":["Neon Auth session","API authorization","least privilege","sensitive-data protection"]},
+    {"id":7,"gate":"Asaas homologation","status":"pending_secret","checks":["ASAAS_API_KEY","ASAAS_WEBHOOK_TOKEN","PIX","card","installments","idempotency","webhook -> Neon"]},
+    {"id":8,"gate":"Google Calendar","status":"pending","checks":["credentials","create","update","cancel","notifications","deduplication"]},
+    {"id":9,"gate":"Module E2E","status":"pending","checks":["Agenda","Clients","Commands","Finance","Commercial","Client area","Notifications"]},
+    {"id":10,"gate":"86-item acceptance","status":"pending","checks":["each item has execution evidence","only tested items become confirmed"]},
+    {"id":11,"gate":"Production release","status":"blocked","checks":["all critical gates passed","secrets configured","security passed","browser E2E passed","rollback point recorded"]}
+  ],
+  "releaseRule":"Production remains blocked until every critical gate is passed."
+}
