@@ -44,20 +44,33 @@ jobs:
         run: |
           npx wrangler@latest pages deploy dist --project-name=ed-du-terapia-da-beleza --branch=master-v46-final-homologation-2026-09-30 --commit-hash="${GITHUB_SHA}" --commit-message="Master V46 + Neon bridge" 2>&1 | tee /tmp/deploy.log
       - name: Resolve deployed Cloudflare URL
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
+          npx wrangler@latest pages deployment list --project-name=ed-du-terapia-da-beleza --json > /tmp/deployments.json
           node <<'NODE'
           const fs = require('fs');
-          const log = fs.readFileSync('/tmp/deploy.log', 'utf8');
-          const urls = [...log.matchAll(/https:\/\/[^\s"'<>]+\.pages\.dev/g)].map(m => m[0].replace(/[),.]+$/,''));
+          const data = JSON.parse(fs.readFileSync('/tmp/deployments.json', 'utf8'));
+          const deployments = Array.isArray(data) ? data : (data.result || data.deployments || []);
+          const sha = process.env.GITHUB_SHA;
+          const branch = 'master-v46-final-homologation-2026-09-30';
+          const candidates = deployments.filter(d => {
+            const meta = d.deployment_trigger?.metadata || d.deployment_trigger?.metadata || {};
+            return meta.commit_hash === sha || meta.commitHash === sha || meta.branch === branch || d.branch === branch;
+          });
+          const d = candidates[0] || deployments[0];
+          if (!d) throw new Error('No Cloudflare Pages deployment found.');
+          const aliases = Array.isArray(d.aliases) ? d.aliases : [];
+          const urls = [d.url, ...aliases].filter(Boolean).map(String);
           const root = 'https://ed-du-terapia-da-beleza.pages.dev';
-          const url = urls.find(u => u !== root && /\.ed-du-terapia-da-beleza\.pages\.dev$/.test(u)) || urls.find(u => u !== root) || urls[urls.length - 1];
-          if (!url) {
-            console.error('Wrangler did not return a Pages deployment URL.');
-            console.error(log);
-            process.exit(1);
-          }
+          const branchAlias = urls.find(u => u !== root && u.includes('master-v46-final-homologation-2026-09-30.ed-du-terapia-da-beleza.pages.dev'));
+          const previewAlias = urls.find(u => u !== root && u.endsWith('.ed-du-terapia-da-beleza.pages.dev'));
+          const url = branchAlias || previewAlias || urls.find(u => u !== root) || urls[0];
+          if (!url) throw new Error('Cloudflare deployment has no public URL.');
           fs.writeFileSync('/tmp/deployment-url.txt', url);
           console.log('Resolved Cloudflare deployment URL: ' + url);
+          console.log('Deployment ID: ' + (d.id || d.short_id || 'unknown'));
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '## Cloudflare Preview\\n\\n**Resolved deployment URL:** ' + url + '\\n');
           NODE
       - name: Verify Cloudflare Neon health
