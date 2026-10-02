@@ -23,14 +23,23 @@ const runtimeFiles=[
   'master/v46-final-homologation-runtime.js',
   'master/v46-final-hardening.js',
   'master/v46-runtime-fixes.js',
-  'master/v48-navigation-hardening.js'
+  'master/v48-navigation-hardening.js',
+  'master/v50-navigation-final-bridge.js',
+  'master/neon-live-bridge.js'
+];
+
+const apiFiles=[
+  'functions/api/data/[entity].js',
+  'functions/api/health.js',
+  'functions/api/payments.js',
+  'functions/api/webhooks/asaas.js'
 ];
 
 const dir=await mkdtemp(resolve(tmpdir(),'eddu-master-v46-check-'));
 let count=0;
 async function check(label,code){
   const p=resolve(dir,'script-'+(++count)+'-'+label+'.js');
-  await import('node:fs/promises').then(fs=>fs.writeFile(p,code));
+  await writeFile(p,code);
   const r=spawnSync(process.execPath,['--check',p],{encoding:'utf8'});
   if(r.status!==0) throw new Error('JS SYNTAX FAILED in '+label+': '+(r.stderr||r.stdout));
 }
@@ -38,7 +47,7 @@ async function check(label,code){
 const blocks=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map(m=>m[1]).filter(x=>x.trim());
 for(let i=0;i<blocks.length;i++) await check('html-'+(i+1),blocks[i]);
 
-for(const file of runtimeFiles){
+for(const file of [...runtimeFiles,...apiFiles]){
   const code=await readFile(resolve(root,file),'utf8');
   if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(code))
     throw new Error('Legacy Supabase reference found in '+file);
@@ -46,4 +55,4 @@ for(const file of runtimeFiles){
 }
 
 await rm(dir,{recursive:true,force:true});
-console.log('MASTER V46 CHECK: PASS | htmlScripts='+blocks.length+' | runtimeFiles='+runtimeFiles.length+' | matrix=86 | bytes='+Buffer.byteLength(html));
+console.log('MASTER V46 CHECK: PASS | htmlScripts='+blocks.length+' | runtimeFiles='+runtimeFiles.length+' | apiFiles='+apiFiles.length+' | matrix=86 | bytes='+Buffer.byteLength(html));
