@@ -3,4 +3,4 @@ compatibility_date = "2026-09-18"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "./dist"
 [vars]
-VITE_APP_VERSION = "33.0.0"
+VITE_APP_VERSION = "46.0.0"
