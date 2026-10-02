@@ -34,7 +34,8 @@
       "requested_at": "2026-10-02T10:25:00Z",
       "reason": "canonical Master V46 preview verification",
       "runtime_change": false
-    }
+    },
+    "cloudflare_api_token_confirmed_by_user": true
   },
   "rules": [
     "V33 visual baseline is immutable",
