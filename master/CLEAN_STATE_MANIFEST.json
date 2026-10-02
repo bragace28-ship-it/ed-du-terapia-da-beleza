@@ -1,0 +1,39 @@
+{
+  "artifact": "EDDU_MASTER_CLEAN_STATE",
+  "generated_at": "2026-10-02",
+  "canonical_branch": "master-v46-final-homologation-2026-09-30",
+  "canonical_release": "V46.0.0",
+  "visual_baseline": "V33 immutable",
+  "repository": {
+    "default_branch": "main",
+    "main_repointed_to_master_clean": true,
+    "obsolete_branches_neutralized": true,
+    "obsolete_branch_policy": "historical branch refs were moved to the canonical clean Master commit; no obsolete branch remains on an old runtime"
+  },
+  "neon": {
+    "project": "divine-dew-72623617",
+    "canonical_branch": "production",
+    "nonproduction_branches_after_cleanup": 0,
+    "schema_additive_preserved": true,
+    "existing_financial_transactions_preserved": 2,
+    "test_customer_data": 0,
+    "test_appointments": 0,
+    "test_commands": 0,
+    "rls_core_tables": true,
+    "neon_auth_enabled": true
+  },
+  "deployment": {
+    "cloudflare_project": "ed-du-terapia-da-beleza",
+    "canonical_preview_branch": "master-v46-final-homologation-2026-09-30",
+    "preview_runtime_verification": "pending_redeploy",
+    "vercel_runtime_authority": false
+  },
+  "rules": [
+    "V33 visual baseline is immutable",
+    "No destructive database cleanup",
+    "No real customer data during homologation",
+    "No secrets in repository",
+    "Only canonical Master branch may advance the homologation runtime",
+    "Production release remains blocked until E2E and 86-item evidence exists"
+  ]
+}
