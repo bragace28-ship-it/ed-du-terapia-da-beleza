@@ -48,29 +48,27 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          curl --fail --silent --show-error \\
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \\
-            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects/ed-du-terapia-da-beleza/deployments?env=preview&per_page=20" \\
-            > /tmp/deployments.json
+          set +e
+          npx wrangler@latest pages deployment list --project-name=ed-du-terapia-da-beleza --environment=preview > /tmp/deployments.txt 2>&1
+          LIST_STATUS=$?
+          set -e
           node <<'NODE'
           const fs = require('fs');
-          const data = JSON.parse(fs.readFileSync('/tmp/deployments.json', 'utf8'));
-          if (!data.success) throw new Error('Cloudflare API returned success=false: ' + JSON.stringify(data.errors));
-          const deployments = Array.isArray(data.result) ? data.result : [];
-          const sha = process.env.GITHUB_SHA;
-          const branch = 'master-v46-final-homologation-2026-09-30';
-          const matching = deployments.filter(d =>
-            d?.deployment_trigger?.metadata?.commit_hash === sha &&
-            d?.deployment_trigger?.metadata?.branch === branch
-          );
-          const d = matching[0] || deployments.find(x => x?.deployment_trigger?.metadata?.commit_hash === sha) || deployments[0];
-          if (!d) throw new Error('No Cloudflare preview deployment found.');
-          const url = d.url || (Array.isArray(d.aliases) ? d.aliases[0] : null);
-          if (!url) throw new Error('Cloudflare deployment has no live URL.');
+          const deployLog = fs.existsSync('/tmp/deploy.log') ? fs.readFileSync('/tmp/deploy.log','utf8') : '';
+          const listLog = fs.existsSync('/tmp/deployments.txt') ? fs.readFileSync('/tmp/deployments.txt','utf8') : '';
+          const combined = deployLog + '\\n' + listLog;
+          const re = /https:\\/\\/[a-z0-9-]+\\.ed-du-terapia-da-beleza\\.pages\\.dev/g;
+          const urls = [...new Set(combined.match(re) || [])];
+          const root = 'https://ed-du-terapia-da-beleza.pages.dev';
+          const url = urls.find(u => u !== root && u.includes('master-v46-final-homologation-2026-09-30.ed-du-terapia-da-beleza.pages.dev')) || urls.find(u => u !== root);
+          if (!url) {
+            console.error('No project-specific Cloudflare Pages URL found. Wrangler deployment-list exit=' + LIST_STATUS);
+            console.error(listLog);
+            console.error(deployLog);
+            process.exit(1);
+          }
           fs.writeFileSync('/tmp/deployment-url.txt', url);
           console.log('Resolved Cloudflare deployment URL: ' + url);
-          console.log('Deployment ID: ' + (d.id || 'unknown'));
-          console.log('Deployment commit: ' + (d.deployment_trigger?.metadata?.commit_hash || 'unknown'));
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, '## Cloudflare Preview\\n\\n**Resolved deployment URL:** ' + url + '\\n');
           NODE
       - name: Verify Cloudflare Neon health
