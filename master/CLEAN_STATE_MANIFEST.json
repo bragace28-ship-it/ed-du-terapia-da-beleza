@@ -1,6 +1,6 @@
 {
   "artifact": "EDDU_MASTER_CLEAN_STATE",
-  "generated_at": "2026-10-02T10:20:00Z",
+  "generated_at": "2026-10-02T10:25:00Z",
   "canonical_branch": "master-v46-final-homologation-2026-09-30",
   "canonical_release": "V46.0.0",
   "visual_baseline": "V33 immutable",
@@ -31,7 +31,7 @@
     "old_preview_cleanup": "legacy branch refs neutralized; Cloudflare deployment inventory requires Cloudflare account API access",
     "preview_trigger": "clean-state verification commit; redeploy trigger reissued 2026-10-02",
     "redeploy_request": {
-      "requested_at": "2026-10-02T10:20:00Z",
+      "requested_at": "2026-10-02T10:25:00Z",
       "reason": "canonical Master V46 preview verification",
       "runtime_change": false
     }
