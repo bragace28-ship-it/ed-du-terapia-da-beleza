@@ -5,7 +5,7 @@
   "matrix_items":86,
   "production":false,
   "cloud_preview":"deployed",
-  "cloud_neon_health":"blocked_missing_cloudflare_preview_secret",
+  "cloud_neon_health":"ready_data_api_secretless_verification",
   "neon_project":"divine-dew-72623617",
   "neon_branch":"production",
   "neon_schema":"production_applied_additive_only",
@@ -13,10 +13,10 @@
   "neon_auth":"enabled",
   "data_api":"active",
   "api_hardening":"committed_fail_closed_outside_homologation",
-  "live_bridge":"core_catalog_scope_committed",
+  "live_bridge":"core_catalog_data_api_auth_committed",
   "asaas":"endpoint_prepared_secret_not_verified",
   "google_calendar":"pending_credentials_endpoint",
   "browser_e2e":"not_yet_verified",
   "production_release":"blocked",
-  "next_gate":"configure_cloudflare_preview_neon_secret_then_run_core_e2e_and_86_item_homologation"
+  "next_gate":"deploy_secretless_data_api_bridge_then_verify_neon_auth_and_core_e2e"
 }
