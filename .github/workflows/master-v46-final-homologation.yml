@@ -48,7 +48,7 @@ jobs:
           node <<'NODE'
           const fs = require('fs');
           const log = fs.readFileSync('/tmp/deploy.log', 'utf8');
-          const re = /https:\\/\\/[a-z0-9-]+\\.ed-du-terapia-da-beleza\\.pages\\.dev/g;
+          const re = /https:\/\/[a-z0-9-]+\.ed-du-terapia-da-beleza\.pages\.dev/g;
           const urls = [...new Set(log.match(re) || [])];
           const root = 'https://ed-du-terapia-da-beleza.pages.dev';
           const url = urls.find(u => u !== root && u.includes('master-v46-final-homologation-2026-09-30.ed-du-terapia-da-beleza.pages.dev')) || urls.find(u => u !== root);
