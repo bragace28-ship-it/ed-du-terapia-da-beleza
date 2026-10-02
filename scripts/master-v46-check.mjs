@@ -25,7 +25,7 @@ const runtimeFiles=[
   'master/v46-runtime-fixes.js',
   'master/v48-navigation-hardening.js',
   'master/v50-navigation-final-bridge.js',
-  'master/neon-live-bridge.js'
+  'master/neon-live-bridge.js','master/neon-auth-client.js'
 ];
 
 const apiFiles=[
