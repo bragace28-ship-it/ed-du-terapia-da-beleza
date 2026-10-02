@@ -26,7 +26,7 @@ jobs:
           npm run master:check
       - name: Validate 86-item Master V46 matrix
         run: |
-          node -e "const m=require('./master/FEATURE_MATRIX_86.json'); if(m.count!==86 || !Array.isArray(m.items) || m.items.length!==86 || m.artifact!=='MASTER-V46' || m.visualBaseline!=='IMMUTABLE-V33') process.exit(1); console.log('FEATURE_MATRIX_86: PASS — 86/86 — MASTER-V46 — IMMUTABLE-V33')"
+          node -e "const fs=require('fs'); const m=JSON.parse(fs.readFileSync('./master/FEATURE_MATRIX_86.json','utf8')); if(m.count!==86 || !Array.isArray(m.items) || m.items.length!==86 || new Set(m.items.map(x=>x.id)).size!==86 || m.artifact!=='MASTER-V46' || m.visualBaseline!=='IMMUTABLE-V33') process.exit(1); console.log('FEATURE_MATRIX_86: PASS — 86/86 — MASTER-V46 — IMMUTABLE-V33')"
       - name: Build Master V46 + Neon bridge
         env:
           MASTER_DEPLOY: '1'
