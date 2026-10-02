@@ -13,14 +13,19 @@ const api=async(entity,method='GET',body)=>{
   return j;
 };
 const normalizeClient=x=>({name:String(x.name||x.fullName||'').trim(),email:x.email||null,phone:x.phone||null,cpf:x.cpf||null,birth_date:x.birth_date||x.birthDate||null,notes:x.notes||null,loyalty_points:Number(x.loyalty_points??x.loyaltyPoints??0)||0,active:x.active!==false});
+const normalizeProfessional=x=>({user_id:x.user_id||x.userId||null,name:String(x.name||x.nome||'').trim(),email:x.email||null,phone:x.phone||null,specialty:x.specialty||x.especialidade||null,commission_rate:Number(x.commission_rate??x.commissionRate??x.commission??0)||0,active:x.active!==false});
+const normalizeService=x=>({category_id:x.category_id||x.categoryId||null,name:String(x.name||x.nome||x.service||'').trim(),description:x.description||null,price:Number(x.price??x.valor??x.value??0)||0,duration_minutes:Number(x.duration_minutes??x.duration??60)||60,active:x.active!==false,price_base:Number(x.price_base??x.priceBase??x.price??0)||0,price_long:Number(x.price_long??x.priceLong??x.price??0)||0,service_cost:Number(x.service_cost??x.serviceCost??x.cost??0)||0});
+const normalizeProduct=x=>({category_id:x.category_id||x.categoryId||null,sku:x.sku||null,name:String(x.name||x.nome||x.product||'').trim(),description:x.description||null,sale_price:Number(x.sale_price??x.salePrice??x.price??0)||0,cost_price:Number(x.cost_price??x.costPrice??x.cost??0)||0,stock:Number(x.stock??0)||0,minimum_stock:Number(x.minimum_stock??x.minimumStock??0)||0,active:x.active!==false});
 const normalizeAppointment=x=>({client_id:stateMap.clients?.[x.clientId||x.client_id]||null,professional_id:stateMap.professionals?.[x.professionalId||x.professional_id]||null,starts_at:x.starts_at||x.startsAt||((x.date||'')+'T'+(x.start||'00:00')+':00'),ends_at:x.ends_at||x.endsAt||((x.date||'')+'T'+(x.end||'01:00')+':00'),status:String(x.status||'confirmed').toLowerCase().replace('confirmado','confirmed').replace('pendente','requested'),notes:x.notes||null});
 async function load(entity){
   try{
     const r=await api(entity);
-    if(!r.ok)return;
     const d=r.data||[];
     const data=window.data||{};
     if(entity==='clients')data.clients=d;
+    if(entity==='professionals')data.professionals=d;
+    if(entity==='services')data.services=d;
+    if(entity==='products')data.products=d;
     if(entity==='appointments')data.appointments=d;
     if(entity==='commands')data.commands=d;
     if(entity==='financial_transactions')data.financialTransactions=d;
@@ -29,20 +34,36 @@ async function load(entity){
     write('eddu_neon_'+entity,d);
   }catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e)}
 }
-async function pushNewClients(){
-  const data=window.data||read('eddu_data',{});
-  const clients=Array.isArray(data.clients)?data.clients:[];
-  stateMap.clients=stateMap.clients||{};
-  for(const c of clients){
-    const local=String(c.id||c.name||'');
-    if(!local||stateMap.clients[local])continue;
-    if(!c.name)continue;
+async function pushMapped(entity,items,normalizer){
+  if(!Array.isArray(items))return;
+  stateMap[entity]=stateMap[entity]||{};
+  for(const item of items){
+    const local=String(item?.id||item?.name||'');
+    if(!local||stateMap[entity][local])continue;
+    const payload=normalizer(item);
+    if(!payload.name)continue;
     try{
-      const r=await api('clients','POST',normalizeClient(c));
-      if(r.data?.id)stateMap.clients[local]=r.data.id;
+      const r=await api(entity,'POST',payload);
+      if(r.data?.id)stateMap[entity][local]=r.data.id;
     }catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e)}
   }
   write(mapKey,stateMap);
+}
+async function pushNewClients(){
+  const data=window.data||read('eddu_data',{});
+  await pushMapped('clients',Array.isArray(data.clients)?data.clients:[],normalizeClient);
+}
+async function pushNewProfessionals(){
+  const data=window.data||read('eddu_data',{});
+  await pushMapped('professionals',Array.isArray(data.professionals)?data.professionals:[],normalizeProfessional);
+}
+async function pushNewServices(){
+  const data=window.data||read('eddu_data',{});
+  await pushMapped('services',Array.isArray(data.services)?data.services:[],normalizeService);
+}
+async function pushNewProducts(){
+  const data=window.data||read('eddu_data',{});
+  await pushMapped('products',Array.isArray(data.products)?data.products:[],normalizeProduct);
 }
 async function pushNewAppointments(){
   const data=window.data||read('eddu_data',{});
@@ -65,14 +86,20 @@ async function sync(){
   window.__EDDU_NEON_SYNCING=true;
   try{
     await pushNewClients();
+    await pushNewProfessionals();
+    await pushNewServices();
+    await pushNewProducts();
     await pushNewAppointments();
     await load('clients');
+    await load('professionals');
+    await load('services');
+    await load('products');
     await load('appointments');
     await load('commands');
     await load('financial_transactions');
     await load('agenda_blocks');
     window.__EDDU_NEON_CONNECTED=true;
-    write(KEY,{connectedAt:new Date().toISOString()});
+    write(KEY,{connectedAt:new Date().toISOString(),scope:['clients','professionals','services','products','appointments','commands','financial_transactions','agenda_blocks']});
   }catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e)}
   finally{window.__EDDU_NEON_SYNCING=false}
 }
