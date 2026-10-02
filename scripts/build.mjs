@@ -11,6 +11,15 @@ const deployMaster=process.env.MASTER_DEPLOY==='1';
 const source=deployMaster?masterSource:v33Source;
 const v33=await readFile(v33Source,'utf8');
 let html=await readFile(source,'utf8');
+// Master source must remain markup-only. If a previous assembly accidentally embedded
+// runtime JavaScript as visible text, fall back to the immutable V33 HTML baseline;
+// all Master functionality is injected below through real <script> tags.
+if(deployMaster && /window\\.(?:v8PrintReport|v46DownloadFinancialReport|EDDU_MASTER_V46_FINAL_RUNTIME)\\s*=|document\\.addEventListener\\([^)]*=>/.test(html)){
+  html=v33;
+}
+if(deployMaster && /window\\.(?:v8PrintReport|v46DownloadFinancialReport|EDDU_MASTER_V46_FINAL_RUNTIME)\\s*=|document\\.addEventListener\\([^)]*=>/.test(html)){
+  throw new Error('MASTER source contains raw JavaScript text; refusing to build malformed HTML.');
+}
 const v33Bytes=Buffer.from(v33,'utf8');
 const v33Blob=createHash('sha1').update(Buffer.from('blob '+v33Bytes.length+'\0','utf8')).update(v33Bytes).digest('hex');
 const v33Sha=createHash('sha256').update(v33Bytes).digest('hex');
@@ -58,6 +67,7 @@ const builtBlob=createHash('sha1').update(Buffer.from('blob '+builtBytes.length+
 const builtSha=createHash('sha256').update(builtBytes).digest('hex');
 if(!deployMaster&&(builtBytes.length!==lock.byteLength||builtBlob!==lock.gitBlobSha)) throw new Error('V33 build output does not match immutable baseline.');
 if(deployMaster&&(builtBytes.length<3000000||builtBlob===lock.gitBlobSha)) throw new Error('MASTER deployment output is not a distinct V46 artifact.');
+if(deployMaster && /(?:window\\.(?:v8PrintReport|v46DownloadFinancialReport|EDDU_MASTER_V46_FINAL_RUNTIME)\\s*=|document\\.addEventListener\\([^)]*=>)/.test(built.replace(/<script[\\s\\S]*?<\\/script>/gi,''))) throw new Error('MASTER build contains visible JavaScript outside script tags.');
 await writeFile(resolve(dist,'_redirects'),'/* /index.html 200\n');
 await writeFile(resolve(dist,'_routes.json'),JSON.stringify({version:1,include:['/api/*'],exclude:[]}));
 await writeFile(resolve(dist,'version.json'),JSON.stringify({version:deployMaster?'46.0.0':lock.version,name:'ED & DU | Terapia da Beleza',visualBaseline:'IMMUTABLE-V33',runtimeArtifact:deployMaster?'MASTER-V46':'V33',sourceSha256:deployMaster?createHash('sha256').update(Buffer.from(html,'utf8')).digest('hex'):lock.sha256,builtSha256:builtSha,v33GitBlobSha:lock.gitBlobSha,v33Sha256:lock.sha256},null,2));
