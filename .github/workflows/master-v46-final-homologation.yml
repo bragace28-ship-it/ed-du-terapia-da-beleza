@@ -44,27 +44,17 @@ jobs:
         run: |
           npx wrangler@latest pages deploy dist --project-name=ed-du-terapia-da-beleza --branch=master-v46-final-homologation-2026-09-30 --commit-hash="${GITHUB_SHA}" --commit-message="Master V46 + Neon bridge" 2>&1 | tee /tmp/deploy.log
       - name: Resolve deployed Cloudflare URL
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          set +e
-          npx wrangler@latest pages deployment list --project-name=ed-du-terapia-da-beleza --environment=preview > /tmp/deployments.txt 2>&1
-          LIST_STATUS=$?
-          set -e
           node <<'NODE'
           const fs = require('fs');
-          const deployLog = fs.existsSync('/tmp/deploy.log') ? fs.readFileSync('/tmp/deploy.log','utf8') : '';
-          const listLog = fs.existsSync('/tmp/deployments.txt') ? fs.readFileSync('/tmp/deployments.txt','utf8') : '';
-          const combined = deployLog + '\\n' + listLog;
+          const log = fs.readFileSync('/tmp/deploy.log', 'utf8');
           const re = /https:\\/\\/[a-z0-9-]+\\.ed-du-terapia-da-beleza\\.pages\\.dev/g;
-          const urls = [...new Set(combined.match(re) || [])];
+          const urls = [...new Set(log.match(re) || [])];
           const root = 'https://ed-du-terapia-da-beleza.pages.dev';
           const url = urls.find(u => u !== root && u.includes('master-v46-final-homologation-2026-09-30.ed-du-terapia-da-beleza.pages.dev')) || urls.find(u => u !== root);
           if (!url) {
-            console.error('No project-specific Cloudflare Pages URL found. Wrangler deployment-list exit=' + LIST_STATUS);
-            console.error(listLog);
-            console.error(deployLog);
+            console.error('Wrangler deploy output did not contain a project-specific Pages URL.');
+            console.error(log);
             process.exit(1);
           }
           fs.writeFileSync('/tmp/deployment-url.txt', url);
