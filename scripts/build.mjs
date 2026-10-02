@@ -11,24 +11,26 @@ const deployMaster=process.env.MASTER_DEPLOY==='1';
 const source=deployMaster?masterSource:v33Source;
 const v33=await readFile(v33Source,'utf8');
 let html=await readFile(source,'utf8');
-// Master source must remain markup-only. If a previous assembly accidentally embedded
-// runtime JavaScript as visible text, fall back to the immutable V33 HTML baseline;
-// all Master functionality is injected below through real <script> tags.
-if(deployMaster && /window\\.(?:v8PrintReport|v46DownloadFinancialReport|EDDU_MASTER_V46_FINAL_RUNTIME)\\s*=|document\\.addEventListener\\([^)]*=>/.test(html)){
-  html=v33;
-}
-if(deployMaster && /window\\.(?:v8PrintReport|v46DownloadFinancialReport|EDDU_MASTER_V46_FINAL_RUNTIME)\\s*=|document\\.addEventListener\\([^)]*=>/.test(html)){
-  throw new Error('MASTER source contains raw JavaScript text; refusing to build malformed HTML.');
-}
+const visiblePart=s=>s.replace(/<script\b[\s\S]*?<\/script>/gi,'').replace(/<style\b[\s\S]*?<\/style>/gi,'');
 const v33Bytes=Buffer.from(v33,'utf8');
 const v33Blob=createHash('sha1').update(Buffer.from('blob '+v33Bytes.length+'\0','utf8')).update(v33Bytes).digest('hex');
 const v33Sha=createHash('sha256').update(v33Bytes).digest('hex');
 if(v33Bytes.length!==lock.byteLength||v33Blob!==lock.gitBlobSha||v33Sha!==lock.sha256) throw new Error('V33 VISUAL LOCK FAILED: immutable baseline changed.');
 if(!html.includes('ED & DU')||!html.includes('Terapia da Beleza')) throw new Error('Required ED & DU branding missing.');
+
 if(deployMaster){
   const v48Start=html.indexOf('<script id="v48-final-functional-fixes">');
   const v48End=v48Start>=0?html.lastIndexOf('</script>'):-1;
   if(v48Start>=0&&v48End>v48Start) html=html.slice(0,v48Start)+html.slice(v48End+'<\\/script>'.length);
+  const bodyEnd=html.toLowerCase().lastIndexOf('</body>');
+  const htmlEnd=html.toLowerCase().lastIndexOf('</html>');
+  if(bodyEnd>=0&&htmlEnd>bodyEnd){
+    const between=html.slice(bodyEnd+7,htmlEnd);
+    if(/(?:window\.|function\s*\(|const\s+|=>|v8PrintReport|v46DownloadFinancialReport)/.test(between)) html=html.slice(0,bodyEnd+7)+'\n</html>';
+  }
+  const end=html.toLowerCase().lastIndexOf('</html>');
+  if(end>=0 && /(?:window\.|function\s*\(|const\s+|=>|v8PrintReport|v46DownloadFinancialReport)/.test(html.slice(end+7))) html=html.slice(0,end+7);
+  if(/(?:window\.(?:v8PrintReport|v46DownloadFinancialReport|EDDU_MASTER_V46_FINAL_RUNTIME)\s*=|document\.addEventListener\([^)]*=>)/.test(visiblePart(html))) throw new Error('MASTER source still contains visible JavaScript text; refusing malformed build.');
 }
 if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(html)) throw new Error('Legacy Supabase reference found.');
 if(!deployMaster){
@@ -39,24 +41,18 @@ if(!deployMaster){
 if(process.argv.includes('--check')){console.log('V33 VISUAL LOCK: PASS');process.exit(0);}
 let output=html;
 if(deployMaster){
-  const runtimeFiles=[
-    'master/v49-final-functional-hotfix.js',
-    'master/v46-final-homologation-runtime.js',
-    'master/v46-final-hardening.js',
-    'master/v46-runtime-fixes.js',
-    'master/v48-navigation-hardening.js',
-    'master/v50-navigation-final-bridge.js',
-    'master/neon-live-bridge.js'
-  ];
+  const runtimeFiles=['master/v49-final-functional-hotfix.js','master/v46-final-homologation-runtime.js','master/v46-final-hardening.js','master/v46-runtime-fixes.js','master/v48-navigation-hardening.js','master/v50-navigation-final-bridge.js','master/neon-live-bridge.js'];
   for(const file of runtimeFiles){
     const code=await readFile(resolve(root,file),'utf8');
     if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(code)) throw new Error('Legacy Supabase reference found in '+file);
     const encoded=Buffer.from(code,'utf8').toString('base64');
-    output=output.replace('</body>','<script>(function(){try{(0,eval)(atob('${encoded}'));}catch(e){console.error("EDDU Master runtime load failed:",e);}})();</script></body>');
+    const tag='<script>(function(){try{(0,eval)(atob('+JSON.stringify(encoded)+'));}catch(e){console.error("EDDU Master runtime load failed:",e);}})();</script></body>';
+    output=output.replace('</body>',tag);
   }
   const authClient=await readFile(resolve(root,'master','neon-auth-client.js'),'utf8');
   const authEncoded=Buffer.from(authClient,'utf8').toString('base64');
-  output=output.replace('</body>','<script>(function(){try{(0,eval)(atob('${authEncoded}'));}catch(e){console.error("EDDU Neon Auth client load failed:",e);}})();</script></body>');
+  const authTag='<script>(function(){try{(0,eval)(atob('+JSON.stringify(authEncoded)+'));}catch(e){console.error("EDDU Neon Auth client load failed:",e);}})();</script></body>';
+  output=output.replace('</body>',authTag);
 }
 await rm(dist,{recursive:true,force:true});
 await mkdir(dist,{recursive:true});
@@ -67,7 +63,7 @@ const builtBlob=createHash('sha1').update(Buffer.from('blob '+builtBytes.length+
 const builtSha=createHash('sha256').update(builtBytes).digest('hex');
 if(!deployMaster&&(builtBytes.length!==lock.byteLength||builtBlob!==lock.gitBlobSha)) throw new Error('V33 build output does not match immutable baseline.');
 if(deployMaster&&(builtBytes.length<3000000||builtBlob===lock.gitBlobSha)) throw new Error('MASTER deployment output is not a distinct V46 artifact.');
-if(deployMaster && /(?:window\\.(?:v8PrintReport|v46DownloadFinancialReport|EDDU_MASTER_V46_FINAL_RUNTIME)\\s*=|document\\.addEventListener\\([^)]*=>)/.test(built.replace(/<script[\\s\\S]*?<\\/script>/gi,''))) throw new Error('MASTER build contains visible JavaScript outside script tags.');
+if(deployMaster && /(?:window\.(?:v8PrintReport|v46DownloadFinancialReport|EDDU_MASTER_V46_FINAL_RUNTIME)\s*=|document\.addEventListener\([^)]*=>)/.test(visiblePart(built))) throw new Error('MASTER build contains visible JavaScript outside script tags.');
 await writeFile(resolve(dist,'_redirects'),'/* /index.html 200\n');
 await writeFile(resolve(dist,'_routes.json'),JSON.stringify({version:1,include:['/api/*'],exclude:[]}));
 await writeFile(resolve(dist,'version.json'),JSON.stringify({version:deployMaster?'46.0.0':lock.version,name:'ED & DU | Terapia da Beleza',visualBaseline:'IMMUTABLE-V33',runtimeArtifact:deployMaster?'MASTER-V46':'V33',sourceSha256:deployMaster?createHash('sha256').update(Buffer.from(html,'utf8')).digest('hex'):lock.sha256,builtSha256:builtSha,v33GitBlobSha:lock.gitBlobSha,v33Sha256:lock.sha256},null,2));
