@@ -6,11 +6,37 @@ const mapKey='eddu_neon_id_map_v1';
 const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch{return d}};
 const write=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
 const stateMap=read(mapKey,{});
+const waitClient=async()=>{
+  if(window.__EDDU_NEON_CLIENT)return window.__EDDU_NEON_CLIENT;
+  if(window.__EDDU_NEON_READY===false)throw new Error(window.__EDDU_NEON_LAST_ERROR||'Neon client unavailable');
+  await new Promise(resolve=>window.addEventListener('eddu-neon-ready',resolve,{once:true}));
+  if(!window.__EDDU_NEON_CLIENT)throw new Error('Neon Auth client unavailable');
+  return window.__EDDU_NEON_CLIENT;
+};
 const api=async(entity,method='GET',body)=>{
-  const r=await fetch('/api/data/'+encodeURIComponent(entity),{method,headers:{'Content-Type':'application/json'},body:body==null?undefined:JSON.stringify(body),credentials:'same-origin'});
-  const j=await r.json().catch(()=>({ok:false,error:'invalid_json'}));
-  if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
-  return j;
+  const client=await waitClient();
+  let q=client.from(entity);
+  let result;
+  if(method==='GET'){
+    const id=new URLSearchParams(location.search).get('id');
+    result=id?await q.select('*').eq('id',id).limit(1):await q.select('*').limit(200);
+  }else if(method==='POST'){
+    result=await q.insert(body).select('*').limit(1);
+  }else if(method==='PATCH'){
+    if(!body?.id)throw new Error('id_required');
+    const {id,...patch}=body;
+    result=await q.update(patch).eq('id',id).select('*').limit(1);
+  }else if(method==='DELETE'){
+    const id=body?.id||new URLSearchParams(location.search).get('id');
+    if(!id)throw new Error('id_required');
+    result=await q.delete().eq('id',id).select('id').limit(1);
+  }else throw new Error('method_not_allowed');
+  if(result?.error){
+    const msg=String(result.error.message||result.error.code||'Neon Data API error');
+    if(/auth|required|jwt|token|unauthor/i.test(msg)&&typeof window.__EDDU_NEON_AUTH_REQUIRED==='function')window.__EDDU_NEON_AUTH_REQUIRED();
+    throw new Error(msg);
+  }
+  return {ok:true,entity:entity,data:result?.data||[]};
 };
 const normalizeClient=x=>({name:String(x.name||x.fullName||'').trim(),email:x.email||null,phone:x.phone||null,cpf:x.cpf||null,birth_date:x.birth_date||x.birthDate||null,notes:x.notes||null,loyalty_points:Number(x.loyalty_points??x.loyaltyPoints??0)||0,active:x.active!==false});
 const normalizeProfessional=x=>({user_id:x.user_id||x.userId||null,name:String(x.name||x.nome||'').trim(),email:x.email||null,phone:x.phone||null,specialty:x.specialty||x.especialidade||null,commission_rate:Number(x.commission_rate??x.commissionRate??x.commission??0)||0,active:x.active!==false});
