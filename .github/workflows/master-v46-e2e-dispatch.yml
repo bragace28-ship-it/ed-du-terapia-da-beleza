@@ -3,6 +3,8 @@ name: ED DU Master V46 E2E Dispatch
 on:
   issue_comment:
     types: [created]
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
@@ -11,9 +13,13 @@ permissions:
 jobs:
   e2e-preview:
     if: >
-      github.event.issue.pull_request &&
-      github.event.comment.body == '/run-e2e' &&
-      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+      (github.event_name == 'pull_request') ||
+      (
+        github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
+        github.event.comment.body == '/run-e2e' &&
+        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR head
