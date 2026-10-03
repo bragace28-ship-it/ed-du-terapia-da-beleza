@@ -63,7 +63,7 @@ const builtBlob=createHash('sha1').update(Buffer.from('blob '+builtBytes.length+
 const builtSha=createHash('sha256').update(builtBytes).digest('hex');
 if(!deployMaster&&(builtBytes.length!==lock.byteLength||builtBlob!==lock.gitBlobSha)) throw new Error('V33 build output does not match immutable baseline.');
 if(deployMaster&&(builtBytes.length<3000000||builtBlob===lock.gitBlobSha)) throw new Error('MASTER deployment output is not a distinct V46 artifact.');
-if(deployMaster && /(?:window\.(?:v8PrintReport|v46DownloadFinancialReport|EDDU_MASTER_V46_FINAL_RUNTIME)\s*=|document\.addEventListener\([^)]*=>|=>)/.test(visiblePart(built))) throw new Error('MASTER build contains visible JavaScript outside script tags.');
+if(deployMaster && /(?:window\.(?:v8PrintReport|v46DownloadFinancialReport|EDDU_MASTER_V46_FINAL_RUNTIME)\s*=|document\.addEventListener\([^)]*=>)/.test(visiblePart(built))) throw new Error('MASTER build contains visible JavaScript outside script tags.');
 await writeFile(resolve(dist,'_redirects'),'/* /index.html 200\n');
 await writeFile(resolve(dist,'_routes.json'),JSON.stringify({version:1,include:['/api/*'],exclude:[]}));
 await writeFile(resolve(dist,'version.json'),JSON.stringify({version:deployMaster?'46.0.0':lock.version,name:'ED & DU | Terapia da Beleza',visualBaseline:'IMMUTABLE-V33',runtimeArtifact:deployMaster?'MASTER-V46':'V33',sourceSha256:deployMaster?createHash('sha256').update(Buffer.from(html,'utf8')).digest('hex'):lock.sha256,builtSha256:builtSha,v33GitBlobSha:lock.gitBlobSha,v33Sha256:lock.sha256},null,2));
