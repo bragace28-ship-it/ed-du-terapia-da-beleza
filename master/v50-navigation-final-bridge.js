@@ -62,6 +62,36 @@
     show(m[1]);
   },true);
 
+  /* Command checkout invariant:
+     "Fechar comanda" must ALWAYS enter Smart Gateway ranking first.
+     This capture-phase guard runs before legacy inline handlers that previously
+     redirected the action to the financial report. It changes routing only;
+     no visual/layout markup is modified and no payment is created here. */
+  function normalizedText(el){
+    return String((el&&el.textContent)||'').replace(/\s+/g,' ').trim().toLowerCase();
+  }
+  function isCommandCheckoutControl(el){
+    if(!el)return false;
+    const text=normalizedText(el);
+    const raw=String(el.getAttribute&&el.getAttribute('onclick')||'').toLowerCase();
+    const id=String(el.id||'').toLowerCase();
+    const dataAction=String(el.getAttribute&&el.getAttribute('data-action')||'').toLowerCase();
+    const byLabel=(text.includes('fechar')||text.includes('finalizar')) && text.includes('comanda');
+    const byHook=/closecommand|finishcommand|finalizecommand|fecharcomanda|finalizarcomanda/.test(raw+' '+id+' '+dataAction);
+    return byLabel||byHook;
+  }
+  document.addEventListener('click',function(e){
+    const control=e.target&&e.target.closest?e.target.closest('button,a,[role="button"],[onclick],[data-action]'):null;
+    if(!isCommandCheckoutControl(control))return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    const opened=show('gatewayRanking');
+    if(!opened && typeof window.openSheet==='function'){
+      try{ window.openSheet('gatewayRanking'); }catch(_){}
+    }
+  },true);
+
   /* Agenda: the first selector item explicitly means "new client". */
   const originalAgendaAdd=window.openAgendaAddM;
   window.openAgendaAddM=function(day){
