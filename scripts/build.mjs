@@ -38,6 +38,7 @@ if(deployMaster){
     'master/v48-navigation-hardening.js',
     'master/v50-navigation-final-bridge.js',
     'master/v51-command-close-gateway-bridge.js',
+    'master/v52-real-checkout-bridge.js',
     'master/neon-live-bridge.js'
   ];
   for(const file of runtimeFiles){
