@@ -4,3 +4,18 @@ compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "./dist"
 [vars]
 VITE_APP_VERSION = "46.0.0"
+
+[secrets]
+required = [
+  "NEON_DATABASE_URL",
+  "ASAAS_API_KEY",
+  "ASAAS_WEBHOOK_TOKEN",
+  "PAGBANK_TOKEN",
+  "STRIPE_SECRET_KEY",
+  "STRIPE_WEBHOOK_SECRET",
+  "PICPAY_CLIENT_ID",
+  "PICPAY_CLIENT_SECRET",
+  "PICPAY_WEBHOOK_TOKEN",
+  "NUPAY_MERCHANT_KEY",
+  "NUPAY_MERCHANT_TOKEN"
+]
