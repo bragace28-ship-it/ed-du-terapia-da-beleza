@@ -18,7 +18,7 @@ function estimate(amount,gateway,method,installments){
   const fee=money(amount*(r.pct||0)+(r.fixed||0));return {fee_known:true,fee_percent:r.pct*100,fee_amount:fee,net_amount:money(amount-fee)};
 }
 function enabled(env,g){
-  if(g==='PagBank')return !!env.PAGBANK_TOKEN&&!!(env.PAGBANK_API_BASE||'');
+  if(g==='PagBank')return !!env.PAGBANK_TOKEN;
   if(g==='Stripe')return !!env.STRIPE_SECRET_KEY;
   if(g==='Asaas')return !!env.ASAAS_API_KEY;
   if(g==='PicPay')return !!env.PICPAY_CLIENT_ID&&!!env.PICPAY_CLIENT_SECRET;
@@ -26,7 +26,7 @@ function enabled(env,g){
   return false;
 }
 async function createPagBank({env,origin,commandId,amount,method,customer,reference}){
-  const token=env.PAGBANK_TOKEN,base=String(env.PAGBANK_API_BASE||'').replace(/\/$/,'');
+  const token=env.PAGBANK_TOKEN,base=String(env.PAGBANK_API_BASE||'https://sandbox.api.pagseguro.com').replace(/\/$/,'');
   if(!token||!base)throw new Error('PagBank não configurado no servidor.');
   const notificationUrl=origin+'/api/webhooks/pagbank';
   const payload={reference_id:reference,expiration_date:new Date(Date.now()+60*60*1000).toISOString(),customer_modifiable:true,items:[{reference_id:commandId||reference,name:'ED & DU | Terapia da Beleza',quantity:1,unit_amount:Math.round(amount*100)}],payment_methods:[{type:method==='pix'?'PIX':'CREDIT_CARD'}],soft_descriptor:'EDDU BELEZA',redirect_url:origin+'/?payment=return&command='+encodeURIComponent(commandId),return_url:origin+'/?payment=return&command='+encodeURIComponent(commandId),notification_urls:[notificationUrl],payment_notification_urls:[notificationUrl]};
