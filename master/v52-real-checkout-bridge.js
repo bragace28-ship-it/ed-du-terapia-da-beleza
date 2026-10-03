@@ -70,3 +70,5 @@ window.EDDU_MASTER_V53_UNIFIED_GATEWAYS=true;
 /* E2E direct-fetch trigger */
 
 /* E2E workflow synchronized */
+
+/* E2E corrected workflow trigger */
