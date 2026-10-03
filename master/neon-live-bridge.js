@@ -107,6 +107,45 @@ async function pushNewAppointments(){
   }
   write(mapKey,stateMap);
 }
+
+const GENERIC_MAP={
+  coupons:'coupons',giftCards:'gift_cards',gift_cards:'gift_cards',referrals:'referrals',
+  quotes:'quotes',receivables:'receivables',receivableInstallments:'receivable_installments',
+  payables:'payables',cardInvoices:'card_invoices',commissions:'commissions',
+  terms:'terms',anamneses:'anamneses',beforeAfterGallery:'before_after_gallery',
+  openFinanceConnections:'open_finance_connections',loyaltyAccounts:'loyalty_accounts',
+  loyaltyTransactions:'loyalty_transactions',creditAccounts:'credit_accounts',
+  creditAlerts:'credit_alerts',recurringPayments:'recurring_payments',ocrDocuments:'ocr_documents',
+  accountActions:'account_actions'
+};
+const FIELD_MAP={clientId:'client_id',professionalId:'professional_id',serviceId:'service_id',productId:'product_id',commandId:'command_id',appointmentId:'appointment_id',referrerClientId:'referrer_client_id',giftCardId:'gift_card_id',loyaltyAccountId:'loyalty_account_id',receivableId:'receivable_id',userId:'user_id',createdBy:'created_by',paidAt:'paid_at',dueAt:'due_at',startsAt:'starts_at',endsAt:'ends_at',beforeRef:'before_ref',afterRef:'after_ref',collageRef:'collage_ref',storageRef:'storage_ref',mimeType:'mime_type',extractedData:'extracted_data'};
+function genericPayload(entity,item){
+  const out={};const allowed=new Set({
+    coupons:['code','type','value','service_id','active','starts_at','expires_at','usage_limit','usage_count','metadata'],
+    gift_cards:['code','title','value','status','metadata'],referrals:['referrer_client_id','referred_name','referred_phone','gift_card_id','status','points_awarded'],
+    quotes:['client_id','professional_id','total_amount','status','payload'],receivables:['client_id','command_id','description','total_amount','paid_amount','due_at','status','method','metadata'],
+    receivable_installments:['receivable_id','installment_no','amount','due_at','paid_at','status'],payables:['description','supplier','amount','due_at','paid_at','status','category','card_invoice','metadata'],
+    card_invoices:['card_name','amount','due_at','category','status','metadata'],commissions:['professional_id','command_id','base_amount','commission_rate','commission_amount','paid_amount','status'],
+    terms:['client_id','status','sent_at','signed_at','payload'],anamneses:['client_id','objective','analysis','private_formula','private_notes','files'],
+    before_after_gallery:['client_id','title','caption','before_ref','after_ref','collage_ref'],open_finance_connections:['provider','status','external_account_ref','metadata'],
+    loyalty_accounts:['client_id','points_balance'],loyalty_transactions:['loyalty_account_id','points','reason','referral_id'],
+    credit_accounts:['client_id','credit_limit','balance','status'],credit_alerts:['client_id','type','message','status','resolved_at'],
+    recurring_payments:['client_id','provider','external_id','amount','interval','status','metadata'],ocr_documents:['payable_id','filename','mime_type','storage_ref','extracted_data','status'],
+    account_actions:['user_id','action','entity','entity_id','payload']
+  }[entity]||[]);
+  for(const [k,v] of Object.entries(item||{})){const snake=FIELD_MAP[k]||k;if(allowed.has(snake))out[snake]=v}
+  for(const k of ['client_id','professional_id','service_id','product_id','command_id','appointment_id','referrer_client_id','gift_card_id','loyalty_account_id','receivable_id','user_id','created_by']){if(out[k]&&stateMap[{client_id:'clients',professional_id:'professionals',service_id:'services',product_id:'products',command_id:'commands',appointment_id:'appointments',referrer_client_id:'clients',gift_card_id:'gift_cards',loyalty_account_id:'loyalty_accounts',receivable_id:'receivables',user_id:'users',created_by:'users'}[k]]?.[out[k]])out[k]=stateMap[{client_id:'clients',professional_id:'professionals',service_id:'services',product_id:'products',command_id:'commands',appointment_id:'appointments',referrer_client_id:'clients',gift_card_id:'gift_cards',loyalty_account_id:'loyalty_accounts',receivable_id:'receivables',user_id:'users',created_by:'users'}[k]][out[k]]}
+  return out;
+}
+async function pushGenericEntity(entity,localProp){
+  const data=window.data||read('eddu_data',{}),items=Array.isArray(data[localProp])?data[localProp]:[];stateMap[entity]=stateMap[entity]||{};
+  for(const item of items){const local=String(item?.id||item?.code||item?.name||'');if(!local||stateMap[entity][local])continue;const payload=genericPayload(entity,item);if(!Object.keys(payload).length)continue;try{const r=await api(entity,'POST',payload);if(r.data?.id)stateMap[entity][local]=r.data.id}catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e)}}
+  write(mapKey,stateMap);
+}
+async function pushGenericEntities(){
+  for(const [prop,entity] of Object.entries(GENERIC_MAP))await pushGenericEntity(entity,prop);
+}
+
 async function sync(){
   if(window.__EDDU_NEON_SYNCING)return;
   window.__EDDU_NEON_SYNCING=true;
@@ -116,6 +155,7 @@ async function sync(){
     await pushNewServices();
     await pushNewProducts();
     await pushNewAppointments();
+    await pushGenericEntities();
     await load('clients');
     await load('professionals');
     await load('services');
@@ -124,6 +164,7 @@ async function sync(){
     await load('commands');
     await load('financial_transactions');
     await load('agenda_blocks');
+    for(const entity of Object.values(GENERIC_MAP)) await load(entity);
     window.__EDDU_NEON_CONNECTED=true;
     write(KEY,{connectedAt:new Date().toISOString(),scope:['clients','professionals','services','products','appointments','commands','financial_transactions','agenda_blocks']});
   }catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e)}
