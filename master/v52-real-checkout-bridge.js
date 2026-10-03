@@ -60,3 +60,5 @@ setTimeout(async()=>{try{const u=new URL(location.href);if(u.searchParams.get('p
 window.EDDU_MASTER_V53_UNIFIED_GATEWAYS=true;
 })();
 /* E2E trigger branch 2026-10-03 */
+
+/* E2E sync trigger 2026-10-03 13:15 UTC */
