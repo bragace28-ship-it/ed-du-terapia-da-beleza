@@ -59,3 +59,26 @@ window.closeCommandAndOpenGateway=c=>window.__edduOpenGatewayRanking(c||currentC
 setTimeout(async()=>{try{const u=new URL(location.href);if(u.searchParams.get('payment')!=='nupay_return')return;const sessionId=u.searchParams.get('sessionId');const commandId=u.searchParams.get('command');if(!sessionId)return;const r=await fetch('/api/payments?mode=nupay-status&sessionId='+encodeURIComponent(sessionId)+'&commandId='+encodeURIComponent(commandId||''));const d=await r.json().catch(()=>({}));if(d.status==='PAID'){toast('✓ NuPay confirmou o pagamento.');open('payments')}else if(d.status==='canceled'||d.status==='expired'){toast('NuPay encerrou a sessão sem pagamento.')}else if(d.status==='pending'||d.status==='approved'){toast('NuPay ainda está aguardando a conclusão do pagamento.')}}catch(e){console.warn('NuPay return handling',e)}},250);
 window.EDDU_MASTER_V53_UNIFIED_GATEWAYS=true;
 })();
+/* live E2E trigger */
+
+/* E2E retry 2026-10-03 */
+
+/* E2E final trigger */
+
+/* E2E checkout stabilization */
+
+/* E2E direct-fetch trigger */
+
+/* E2E workflow synchronized */
+
+/* E2E corrected workflow trigger */
+
+/* Gateway regex fix E2E trigger */
+
+/* E2E template literal fix trigger */
+
+/* E2E webhook syntax fix trigger */
+
+/* deployed smoke test trigger */
+
+/* smoke ordering retry */
