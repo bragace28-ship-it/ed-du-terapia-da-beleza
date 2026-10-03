@@ -55,6 +55,7 @@ async function load(entity){
     if(entity==='appointments')data.appointments=d;
     if(entity==='commands')data.commands=d;
     if(entity==='financial_transactions')data.financialTransactions=d;
+    if(entity==='payments')data.payments=d;
     if(entity==='agenda_blocks')data.blocks=d;
     window.data=data;
     write('eddu_neon_'+entity,d);
@@ -123,9 +124,10 @@ async function sync(){
     await load('appointments');
     await load('commands');
     await load('financial_transactions');
+    await load('payments');
     await load('agenda_blocks');
     window.__EDDU_NEON_CONNECTED=true;
-    write(KEY,{connectedAt:new Date().toISOString(),scope:['clients','professionals','services','products','appointments','commands','financial_transactions','agenda_blocks']});
+    write(KEY,{connectedAt:new Date().toISOString(),scope:['clients','professionals','services','products','appointments','commands','financial_transactions','payments','agenda_blocks']});
   }catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e)}
   finally{window.__EDDU_NEON_SYNCING=false}
 }
