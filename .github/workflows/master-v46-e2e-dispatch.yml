@@ -12,7 +12,8 @@ jobs:
   e2e-preview:
     if: >
       github.event.issue.pull_request &&
-      github.event.comment.body == '/run-e2e'
+      github.event.comment.body == '/run-e2e' &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR head
