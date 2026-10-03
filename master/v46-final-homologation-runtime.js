@@ -186,4 +186,82 @@ window.openUserEditV20=function(id){
 document.addEventListener('change',e=>{if(e.target?.id==='u20role'&&typeof window.renderUserPermsV20==='function')setTimeout(()=>window.renderUserPermsV20(),0)},true);
 
 window.EDDU_MASTER_V46_FINAL_RUNTIME=true;
+/* MASTER V46 — real payments bridge (no demo payment records) */
+(function(){
+  const escP=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  const paymentMoney=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  async function paymentToken(){
+    try{
+      if(typeof window.EDDU_NEON_GET_SESSION!=='function')return '';
+      const r=await window.EDDU_NEON_GET_SESSION();
+      const s=r?.data?.session||r?.session||r?.data||r;
+      return String(s?.accessToken||s?.access_token||s?.token||s?.session?.token||'');
+    }catch(_){return ''}
+  }
+  async function paymentsRequest(path,options={}){
+    const token=await paymentToken();
+    if(!token)throw new Error('Sessão Neon Auth necessária para operações financeiras.');
+    const headers=Object.assign({'Authorization':'Bearer '+token,'Content-Type':'application/json'},options.headers||{});
+    const r=await fetch(path,Object.assign({},options,{headers}));
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(data.error||'Falha na operação de pagamentos.');
+    return data;
+  }
+  function paymentRows(rows){
+    if(!Array.isArray(rows)||!rows.length)return '<div class="card"><p class="sub">Nenhum pagamento real registrado no Neon.</p></div>';
+    return rows.map(p=>{
+      const meta=p.metadata||{}, provider=meta.provider||{}, invoice=meta.invoiceUrl||provider.invoiceUrl||'';
+      return '<div class="card"><div class="row"><span>'+escP(p.method||'Pagamento')+'</span><b>'+paymentMoney(p.amount)+'</b></div>'+
+        '<div class="row"><span>Status</span><b class="'+(/RECEIVED|CONFIRMED|RECEIVED_IN_CASH/i.test(String(p.status))?'badge-ok':'')+'">'+escP(p.status||'Pendente')+'</b></div>'+
+        '<div class="row"><span>Gateway</span><b>'+escP(p.gateway||'Asaas')+'</b></div>'+
+        '<div class="row"><span>Data</span><b>'+escP(p.created_at?new Date(p.created_at).toLocaleDateString('pt-BR'):'—')+'</b></div>'+
+        (invoice?'<button class="btn full" onclick="window.open('+JSON.stringify(invoice)+',\'_blank\',\'noopener\')">Abrir fatura</button>':'')+
+        '<button class="btn full" onclick="window.__EDDU_PAYMENT_RECEIPT='+JSON.stringify(p).replace(/</g,'\\u003c')+';openSheet(\'receipt\')">Ver comprovante</button></div>';
+    }).join('');
+  }
+  window.EDDU_REFRESH_REAL_PAYMENTS=async function(){
+    const status=document.getElementById('eddu-payment-status');
+    if(status)status.textContent='Consultando Neon…';
+    try{
+      const data=await paymentsRequest('/api/payments');
+      window.data=window.data||{};window.data.payments=Array.isArray(data.payments)?data.payments:[];
+      if(status)status.textContent='Dados reais · Neon + Asaas';
+      if(typeof window.render==='function')window.render('payments');
+    }catch(e){
+      if(status)status.textContent=String(e.message||e);
+      if(typeof window.__EDDU_NEON_AUTH_REQUIRED==='function')window.__EDDU_NEON_AUTH_REQUIRED();
+    }
+  };
+  window.openRealPaymentForm=function(){if(typeof window.openSheet==='function')window.openSheet('realPayment')};
+  window.createRealPayment=async function(){
+    const btn=document.getElementById('eddu-pay-submit'),status=document.getElementById('eddu-pay-create-status');
+    if(btn)btn.disabled=true;if(status)status.textContent='Criando cobrança no Asaas…';
+    try{
+      const amount=Number(document.getElementById('eddu-pay-amount')?.value||0);
+      const customer=String(document.getElementById('eddu-pay-customer')?.value||'').trim();
+      const billingType=String(document.getElementById('eddu-pay-method')?.value||'PIX');
+      const dueDate=String(document.getElementById('eddu-pay-due')?.value||new Date().toISOString().slice(0,10));
+      const description=String(document.getElementById('eddu-pay-description')?.value||'ED & DU | Terapia da Beleza').trim();
+      const installmentCount=Math.max(1,Number(document.getElementById('eddu-pay-installments')?.value||1));
+      if(!(amount>0)||!customer)throw new Error('Informe o valor e o ID do cliente no Asaas.');
+      const data=await paymentsRequest('/api/payments',{method:'POST',headers:{'Idempotency-Key':'EDDU-'+crypto.randomUUID()},body:JSON.stringify({amount,customer,billingType,dueDate,description,installmentCount})});
+      const p=data.payment||{},meta=p.metadata||{},pix=data.pix||meta.pixQrCode;
+      if(status)status.textContent='✓ Cobrança criada no Asaas. Status: '+String(p.status||'PENDING');
+      const host=document.getElementById('eddu-pay-result');
+      if(host&&pix?.encodedImage)host.innerHTML='<div class="card"><b>PIX gerado</b><img alt="QR Code PIX" style="display:block;width:220px;max-width:100%;margin:14px auto" src="data:image/png;base64,'+pix.encodedImage+'"><textarea readonly style="width:100%;min-height:90px;box-sizing:border-box">'+escP(pix.payload||'')+'</textarea></div>';
+      else if(host&&(meta.invoiceUrl||data.provider?.invoiceUrl)){const url=meta.invoiceUrl||data.provider.invoiceUrl;host.innerHTML='<div class="card"><b>Fatura Asaas criada</b><button class="btn primary full" onclick="window.open('+JSON.stringify(url)+',\'_blank\',\'noopener\')">Abrir fatura de pagamento</button></div>'}
+      if(typeof window.EDDU_REFRESH_REAL_PAYMENTS==='function')await window.EDDU_REFRESH_REAL_PAYMENTS();
+    }catch(e){if(status)status.textContent='Erro: '+String(e.message||e)}
+    finally{if(btn)btn.disabled=false}
+  };
+  window.views=window.views||{};
+  window.views.payments=()=>'<h2>Pagamentos</h2><div id="eddu-payment-status" class="sub">Dados reais · carregando…</div>'+paymentRows(Array.isArray(window.data?.payments)?window.data.payments:[])+'<button class="btn primary full" onclick="openRealPaymentForm()">+ Nova cobrança</button><button class="btn full" onclick="EDDU_REFRESH_REAL_PAYMENTS()">↻ Atualizar pagamentos</button>';
+  window.views.realPayment=()=>'<h2>Nova cobrança</h2><p class="sub">Homologação financeira: a cobrança será criada no Asaas e registrada no Neon.</p><div class="card"><label>Cliente Asaas (ID cus_...)</label><input id="eddu-pay-customer" placeholder="cus_..."><label>Valor</label><input id="eddu-pay-amount" type="number" min="0.01" step="0.01" value="1.00"><label>Forma</label><select id="eddu-pay-method"><option value="PIX">PIX</option><option value="CREDIT_CARD">Cartão de crédito · fatura Asaas</option><option value="UNDEFINED">Fatura · cliente escolhe</option></select><label>Parcelas</label><select id="eddu-pay-installments"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option><option value="6">6x</option><option value="12">12x</option></select><label>Vencimento</label><input id="eddu-pay-due" type="date" value="'+new Date().toISOString().slice(0,10)+'"><label>Descrição</label><input id="eddu-pay-description" value="ED & DU | Terapia da Beleza"><button id="eddu-pay-submit" class="btn primary full" onclick="createRealPayment()">Criar cobrança real</button><div id="eddu-pay-create-status" class="sub"></div><div id="eddu-pay-result"></div></div><button class="btn full" onclick="openSheet(\'payments\')">← Pagamentos</button>';
+  window.views.receipt=()=>{
+    const p=window.__EDDU_PAYMENT_RECEIPT||{},meta=p.metadata||{},provider=meta.provider||{};
+    return '<h2>Comprovante de pagamento</h2><div class="card"><div class="row"><span>ED & DU | Terapia da Beleza</span><b>Comprovante</b></div><div class="row"><span>Valor</span><b>'+paymentMoney(p.amount)+'</b></div><div class="row"><span>Pagamento</span><b>'+escP(p.method||'—')+'</b></div><div class="row"><span>Status</span><b class="badge-ok">'+escP(p.status||'—')+'</b></div><div class="row"><span>Identificação</span><b>'+escP(p.external_id||'—')+'</b></div></div>'+(provider.invoiceUrl?'<button class="btn primary full" onclick="window.open('+JSON.stringify(provider.invoiceUrl)+',\'_blank\',\'noopener\')">Abrir fatura Asaas</button>':'')+'<button class="btn full" onclick="openSheet(\'payments\')">← Pagamentos</button>';
+  };
+  setTimeout(()=>{if(typeof window.EDDU_REFRESH_REAL_PAYMENTS==='function'&&document.querySelector('.client-actions-v11'))window.EDDU_REFRESH_REAL_PAYMENTS().catch(()=>{})},1200);
+})();
+
 })();
