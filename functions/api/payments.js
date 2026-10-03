@@ -78,7 +78,27 @@ async function createNubank({env,origin,commandId,amount,customer,reference}){
   return {checkoutUrl:data?.redirectUrl||null,externalId:String(data?.id||''),providerData:data};
 }
 export async function onRequestGet({request,env}){
-  const u=new URL(request.url);if(u.searchParams.get('mode')!=='rank')return json({ok:false,error:'mode=rank required'},400);
+  const u=new URL(request.url);
+  if(u.searchParams.get('mode')==='nupay-status'){
+    if(!env.NEON_DATABASE_URL)return json({ok:false,error:'NEON_DATABASE_URL não configurada'},503);
+    const sessionId=clean(u.searchParams.get('sessionId')),commandId=clean(u.searchParams.get('commandId'));
+    if(!sessionId)return json({ok:false,error:'sessionId required'},400);
+    const key=env.NUPAY_MERCHANT_KEY,token=env.NUPAY_MERCHANT_TOKEN;if(!key||!token)return json({ok:false,error:'Nubank/NuPay não configurado'},503);
+    const base=String(env.NUPAY_API_BASE||'https://sandbox-api.spinpay.com.br').replace(/\\/$/,'');const sql=neon(env.NEON_DATABASE_URL);
+    const rows=await sql\`select * from payments where gateway='Nubank' and (external_id=\${sessionId} or metadata->>'reference'=\${u.searchParams.get('reference')||''}) order by created_at desc limit 1\`;const pay=rows[0];
+    if(!pay)return json({ok:false,error:'Pagamento NuPay não encontrado'},404);
+    const sr=await fetch(base+'/v1/checkouts/sessions/'+encodeURIComponent(sessionId),{headers:{'X-Merchant-Key':key,'X-Merchant-Token':token,Accept:'application/json'}});const session=await sr.json().catch(()=>({}));if(!sr.ok)return json({ok:false,error:'Falha ao consultar sessão NuPay',status:sr.status},502);
+    if(session.status==='canceled'||session.status==='expired'){await sql\`update payments set status='CANCELLED',metadata=\${JSON.stringify({...pay.metadata,lastSession:session})}::jsonb,updated_at=now() where id=\${pay.id}\`;return json({ok:true,status:session.status,payment:pay});}
+    if(session.status!=='approved')return json({ok:true,status:session.status,payment:pay});
+    if(!session.approvalCode)return json({ok:true,status:'approved',awaiting_capture:true,payment:pay});
+    const reference=String(pay.metadata?.reference||u.searchParams.get('reference')||('EDDU-'+(pay.command_id||crypto.randomUUID()))).slice(0,64);
+    const capturePayload={merchantOrderReference:reference,referenceId:reference,transactionId:sessionId,merchantName:'ED & DU | Terapia da Beleza',storeName:'ED & DU',amount:{value:Number(pay.amount),currency:'BRL'},paymentMethod:{type:'nupay',authorizationType:'manually_authorized'},paymentFlow:{returnUrl:new URL(request.url).origin+'/?payment=success&command='+encodeURIComponent(pay.command_id||commandId),cancelUrl:new URL(request.url).origin+'/?payment=cancelled&command='+encodeURIComponent(pay.command_id||commandId)},shopper:{reference:pay.client_id||pay.command_id||commandId},items:[{referenceId:pay.command_id||commandId,name:'ED & DU | Comanda',quantity:1,unitPrice:{value:Number(pay.amount),currency:'BRL'}}],delayToAutoCancel:15,approvalCode:session.approvalCode,selectedPaymentOption:session.selectedPaymentOption};
+    const pr=await fetch(base+'/v1/checkouts/payments',{method:'POST',headers:{'X-Merchant-Key':key,'X-Merchant-Token':token,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(capturePayload)});const pd=await pr.json().catch(()=>({}));if(!pr.ok)return json({ok:false,error:pd?.message||'NuPay recusou a captura'},502);
+    if(pd?.status==='COMPLETED'){const meta={...(pay.metadata||{}),lastSession:session,payment:pd};await sql\`update payments set status='PAID',paid_at=coalesce(paid_at,now()),metadata=\${JSON.stringify(meta)}::jsonb,updated_at=now() where id=\${pay.id}\`;if(pay.command_id)await sql\`update commands set status='Fechada',updated_at=now() where id=\${pay.command_id} and status<>'Fechada'\`;
+      return json({ok:true,status:'PAID',payment_id:pay.id,command_id:pay.command_id});}
+    return json({ok:true,status:pd?.status||'pending',payment_id:pay.id});
+  }
+  if(u.searchParams.get('mode')!=='rank')return json({ok:false,error:'mode=rank required'},400);
   const amount=money(u.searchParams.get('amount')),method=clean(u.searchParams.get('method')).toLowerCase()==='pix'?'pix':'card',installments=Math.max(1,Math.min(12,Number(u.searchParams.get('installments'))||1));
   if(!(amount>0))return json({ok:false,error:'amount required'},400);
   const all=['PagBank','Asaas','Stripe','PicPay','Nubank'];
