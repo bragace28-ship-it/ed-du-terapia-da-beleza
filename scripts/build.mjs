@@ -41,6 +41,11 @@ if(!deployMaster){
 if(process.argv.includes('--check')){console.log('V33 VISUAL LOCK: PASS');process.exit(0);}
 let output=html;
 if(deployMaster){
+  // Homologation must never ship the V33 demo commercial metrics as if they were real.
+  // Keep the approved markup/layout intact; replace only the seeded display values.
+  output=output.replace(/R\\$ 1\\.280([\\s\\S]{0,800}?)18%([\\s\\S]{0,800}?)R\\$ 7\\.000([\\s\\S]{0,800}?)R\\$ 5\\.720 para atingir a meta 🎯 · toque para abrir o painel comercial/u,
+    'R$ 0,00$10%$2R$ 0,00$3Meta mensal não configurada · toque para abrir o painel comercial');
+if(deployMaster){
   const runtimeFiles=['master/v49-final-functional-hotfix.js','master/v46-final-homologation-runtime.js','master/v46-final-hardening.js','master/v46-runtime-fixes.js','master/v48-navigation-hardening.js','master/v50-navigation-final-bridge.js','master/neon-live-bridge.js'];
   const runtimeTags=[];
   const utf8Eval=(encoded)=>'(function(){try{const b=atob('+JSON.stringify(encoded)+');const bytes=Uint8Array.from(b,c=>c.charCodeAt(0));const code=new TextDecoder("utf-8").decode(bytes);(0,eval)(code);}catch(e){console.error("EDDU Master runtime load failed:",e);}})();';
