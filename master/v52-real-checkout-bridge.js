@@ -59,3 +59,4 @@ window.closeCommandAndOpenGateway=c=>window.__edduOpenGatewayRanking(c||currentC
 setTimeout(async()=>{try{const u=new URL(location.href);if(u.searchParams.get('payment')!=='nupay_return')return;const sessionId=u.searchParams.get('sessionId');const commandId=u.searchParams.get('command');if(!sessionId)return;const r=await fetch('/api/payments?mode=nupay-status&sessionId='+encodeURIComponent(sessionId)+'&commandId='+encodeURIComponent(commandId||''));const d=await r.json().catch(()=>({}));if(d.status==='PAID'){toast('✓ NuPay confirmou o pagamento.');open('payments')}else if(d.status==='canceled'||d.status==='expired'){toast('NuPay encerrou a sessão sem pagamento.')}else if(d.status==='pending'||d.status==='approved'){toast('NuPay ainda está aguardando a conclusão do pagamento.')}}catch(e){console.warn('NuPay return handling',e)}},250);
 window.EDDU_MASTER_V53_UNIFIED_GATEWAYS=true;
 })();
+/* E2E trigger branch 2026-10-03 */
