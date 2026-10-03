@@ -141,7 +141,8 @@ function refreshCommercialMetrics(){
     const revenue=[...tx.map(x=>({amount:Number(x.amount||0),direction:x.direction,date:x.paid_at||x.created_at||x.date,status:String(x.status||'')})),...paid.map(x=>({amount:Number(x.amount||0),direction:'in',date:x.paid_at||x.created_at,status:String(x.status||'')}))]
       .filter(x=>x.direction==='in'&&x.date&&String(x.date).slice(0,7)===month&&!/cancel|void/i.test(x.status))
       .reduce((s,x)=>s+x.amount,0);
-    const target=Number(window.data?.settings?.monthlyTarget??localStorage.getItem('eddu_monthly_target')??0)||0;
+    const hasRealFinance=tx.length>0||paid.length>0;
+    const target=hasRealFinance?Number(window.data?.settings?.monthlyTarget??localStorage.getItem('eddu_monthly_target')??0)||0:0;
     const pct=target>0?Math.min(100,(revenue/target)*100):0;
     const remain=Math.max(0,target-revenue);
     const nums=box.querySelectorAll('.pc-grid .pc-k b');
