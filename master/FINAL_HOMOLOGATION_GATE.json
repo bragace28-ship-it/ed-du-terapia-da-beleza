@@ -16,12 +16,13 @@
   "live_bridge": "core_catalog_data_api_auth_committed",
   "neon_authorization": "owner_auth_profile_admin_mapped",
   "agenda_blocks_rls": "enabled",
-  "asaas": "endpoint_prepared_secret_not_verified",
+  "asaas": "real_payment_endpoint_committed_auth_required_secrets_pending",
   "google_calendar": "pending_credentials_endpoint",
   "browser_e2e": "pending_authenticated_E2E",
   "production_release": "blocked",
-  "next_gate": "authenticated E2E on Master V46 preview, then 86-item acceptance",
+  "next_gate": "configure Cloudflare Asaas secrets, authenticated payment E2E, then 86-item acceptance",
   "clean_state": true,
   "neon_test_data": 0,
-  "neon_obsolete_homologation_view": false
+  "neon_obsolete_homologation_view": false,
+  "payment_flow": "Neon+Asaas_UI_committed_Pix_and_invoice_checkout"
 }
