@@ -129,6 +129,31 @@ async function sync(){
   }catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e)}
   finally{window.__EDDU_NEON_SYNCING=false}
 }
+function refreshCommercialMetrics(){
+  try{
+    const box=document.querySelector('.performance-card-overlay');
+    if(!box)return;
+    const month=new Date().toISOString().slice(0,7);
+    const tx=Array.isArray(window.data?.financialTransactions)?window.data.financialTransactions:[];
+    const paid=Array.isArray(window.data?.payments)?window.data.payments:[];
+    const revenue=[...tx.map(x=>({amount:Number(x.amount||0),direction:x.direction,date:x.paid_at||x.created_at||x.date,status:String(x.status||'')})),...paid.map(x=>({amount:Number(x.amount||0),direction:'in',date:x.paid_at||x.created_at,status:String(x.status||'')}))]
+      .filter(x=>x.direction==='in'&&x.date&&String(x.date).slice(0,7)===month&&!/cancel|void/i.test(x.status))
+      .reduce((s,x)=>s+x.amount,0);
+    const target=Number(window.data?.settings?.monthlyTarget??localStorage.getItem('eddu_monthly_target')??0)||0;
+    const pct=target>0?Math.min(100,(revenue/target)*100):0;
+    const remain=Math.max(0,target-revenue);
+    const nums=box.querySelectorAll('.pc-grid .pc-k b');
+    if(nums[0])nums[0].textContent=money(revenue);
+    if(nums[1])nums[1].textContent=Math.round(pct)+'%';
+    if(nums[2])nums[2].textContent=money(target);
+    const bar=box.querySelector('.pc-bar i');if(bar)bar.style.width=pct+'%';
+    const goal=box.querySelector('.pc-goal');
+    if(goal)goal.textContent=target>0?(remain>0?money(remain)+' para atingir a meta 🎯 · toque para abrir o painel comercial':'Meta mensal atingida 🎯 · toque para abrir o painel comercial'):'Meta mensal não configurada · toque para abrir o painel comercial';
+  }catch(_){}
+}
+setInterval(refreshCommercialMetrics,1000);
+setTimeout(refreshCommercialMetrics,0);
+
 const originalPersist=window.persist;
 if(typeof originalPersist==='function'&&!window.__EDDU_NEON_PERSIST_WRAPPED){
   window.persist=function(){const r=originalPersist.apply(this,arguments);setTimeout(sync,0);return r};
