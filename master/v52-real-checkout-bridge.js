@@ -68,3 +68,5 @@ window.EDDU_MASTER_V53_UNIFIED_GATEWAYS=true;
 /* E2E checkout stabilization */
 
 /* E2E direct-fetch trigger */
+
+/* E2E workflow synchronized */
