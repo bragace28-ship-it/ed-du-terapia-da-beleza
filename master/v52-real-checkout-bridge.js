@@ -55,5 +55,7 @@ window.__edduSelectGateway=function(gateway,method){
 };
 function isClose(el){if(!el)return false;const t=((el.innerText||el.textContent||'')+' '+(el.getAttribute('aria-label')||'')).toLowerCase().replace(/\s+/g,' ');return /(fechar|finalizar|encerrar)\s*(comanda|atendimento)|fechar\s*comanda|finalizar\s*comanda/.test(t)}
 document.addEventListener('click',e=>{const el=e.target?.closest?.('button,a,[role="button"],[onclick]');if(!isClose(el)||el.closest('.gateway-choice')||el.id==='v52Checkout')return;e.preventDefault();e.stopImmediatePropagation();window.__edduOpenGatewayRanking(currentCommand())},true);
-window.closeCommandAndOpenGateway=c=>window.__edduOpenGatewayRanking(c||currentCommand());window.EDDU_MASTER_V53_UNIFIED_GATEWAYS=true;
+window.closeCommandAndOpenGateway=c=>window.__edduOpenGatewayRanking(c||currentCommand());
+setTimeout(async()=>{try{const u=new URL(location.href);if(u.searchParams.get('payment')!=='nupay_return')return;const sessionId=u.searchParams.get('sessionId');const commandId=u.searchParams.get('command');if(!sessionId)return;const r=await fetch('/api/payments?mode=nupay-status&sessionId='+encodeURIComponent(sessionId)+'&commandId='+encodeURIComponent(commandId||''));const d=await r.json().catch(()=>({}));if(d.status==='PAID'){toast('✓ NuPay confirmou o pagamento.');open('payments')}else if(d.status==='canceled'||d.status==='expired'){toast('NuPay encerrou a sessão sem pagamento.')}else if(d.status==='pending'||d.status==='approved'){toast('NuPay ainda está aguardando a conclusão do pagamento.')}}catch(e){console.warn('NuPay return handling',e)}},250);
+window.EDDU_MASTER_V53_UNIFIED_GATEWAYS=true;
 })();
