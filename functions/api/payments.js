@@ -6,16 +6,16 @@ const clean=v=>String(v??'').trim();
 const digits=v=>clean(v).replace(/\D/g,'');
 const money=v=>Math.round(Number(v||0)*100)/100;
 const rates={
-  PagBank:{pix:0,one:0.035,installments:0.059},
-  Stripe:{pix:0,one:0.0525,installments:0.075},
-  Asaas:{pix:0,one:0.0591666667,installments:0.085},
-  PicPay:{pix:0,one:null,installments:null},
-  Nubank:{pix:null,one:null,installments:null}
+  PagBank:{pix:null,one:{pct:.0499,fixed:.40},installments:{pct:.0499,fixed:.40}},
+  Stripe:{pix:null,one:{pct:.0399,fixed:.39},installments:{pct:.0399,fixed:.39}},
+  Asaas:{pix:null,one:{pct:.0299,fixed:.49},installments:{pct:.0349,fixed:.49}},
+  PicPay:{pix:null,one:{pct:.0519,fixed:0},installments:{pct:.0519,fixed:0}},
+  Nubank:{pix:null,one:{pct:.0399,fixed:0},installments:{pct:.0599,fixed:0}}
 };
 function estimate(amount,gateway,method,installments){
   const r=method==='pix'?rates[gateway]?.pix:installments>1?rates[gateway]?.installments:rates[gateway]?.one;
   if(r==null)return {fee_known:false,fee_percent:null,fee_amount:null,net_amount:null};
-  const fee=money(amount*r);return {fee_known:true,fee_percent:r*100,fee_amount:fee,net_amount:money(amount-fee)};
+  const fee=money(amount*(r.pct||0)+(r.fixed||0));return {fee_known:true,fee_percent:r.pct*100,fee_amount:fee,net_amount:money(amount-fee)};
 }
 function enabled(env,g){
   if(g==='PagBank')return !!env.PAGBANK_TOKEN&&!!(env.PAGBANK_API_BASE||'');
