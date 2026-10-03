@@ -80,3 +80,5 @@ window.EDDU_MASTER_V53_UNIFIED_GATEWAYS=true;
 /* E2E webhook syntax fix trigger */
 
 /* deployed smoke test trigger */
+
+/* smoke ordering retry */
