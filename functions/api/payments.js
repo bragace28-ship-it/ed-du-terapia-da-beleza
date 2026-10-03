@@ -25,7 +25,7 @@ function enabled(env,g){
   if(g==='Nubank')return !!env.NUPAY_MERCHANT_KEY&&!!env.NUPAY_MERCHANT_TOKEN;
   return false;
 }
-async function createPagBank({env,origin,commandId,amount,method,customer,reference}){
+async function createPagBank({env,origin,commandId,amount,method,installments,customer,reference}){
   const token=env.PAGBANK_TOKEN,base=String(env.PAGBANK_API_BASE||'https://sandbox.api.pagseguro.com').replace(/\/$/,'');
   if(!token||!base)throw new Error('PagBank não configurado no servidor.');
   const notificationUrl=origin+'/api/webhooks/pagbank';
@@ -114,7 +114,7 @@ export async function onRequestPost({request,env}){
   const sql=neon(env.NEON_DATABASE_URL);const [existing]=await sql\`select id,command_id,client_id,amount,method,gateway,installments,status,external_id,metadata from payments where idempotency_key=\${idem} limit 1\`;if(existing)return json({ok:true,replayed:true,payment:existing,checkoutUrl:existing?.metadata?.checkoutUrl||null,qrCode:existing?.metadata?.qrCode||null});
   const origin=new URL(request.url).origin;const reference=('EDDU-'+(commandId||crypto.randomUUID())).slice(0,64);const customer={name:clean(body.customerName||body.customer?.name||'Cliente ED & DU'),email:clean(body.customerEmail||body.customer?.email),phone:clean(body.customerPhone||body.customer?.phone),document:clean(body.customerDocument||body.customer?.document),temporary_card_token:clean(body.temporary_card_token)};
   let result;
-  if(provider==='PagBank')result=await createPagBank({env,origin,commandId,amount,method,customer,reference});
+  if(provider==='PagBank')result=await createPagBank({env,origin,commandId,amount,method,installments,customer,reference});
   else if(provider==='Stripe')result=await createStripe({env,origin,commandId,amount,installments,description:clean(body.description||'Comanda ED & DU'),reference});
   else if(provider==='Asaas')result=await createAsaas({env,origin,commandId,amount,method,installments,customer,reference});
   else if(provider==='PicPay')result=await createPicPay({env,commandId,amount,method,installments,customer,reference});
