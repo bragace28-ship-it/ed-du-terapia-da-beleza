@@ -1,10 +1,19 @@
 /* MASTER V46 — gateway/comanda flow correction
    Additive only. V33 visual baseline remains immutable.
-   Flow: comanda -> forma de pagamento -> cartão/PIX details -> Smart Gateway -> pagamento -> conciliação.
-   Closing a command must never route directly to the financial report.
+
+   Approved operational flow:
+   comanda -> forma de pagamento -> cartão/PIX details -> Smart Gateway
+   -> pagamento -> conciliação.
+
+   Important:
+   - "Fechar comanda" never marks a command paid/closed.
+   - It opens the payment flow.
+   - Gateway selection happens before the payment approval screen.
+   - Financial reconciliation is reached only after payment approval.
 */
 (function(){
   'use strict';
+
   const money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
   const toastF=m=>{try{if(typeof window.toast==='function')window.toast(m);else alert(m)}catch(_){}};
   const stateOf=()=>window.state||{};
@@ -20,14 +29,112 @@
 
   window.__EDDU_GATEWAY_FLOW_V51=true;
 
-  window.v51OpenGateway=function(){
-    const s=stateOf(),c=s.command||{};
-    if(!c.method){
-      toastF('Selecione a forma de pagamento antes de fechar a comanda.');
+  function activeCommand(){
+    const s=stateOf();
+    if(!s.activeCommandId || !Array.isArray(s.commands)) return null;
+    return s.commands.find(c=>c.id===s.activeCommandId)||null;
+  }
+
+  function syncLegacyFromActive(){
+    const s=stateOf(),c=activeCommand();
+    if(!c) return null;
+    s.command=s.command||{};
+    Object.assign(s.command,{
+      client:c.client||'',
+      service:c.service||'',
+      amount:Number(c.netAmount??c.amount??c.grossAmount??0),
+      grossAmount:Number(c.grossAmount??c.amount??0),
+      netAmount:Number(c.netAmount??c.amount??c.grossAmount??0),
+      method:c.method||'',
+      brand:c.brand||'',
+      installments:Number(c.installments||1),
+      gateway:c.gateway||'',
+      closed:false
+    });
+    return c;
+  }
+
+  function syncActiveFromLegacy(){
+    const s=stateOf(),c=activeCommand();
+    if(!c)return null;
+    const legacy=s.command||{};
+    c.method=legacy.method||c.method||'';
+    c.brand=legacy.brand||c.brand||'';
+    c.installments=Number(legacy.installments||c.installments||1);
+    c.gateway=legacy.gateway||c.gateway||'';
+    c.gatewayRate=legacy.gatewayRate??c.gatewayRate;
+    c.gatewayFee=legacy.gatewayFee??c.gatewayFee;
+    c.status='Aguardando pagamento';
+    c.paymentStatus='PENDING';
+    c.paymentFlow='gateway';
+    c.isDraft=false;
+    return c;
+  }
+
+  function amountOf(c){
+    return Number(c?.netAmount??c?.amount??c?.grossAmount??0);
+  }
+
+  function openPaymentMethod(){
+    const s=stateOf(),c=syncLegacyFromActive();
+    if(!c || !(amountOf(c)>0)){
+      toastF('Comanda sem valor válido para pagamento.');
       return;
     }
-    if(c.method==='Cartão' && !c.installments)c.installments=1;
-    if((c.method==='Cartão'||c.method==='Pix') && !c.gateway){
+    s.command.status='Aguardando pagamento';
+    s.command.paymentStatus='PENDING';
+    s.command.paymentFlow='gateway';
+    persistState();
+    if(typeof window.openSheet==='function')window.openSheet('commandPaymentMethodV51');
+  }
+
+  function choosePayment(method){
+    const s=stateOf(),c=syncLegacyFromActive();
+    if(!c)return;
+    s.command.method=method;
+    c.method=method;
+    if(method==='Cartão'){
+      s.command.installments=Number(c.installments||1);
+      syncActiveFromLegacy();
+      persistState();
+      if(typeof window.openSheet==='function')window.openSheet('cardDetails');
+      return;
+    }
+    if(method==='Pix'){
+      s.command.brand='Pix';
+      s.command.installments=1;
+      c.brand='Pix';
+      c.installments=1;
+      syncActiveFromLegacy();
+      persistState();
+      if(typeof window.openSheet==='function')window.openSheet('gatewayRanking');
+      return;
+    }
+    if(method==='Tap On'){
+      c.method='Tap On';
+      s.command.method='Tap On';
+      syncActiveFromLegacy();
+      persistState();
+      if(typeof window.openSheet==='function')window.openSheet('tapOn');
+      return;
+    }
+    syncActiveFromLegacy();
+    persistState();
+    if(typeof window.openSheet==='function')window.openSheet('commandPaymentV32');
+  }
+
+  window.v51OpenGateway=function(){
+    const s=stateOf(),c=syncLegacyFromActive()||s.command||{};
+    if(!c.method){
+      openPaymentMethod();
+      return;
+    }
+    if(c.method==='Cartão' && !Number(c.installments))c.installments=1;
+    if((c.method==='Cartão'||c.method==='Pix')&&!c.gateway){
+      if(c.method==='Pix'){
+        c.brand='Pix';c.installments=1;
+      }
+      persistState();
       openSheet('gatewayRanking');
       return;
     }
@@ -35,53 +142,102 @@
   };
 
   window.v51PrepareCommandPayment=function(){
-    const s=stateOf(),c=s.command||{};
-    if(!c.client||!(Number(c.netAmount??c.amount??c.grossAmount)>0)){
+    const s=stateOf(),c=syncLegacyFromActive()||s.command||{};
+    if(!c.client || !(amountOf(c)>0)){
       toastF('Comanda sem cliente ou valor válido.');
       return;
     }
     c.status='Aguardando pagamento';
     c.paymentStatus='PENDING';
     c.paymentFlow='gateway';
-    c.gateway=c.gateway||null;
     persistState();
     if(typeof window.openSheet==='function')window.openSheet('commandPaymentV32');
   };
 
   window.finalizeCommand=function(){
-    const s=stateOf();
-    s.command=s.command||{};
+    const s=stateOf(),c=syncLegacyFromActive()||s.command||{};
     if(typeof window.commandTotals==='function')window.commandTotals();
-    if(!s.command.method){
-      toastF('Selecione Pix, Cartão, Tap On ou Outro para continuar.');
+    if(!c.method){
+      openPaymentMethod();
       return;
     }
-    if((s.command.method==='Cartão'||s.command.method==='Pix')&&!s.command.gateway){
+    if((c.method==='Cartão'||c.method==='Pix')&&!c.gateway){
       window.v51OpenGateway();
       return;
     }
     window.v51PrepareCommandPayment();
   };
 
+  // Both command implementations (V31 and V32) use these handlers in the
+  // approved UI. Closing is therefore intercepted at the single functional
+  // boundary instead of editing the immutable V33 markup.
+  function interceptCloseCommand(){
+    const c=syncLegacyFromActive();
+    if(!c)return;
+    if(typeof window.commandTotals==='function')window.commandTotals();
+    if(!(amountOf(c)>0)){
+      toastF('Adicione pelo menos um serviço com valor antes de fechar a comanda.');
+      return;
+    }
+    openPaymentMethod();
+  }
+
+  window.closeCommandV31=interceptCloseCommand;
+  window.closeCommandV32=interceptCloseCommand;
+
+  window.choosePay=function(method){
+    choosePayment(method);
+  };
+
+  window.v51ChoosePayment=choosePayment;
+
   window.selectGateway=function(g){
-    const s=stateOf();s.command=s.command||{};
+    const s=stateOf(),c=syncLegacyFromActive();
+    if(!c)return;
     if(!providers.includes(g)){
       toastF('Gateway indisponível.');
       return;
     }
+    const n=Math.max(1,Number(c.installments||1));
+    const amount=amountOf(c);
     s.command.gateway=g;
     s.command.gatewaySelectedAt=new Date().toISOString();
-    s.command.gatewayRate=rates[g][Number(s.command.installments||1)]??rates[g][1];
-    s.command.gatewayFee=Number(s.command.netAmount||s.command.amount||s.command.grossAmount||0)*s.command.gatewayRate;
+    s.command.gatewayRate=rates[g][n]??rates[g][1];
+    s.command.gatewayFee=amount*s.command.gatewayRate;
+    c.gateway=g;
+    c.gatewayRate=s.command.gatewayRate;
+    c.gatewayFee=s.command.gatewayFee;
+    c.gatewaySelectedAt=s.command.gatewaySelectedAt;
+    c.status='Aguardando pagamento';
+    c.paymentStatus='PENDING';
+    c.paymentFlow='gateway';
     persistState();
     toastF('Gateway selecionado: '+g);
-    setTimeout(()=>window.openSheet('command'),120);
+    setTimeout(()=>window.openSheet('commandPaymentV32'),120);
   };
 
   window.views=window.views||{};
+
+  window.views.commandPaymentMethodV51=function(){
+    const s=stateOf(),c=syncLegacyFromActive();
+    if(!c)return '<h2>Comanda não encontrada</h2>';
+    const amount=amountOf(c);
+    return '<h2>Forma de pagamento</h2>'+
+      '<p class="sub">Escolha como o cliente vai pagar. Para Pix e Cartão, o próximo passo é a análise do Smart Gateway.</p>'+
+      '<div class="card"><div class="row"><span>Cliente</span><b>'+esc(c.client)+'</b></div>'+
+      '<div class="row"><span>Total a pagar</span><b class="money-good">'+money(amount)+'</b></div></div>'+
+      '<div class="grid2">'+
+      '<button class="btn" type="button" onclick="v51ChoosePayment(\'Pix\')">Pix</button>'+
+      '<button class="btn" type="button" onclick="v51ChoosePayment(\'Cartão\')">Cartão</button>'+
+      '<button class="btn" type="button" onclick="v51ChoosePayment(\'Tap On\')">Tap On</button>'+
+      '<button class="btn" type="button" onclick="v51ChoosePayment(\'Outro\')">Outro</button>'+
+      '</div>'+
+      '<button class="btn full" type="button" onclick="openSheet(\'commandEdit\')">← Voltar à comanda</button>';
+  };
+
   window.views.gatewayRanking=function(){
-    const s=stateOf(),c=s.command||{};
-    const amount=Number(c.netAmount||c.amount||c.grossAmount||0);
+    const s=stateOf(),c=syncLegacyFromActive()||s.command||{};
+    const amount=amountOf(c);
     const n=Math.max(1,Number(c.installments||1));
     const method=c.method||'—';
     return '<h2>Smart Gateway — análise</h2>'+
@@ -92,16 +248,29 @@
           '<span><b>'+esc(g)+'</b><small>Taxa '+(rate*100).toFixed(2).replace('.',',')+'% · líquido estimado</small></span>'+
           '<b>'+money(net)+'</b></button>';
       }).join('')+
-      '<button class="btn full" type="button" onclick="openSheet(\'command\')">← Voltar à comanda</button>';
+      '<button class="btn full" type="button" onclick="openSheet(\'commandPaymentMethodV51\')">← Forma de pagamento</button>';
   };
 
-  // The payment approval remains the homologation boundary: only after approval is the
-  // command marked paid/closed and the flow goes to reconciliation.
-  const oldApprove=window.approvePaymentV32;
+  // The existing V31/V32 approval handlers are kept as the homologation payment
+  // boundary. They are reached only after gateway selection.
+  const oldApproveV31=window.approvePaymentV31;
+  const oldApproveV32=window.approvePaymentV32;
+  window.approvePaymentV31=function(){
+    const c=syncActiveFromLegacy();
+    if(c){c.gateway=c.gateway||stateOf().command?.gateway||'';c.status='Aguardando pagamento';}
+    if(typeof oldApproveV31==='function')return oldApproveV31.apply(this,arguments);
+    if(c){
+      c.status='Pago';c.paymentStatus='PAID';c.closed=true;c.paidAt=new Date().toISOString();
+      persistState();openSheet('financialReconciliation');
+    }
+  };
   window.approvePaymentV32=function(){
-    if(typeof oldApprove==='function')return oldApprove.apply(this,arguments);
-    const s=stateOf(),c=s.command||{};
-    c.status='Pago';c.paymentStatus='PAID';c.closed=true;c.paidAt=new Date().toISOString();persistState();
-    if(typeof window.openSheet==='function')window.openSheet('reconciliation33');
+    const c=syncActiveFromLegacy();
+    if(c){c.gateway=c.gateway||stateOf().command?.gateway||'';c.status='Aguardando pagamento';}
+    if(typeof oldApproveV32==='function')return oldApproveV32.apply(this,arguments);
+    if(c){
+      c.status='Pago';c.paymentStatus='PAID';c.closed=true;c.paidAt=new Date().toISOString();
+      persistState();openSheet('financialReconciliation');
+    }
   };
 })();
