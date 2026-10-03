@@ -1,8 +1,6 @@
 name: ED DU Master V46 E2E Dispatch
 
 on:
-  issue_comment:
-    types: [created]
   pull_request:
     types: [opened, synchronize, reopened]
 
@@ -12,20 +10,16 @@ permissions:
 
 jobs:
   e2e-preview:
-    if: >
-      (github.event_name == 'pull_request') ||
-      (
-        github.event_name == 'issue_comment' &&
-        github.event.issue.pull_request &&
-        github.event.comment.body == '/run-e2e' &&
-        contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
-      )
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR head
         uses: actions/checkout@v4
         with:
           ref: refs/pull/${{ github.event.issue.number }}/head
+      - name: Checkout exact PR head
+        run: |
+          git fetch --no-tags origin \${{ github.event.pull_request.head.sha }}
+          git checkout --detach \${{ github.event.pull_request.head.sha }}
       - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
