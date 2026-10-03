@@ -10,7 +10,10 @@ export async function onRequestPost({request,env}) {
   const eventName=String(event.event), eventId=String(event.id||'');
   if(event.payment?.id){
     const p=event.payment;
-    await sql`update payments set status=${String(p.status||eventName)},paid_at=case when ${String(p.status||'')} in ('RECEIVED','CONFIRMED') then coalesce(paid_at,now()) else paid_at end,metadata=coalesce(metadata,'{}'::jsonb)||${JSON.stringify(event)}::jsonb,updated_at=now() where external_id=${String(p.id)}`;
+    const providerStatus=String(p.status||eventName);
+    const paid=['RECEIVED','CONFIRMED'].includes(providerStatus);
+    await sql`update payments set status=${providerStatus},paid_at=case when ${paid} then coalesce(paid_at,now()) else paid_at end,metadata=coalesce(metadata,'{}'::jsonb)||${JSON.stringify(event)}::jsonb,updated_at=now() where external_id=${String(p.id)}`;
+    if(paid) await sql`update commands set status='Fechada',updated_at=now() where id in (select command_id from payments where external_id=${String(p.id)}) and status<>'Fechada'`;
   }
   if(event.checkout?.id){
     const checkoutId=String(event.checkout.id);
