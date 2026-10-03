@@ -43,21 +43,26 @@ let output=html;
 if(deployMaster){
   const runtimeFiles=['master/v49-final-functional-hotfix.js','master/v46-final-homologation-runtime.js','master/v46-final-hardening.js','master/v46-runtime-fixes.js','master/v48-navigation-hardening.js','master/v50-navigation-final-bridge.js','master/neon-live-bridge.js'];
   const runtimeTags=[];
+  const utf8Eval=(encoded)=>'(function(){try{const b=atob('+JSON.stringify(encoded)+');const bytes=Uint8Array.from(b,c=>c.charCodeAt(0));const code=new TextDecoder("utf-8").decode(bytes);(0,eval)(code);}catch(e){console.error("EDDU Master runtime load failed:",e);}})();';
   for(const file of runtimeFiles){
     const code=await readFile(resolve(root,file),'utf8');
     if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(code)) throw new Error('Legacy Supabase reference found in '+file);
     const encoded=Buffer.from(code,'utf8').toString('base64');
-    runtimeTags.push('<script>(function(){try{(0,eval)(atob('+JSON.stringify(encoded)+'));}catch(e){console.error("EDDU Master runtime load failed:",e);}})();</script>');
+    runtimeTags.push('<script>'+utf8Eval(encoded)+'</script>');
   }
   const authClient=await readFile(resolve(root,'master','neon-auth-client.js'),'utf8');
   const authEncoded=Buffer.from(authClient,'utf8').toString('base64');
-  runtimeTags.push('<script>(function(){try{(0,eval)(atob('+JSON.stringify(authEncoded)+'));}catch(e){console.error("EDDU Neon Auth client load failed:",e);}})();</script>');
+  runtimeTags.push('<script>'+utf8Eval(authEncoded).replace('EDDU Master runtime load failed','EDDU Neon Auth client load failed')+'</script>');
   // IMPORTANT: the Master source contains literal </body> inside a PDF/HTML string.
   // Never use String.replace('</body>', ...) because it would inject runtime code inside that JS string.
+  // HTML parsers terminate script elements on a literal </script> even when it appears inside a JS string.
+  // Escape that token inside existing script blocks before deployment so source strings cannot leak into the page.
+  output=output.replace(/(<script\\b[^>]*>)([\\s\\S]*?)(<\\/script>)/gi,(m,open,code,close)=>open+code.replace(/<\\/script>/gi,'<\\\\/script>')+close);
   const bodyMarker='</body>';
   const bodyPos=output.toLowerCase().lastIndexOf(bodyMarker);
   if(bodyPos<0) throw new Error('MASTER source has no final </body> marker.');
   output=output.slice(0,bodyPos)+runtimeTags.join('')+output.slice(bodyPos);
+  // The generated runtime tags are safe because they contain base64-decoded code and no literal closing-script tokens.
 }
 await rm(dist,{recursive:true,force:true});
 await mkdir(dist,{recursive:true});
