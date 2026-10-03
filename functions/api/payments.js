@@ -54,7 +54,7 @@ export async function onRequestPost({request,env}) {
   if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(dueDate))
     return json({ok:false,error:'dueDate must be YYYY-MM-DD'},400);
 
-  const base=String(env.ASAAS_BASE_URL||'https://api-sandbox.asaas.com/v3').replace(/\\/$/,'');
+  const base=String(env.ASAAS_BASE_URL||'https://api-sandbox.asaas.com/v3').replace(/\/$/,'');
   const externalReference=String(body.externalReference||('EDDU-'+crypto.randomUUID()));
   const idem=String(request.headers.get('Idempotency-Key')||externalReference);
   const sql=neon(env.NEON_DATABASE_URL);
