@@ -76,3 +76,5 @@ window.EDDU_MASTER_V53_UNIFIED_GATEWAYS=true;
 /* Gateway regex fix E2E trigger */
 
 /* E2E template literal fix trigger */
+
+/* E2E webhook syntax fix trigger */
