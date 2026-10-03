@@ -84,7 +84,7 @@ export async function onRequestGet({request,env}){
     const sessionId=clean(u.searchParams.get('sessionId')),commandId=clean(u.searchParams.get('commandId'));
     if(!sessionId)return json({ok:false,error:'sessionId required'},400);
     const key=env.NUPAY_MERCHANT_KEY,token=env.NUPAY_MERCHANT_TOKEN;if(!key||!token)return json({ok:false,error:'Nubank/NuPay não configurado'},503);
-    const base=String(env.NUPAY_API_BASE||'https://sandbox-api.spinpay.com.br').replace(/\\/$/,'');const sql=neon(env.NEON_DATABASE_URL);
+    const base=String(env.NUPAY_API_BASE||'https://sandbox-api.spinpay.com.br').replace(/\/$/,'');const sql=neon(env.NEON_DATABASE_URL);
     const rows=await sql\`select * from payments where gateway='Nubank' and (external_id=\${sessionId} or metadata->>'reference'=\${u.searchParams.get('reference')||''}) order by created_at desc limit 1\`;const pay=rows[0];
     if(!pay)return json({ok:false,error:'Pagamento NuPay não encontrado'},404);
     const sr=await fetch(base+'/v1/checkouts/sessions/'+encodeURIComponent(sessionId),{headers:{'X-Merchant-Key':key,'X-Merchant-Token':token,Accept:'application/json'}});const session=await sr.json().catch(()=>({}));if(!sr.ok)return json({ok:false,error:'Falha ao consultar sessão NuPay',status:sr.status},502);
