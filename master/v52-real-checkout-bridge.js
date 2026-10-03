@@ -64,3 +64,5 @@ window.EDDU_MASTER_V53_UNIFIED_GATEWAYS=true;
 /* E2E retry 2026-10-03 */
 
 /* E2E final trigger */
+
+/* E2E checkout stabilization */
