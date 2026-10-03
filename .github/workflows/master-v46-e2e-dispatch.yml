@@ -40,6 +40,42 @@ jobs:
           set -euo pipefail
           test -n "$CLOUDFLARE_API_TOKEN"
           test -n "$CLOUDFLARE_ACCOUNT_ID"
+      - name: Configure gateway runtime secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          ASAAS_API_KEY: ${{ secrets.ASAAS_API_KEY }}
+          ASAAS_WEBHOOK_TOKEN: ${{ secrets.ASAAS_WEBHOOK_TOKEN }}
+          PAGBANK_TOKEN: ${{ secrets.PAGBANK_TOKEN }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          PICPAY_CLIENT_ID: ${{ secrets.PICPAY_CLIENT_ID }}
+          PICPAY_CLIENT_SECRET: ${{ secrets.PICPAY_CLIENT_SECRET }}
+          PICPAY_WEBHOOK_TOKEN: ${{ secrets.PICPAY_WEBHOOK_TOKEN }}
+          NUPAY_MERCHANT_KEY: ${{ secrets.NUPAY_MERCHANT_KEY }}
+          NUPAY_MERCHANT_TOKEN: ${{ secrets.NUPAY_MERCHANT_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$NEON_DATABASE_URL"
+          test -n "$ASAAS_API_KEY"
+          test -n "$PAGBANK_TOKEN"
+          test -n "$STRIPE_SECRET_KEY"
+          test -n "$PICPAY_CLIENT_ID"
+          test -n "$PICPAY_CLIENT_SECRET"
+          test -n "$NUPAY_MERCHANT_KEY"
+          test -n "$NUPAY_MERCHANT_TOKEN"
+          printf '%s' "$NEON_DATABASE_URL" | npx wrangler@latest pages secret put NEON_DATABASE_URL --project-name=ed-du-terapia-da-beleza
+          printf '%s' "$ASAAS_API_KEY" | npx wrangler@latest pages secret put ASAAS_API_KEY --project-name=ed-du-terapia-da-beleza
+          printf '%s' "$ASAAS_WEBHOOK_TOKEN" | npx wrangler@latest pages secret put ASAAS_WEBHOOK_TOKEN --project-name=ed-du-terapia-da-beleza
+          printf '%s' "$PAGBANK_TOKEN" | npx wrangler@latest pages secret put PAGBANK_TOKEN --project-name=ed-du-terapia-da-beleza
+          printf '%s' "$STRIPE_SECRET_KEY" | npx wrangler@latest pages secret put STRIPE_SECRET_KEY --project-name=ed-du-terapia-da-beleza
+          printf '%s' "$STRIPE_WEBHOOK_SECRET" | npx wrangler@latest pages secret put STRIPE_WEBHOOK_SECRET --project-name=ed-du-terapia-da-beleza
+          printf '%s' "$PICPAY_CLIENT_ID" | npx wrangler@latest pages secret put PICPAY_CLIENT_ID --project-name=ed-du-terapia-da-beleza
+          printf '%s' "$PICPAY_CLIENT_SECRET" | npx wrangler@latest pages secret put PICPAY_CLIENT_SECRET --project-name=ed-du-terapia-da-beleza
+          printf '%s' "$PICPAY_WEBHOOK_TOKEN" | npx wrangler@latest pages secret put PICPAY_WEBHOOK_TOKEN --project-name=ed-du-terapia-da-beleza
+          printf '%s' "$NUPAY_MERCHANT_KEY" | npx wrangler@latest pages secret put NUPAY_MERCHANT_KEY --project-name=ed-du-terapia-da-beleza
+          printf '%s' "$NUPAY_MERCHANT_TOKEN" | npx wrangler@latest pages secret put NUPAY_MERCHANT_TOKEN --project-name=ed-du-terapia-da-beleza
       - name: Deploy preview
         uses: cloudflare/wrangler-action@v3
         with:
