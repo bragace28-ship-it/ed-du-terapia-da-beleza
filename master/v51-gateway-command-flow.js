@@ -273,4 +273,72 @@
       persistState();openSheet('financialReconciliation');
     }
   };
+  /* V51.1 — final checkout boundary.
+     The approved interaction is:
+     Fechar comanda -> Smart Gateway ranking -> select gateway -> payment.
+     This boundary intentionally bypasses the financial report and payment-method
+     screen until the gateway has been selected. */
+  function openGatewayRankingDirect(){
+    const s=stateOf();
+    const c=syncLegacyFromActive()||s.command||null;
+    if(!c){
+      toastF('Nenhuma comanda ativa para fechamento.');
+      return false;
+    }
+    if(typeof window.commandTotals==='function'){
+      try{window.commandTotals()}catch(_){}
+    }
+    const fresh=syncLegacyFromActive()||c;
+    if(!(amountOf(fresh)>0)){
+      toastF('Adicione pelo menos um serviço com valor antes de fechar a comanda.');
+      return false;
+    }
+    s.command=s.command||{};
+    s.command.status='Aguardando pagamento';
+    s.command.paymentStatus='PENDING';
+    s.command.paymentFlow='gateway';
+    persistState();
+    if(typeof window.openSheet==='function'){
+      window.openSheet('gatewayRanking');
+      return true;
+    }
+    return false;
+  }
+
+  window.v51CloseCommandToGateway=openGatewayRankingDirect;
+  window.closeCommandV31=openGatewayRankingDirect;
+  window.closeCommandV32=openGatewayRankingDirect;
+  window.closeCommand=openGatewayRankingDirect;
+  window.finishCommand=openGatewayRankingDirect;
+  window.finalizeCommand=openGatewayRankingDirect;
+  window.fecharComanda=openGatewayRankingDirect;
+  window.finalizarComanda=openGatewayRankingDirect;
+
+  /* Ensure the route exists even if a later legacy layer replaced views. */
+  if(!window.views.gatewayRanking){
+    window.views.gatewayRanking=window.views.gatewayRankingV46||function(){
+      return '<h2>Smart Gateway</h2><p class="sub">Selecione o gateway para continuar a cobrança.</p>';
+    };
+  }
+
+  /* Capture every known close-command control before legacy onclick handlers.
+     Text, id, data-action and inline handler are all accepted because the V33
+     baseline contains more than one command implementation. */
+  document.addEventListener('click',function(e){
+    const el=e.target&&e.target.closest?e.target.closest('button,a,[role="button"],[onclick],[data-action],div'):null;
+    if(!el)return;
+    const raw=String(el.getAttribute&&el.getAttribute('onclick')||'').toLowerCase();
+    const id=String(el.id||'').toLowerCase();
+    const action=String(el.getAttribute&&el.getAttribute('data-action')||'').toLowerCase();
+    const txt=String(el.textContent||'').replace(/\\s+/g,' ').trim().toLowerCase();
+    const hook=/(closecommand|finishcommand|finalizecommand|fecharcomanda|finalizarcomanda)\\s*\\(/.test(raw) ||
+      /(closecommand|finishcommand|finalizecommand|fecharcomanda|finalizarcomanda)/.test(id+' '+action);
+    const label=((txt.includes('fechar')||txt.includes('finalizar'))&&txt.includes('comanda'));
+    if(!hook&&!label)return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    openGatewayRankingDirect();
+  },true);
+
 })();
