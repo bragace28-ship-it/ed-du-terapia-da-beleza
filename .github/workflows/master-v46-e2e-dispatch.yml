@@ -12,14 +12,12 @@ jobs:
   e2e-preview:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PR head
-        uses: actions/checkout@v4
-        with:
-          ref: refs/pull/${{ github.event.issue.number }}/head
-      - name: Checkout exact PR head
+      - name: Checkout repository without action dependency
         run: |
-          git fetch --no-tags origin \${{ github.event.pull_request.head.sha }}
-          git checkout --detach \${{ github.event.pull_request.head.sha }}
+          git init .
+          git remote add origin https://github.com/bragace28-ship-it/ed-du-terapia-da-beleza.git
+          git fetch --no-tags --depth=1 origin ${{ github.event.pull_request.head.sha }}
+          git checkout --detach FETCH_HEAD
       - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
