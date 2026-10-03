@@ -88,7 +88,7 @@ export async function onRequestGet({request,env}){
 export async function onRequestPost({request,env}){
   if(!env.NEON_DATABASE_URL)return json({ok:false,error:'NEON_DATABASE_URL não configurada'},503);
   let body;try{body=await request.json()}catch{return json({ok:false,error:'Invalid JSON'},400);}
-  const amount=money(body.amount),method=clean(body.method||body.billingType).toLowerCase().replace('credit_card','card')==='pix'?'pix':'card';
+  const amount=money(body.amount);const rawMethod=clean(body.method||body.billingType).toLowerCase().replace('credit_card','card');const method=['pix','card','wallet'].includes(rawMethod)?rawMethod:'card';
   const gateway=clean(body.gateway||'').toLowerCase();const map={pagbank:'PagBank',stripe:'Stripe',asaas:'Asaas',picpay:'PicPay',nubank:'Nubank',nupay:'Nubank'};const provider=map[gateway];
   const installments=Math.max(1,Math.min(12,Number(body.installments||body.installmentCount)||1));const commandId=clean(body.commandId||body.command_id);const clientId=clean(body.clientId||body.client_id);const idem=clean(request.headers.get('Idempotency-Key')||('EDDU-'+commandId+'-'+provider+'-'+method+'-'+installments));if(!(amount>0)||!provider)return json({ok:false,error:'gateway e valor válidos são obrigatórios'},400);
   const sql=neon(env.NEON_DATABASE_URL);const [existing]=await sql\`select id,command_id,client_id,amount,method,gateway,installments,status,external_id,metadata from payments where idempotency_key=\${idem} limit 1\`;if(existing)return json({ok:true,replayed:true,payment:existing,checkoutUrl:existing?.metadata?.checkoutUrl||null,qrCode:existing?.metadata?.qrCode||null});
