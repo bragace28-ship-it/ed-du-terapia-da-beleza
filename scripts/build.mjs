@@ -57,7 +57,7 @@ if(deployMaster){
   // Never use String.replace('</body>', ...) because it would inject runtime code inside that JS string.
   // HTML parsers terminate script elements on a literal </script> even when it appears inside a JS string.
   // Escape that token inside existing script blocks before deployment so source strings cannot leak into the page.
-  output=output.replace(/(<script\\b[^>]*>)([\\s\\S]*?)(<\\/script>)/gi,(m,open,code,close)=>open+code.replace(/<\\/script>/gi,'<\\\\/script>')+close);
+  output=output.replace(/(<script\b[^>]*>)([\s\S]*?)(<\/script>)/gi,(m,open,code,close)=>open+code.replace(/<\/script>/gi,'<\\/script>')+close);
   const bodyMarker='</body>';
   const bodyPos=output.toLowerCase().lastIndexOf(bodyMarker);
   if(bodyPos<0) throw new Error('MASTER source has no final </body> marker.');
