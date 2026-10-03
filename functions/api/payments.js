@@ -8,7 +8,7 @@ const PAYMENT_ROLES=new Set(['admin','manager','receptionist','finance']);
 async function requireStaff(request,env){
   const auth=request.headers.get('authorization')||'';
   if(!/^Bearer\\s+\\S+$/i.test(auth)) return {ok:false,status:401,error:'Authentication required'};
-  const base=String(env.NEON_DATA_API_URL||DATA_API_FALLBACK).replace(/\\/$/,'');
+  const base=String(env.NEON_DATA_API_URL||DATA_API_FALLBACK).replace(/\/$/,'');
   const r=await fetch(base+'/profiles?select=id,role,active&limit=1',{
     headers:{Authorization:auth,Accept:'application/json'}
   });
