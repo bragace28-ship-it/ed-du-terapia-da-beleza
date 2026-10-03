@@ -73,33 +73,49 @@ window.createManualCoupon=function(){
 };
 
 /* 4. Agenda: client dropdown with first option "Adicionar novo cliente"; day block; robust persistence. */
-function clientsList(){try{if(Array.isArray(window.data?.clients)&&data.clients.length)return data.clients.map(x=>typeof x==='string'?x:(x.name||x.nome||x.client||'')).filter(Boolean)}catch(_){} try{return (JSON.parse(localStorage.getItem('eddu_clients')||'[]')).map(x=>x.name||x.nome||x).filter(Boolean)}catch(_){return ['Mariana','Carlos','Juliana']}}
+function catalogList(key){
+  try{
+    const arr=Array.isArray(window.data?.[key])?window.data[key]:[];
+    return arr.filter(Boolean);
+  }catch(_){return []}
+}
+function optionId(x){return String(x?.id??x?.uuid??'')}
+function optionName(x){return String(x?.name??x?.nome??x?.title??'').trim()}
+function clientsList(){return catalogList('clients').map(x=>({id:optionId(x),name:optionName(x)})).filter(x=>x.id&&x.name)}
+function professionalsList(){return catalogList('professionals').map(x=>({id:optionId(x),name:optionName(x)})).filter(x=>x.id&&x.name)}
+function servicesList(){return catalogList('services').map(x=>({id:optionId(x),name:optionName(x),price:Number(x.price??x.price_base??0)||0,duration:Number(x.duration_minutes??x.duration??60)||60})).filter(x=>x.id&&x.name)}
 window.openNewClientFromAgenda=function(){window.__masterReturnToAgenda=true; if(typeof window.openSheet==='function')window.openSheet('clientRegistration');};
-const oldAgendaAdd=window.openAgendaAddM;
-window.openAgendaAddM=function(day){
+window.openAgendaAddM=async function(day){
  const d=day||new Date().toISOString().slice(0,10);
+ try{if(typeof window.EDDU_NEON_SYNC==='function')await window.EDDU_NEON_SYNC()}catch(_){}
+ const clients=clientsList(), professionals=professionalsList(), services=servicesList();
+ const clientOptions=clients.length?clients.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join(''):'<option value="" disabled>Nenhum cliente cadastrado</option>';
+ const professionalOptions=professionals.length?professionals.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join(''):'<option value="" disabled>Nenhum profissional cadastrado</option>';
+ const serviceOptions=services.length?services.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join(''):'<option value="" disabled>Nenhum serviço cadastrado</option>';
  window.views.agendaAdd=()=>'<h2>Adicionar agendamento</h2><p class="sub">Novo atendimento diretamente na Agenda.</p><div class="card">'+
- '<label>Cliente</label><select id="aptClient">'+
- '<option value="__NEW__">＋ Adicionar novo cliente</option>'+clientsList().map(n=>'<option>'+esc(n)+'</option>').join('')+
- '</select><label>Profissional</label><select id="aptProfessional"><option>Profissional ED</option><option>ED</option><option>DU</option></select>'+
- '<label>Serviço</label><select id="aptService"><option>Limpeza de Pele</option><option>Spa Capilar</option><option>Corte + Secagem</option><option>Bio Nutrição</option></select>'+
+ '<label>Cliente</label><select id="aptClient"><option value="__NEW__">＋ Adicionar novo cliente</option>'+clientOptions+'</select>'+
+ '<label>Profissional</label><select id="aptProfessional">'+professionalOptions+'</select>'+
+ '<label>Serviço</label><select id="aptService">'+serviceOptions+'</select>'+
  '<div class="row"><div><label>Data</label><input id="aptDate" type="date" value="'+d+'"></div><div><label>Início</label><input id="aptStart" type="time" value="10:00"></div></div>'+
- '<div class="row"><div><label>Término</label><input id="aptEnd" type="time" value="11:00"></div><div><label>Status</label><select id="aptStatus"><option>Confirmado</option><option>Pendente</option><option>Cancelado</option></select></div></div>'+
+ '<div class="row"><div><label>Término</label><input id="aptEnd" type="time" value="11:00"></div><div><label>Status</label><select id="aptStatus"><option value="confirmed">Confirmado</option><option value="requested">Pendente</option><option value="cancelled">Cancelado</option></select></div></div>'+
  '<div class="action-row"><button class="btn primary full" onclick="saveAgendaAddM()">Salvar agendamento</button><button class="btn full" onclick="closeSheet()">Cancelar</button></div></div>';
  window.__masterAgendaClientHandler=true;
- window.__masterAgendaOriginalSave=window.saveAgendaAddM;
- window.saveAgendaAddM=function(){
-   const sel=document.getElementById('aptClient')?.value;
-   if(sel==='__NEW__'){window.openNewClientFromAgenda();return}
-   const a={id:'APT-'+Date.now(),date:document.getElementById('aptDate')?.value,start:document.getElementById('aptStart')?.value,end:document.getElementById('aptEnd')?.value,client:sel||'',professional:document.getElementById('aptProfessional')?.value,service:document.getElementById('aptService')?.value,status:document.getElementById('aptStatus')?.value};
-   if(!a.client)return toastF('Selecione um cliente.');
+ window.saveAgendaAddM=async function(){
+   const clientId=document.getElementById('aptClient')?.value||'';
+   if(clientId==='__NEW__'){window.openNewClientFromAgenda();return}
+   const professionalId=document.getElementById('aptProfessional')?.value||'';
+   const serviceId=document.getElementById('aptService')?.value||'';
+   if(!clientId)return toastF('Selecione um cliente ou adicione um novo.');
+   if(!professionalId||!serviceId)return toastF('Cadastre profissional e serviço antes de agendar.');
+   const client=clients.find(x=>x.id===clientId), professional=professionals.find(x=>x.id===professionalId), service=services.find(x=>x.id===serviceId);
+   const a={id:'APT-'+Date.now(),date:document.getElementById('aptDate')?.value,start:document.getElementById('aptStart')?.value,end:document.getElementById('aptEnd')?.value,client:client?.name||'',clientId,professional:professional?.name||'',professionalId,service:service?.name||'',serviceId,status:document.getElementById('aptStatus')?.value||'confirmed'};
    if(!a.date||!a.start||!a.end||a.start>=a.end)return toastF('Informe data e horário válidos.');
    const d=JSON.parse(localStorage.getItem('eddu_data')||'{}');d.appointments=Array.isArray(d.appointments)?d.appointments:[];d.blocks=Array.isArray(d.blocks)?d.blocks:[];
    if(d.blocks.some(b=>b.date===a.date&&a.start<b.end&&a.end>b.start)||d.appointments.some(x=>x.date===a.date&&a.start<x.end&&a.end>x.start))return toastF('Conflito: este horário já está ocupado/bloqueado.');
-   d.appointments.push(a);localStorage.setItem('eddu_data',JSON.stringify(d));try{if(window.data)window.data.appointments=d.appointments;window.data.blocks=d.blocks;if(typeof window.persist==='function')window.persist()}catch(_){}
+   d.appointments.push(a);localStorage.setItem('eddu_data',JSON.stringify(d));
+   try{if(window.data){window.data.appointments=d.appointments;window.data.blocks=d.blocks}if(typeof window.persist==='function')window.persist()}catch(_){}
    toastF('✓ Agendamento salvo.');setTimeout(()=>window.openSheet('agenda'),120);
  };
- window.views.agendaAdd();
  window.openSheet('agendaAdd');
 };
 window.openAgendaBlockDayM=function(day){
