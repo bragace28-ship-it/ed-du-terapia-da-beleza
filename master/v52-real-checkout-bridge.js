@@ -47,9 +47,8 @@ window.__edduSelectGateway=function(gateway,method){
     const idem='EDDU-'+p.commandId+'-'+gateway+'-'+m+'-'+n;const r=await fetch('/api/payments',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':idem},body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok||!d.ok)throw new Error(d.error||'Não foi possível gerar a cobrança.');
     const record={...p,method:m,installments:n,payment:d.payment,checkoutUrl:d.checkoutUrl||null,qrCode:d.qrCode||null,status:'CHECKOUT_PENDING',createdAt:new Date().toISOString()};persist(record);window.__edduPendingPayment=record;
     if(d.checkoutUrl){window.open(d.checkoutUrl,'_blank','noopener,noreferrer');toast('✓ Checkout '+providerLabel(gateway)+' aberto. A comanda só será quitada após a confirmação do gateway.');}
-    else if(d.qrCode){info.innerHTML='<p><b>PIX gerado.</b></p><textarea readonly style="width:100%;min-height:90px">'+esc(d.qrCode)+'</textarea><p>Use o QR/ código no aplicativo do cliente. A baixa ocorrerá pelo webhook.</p>';toast('✓ Cobrança '+providerLabel(gateway)+' criada.');}
-    else toast('✓ Cobrança criada; aguardando confirmação do gateway.');
-    open('payments');
+    else if(d.qrCode){info.innerHTML='<p><b>QR/PIX '+esc(providerLabel(gateway))+' gerado.</b></p><textarea readonly style="width:100%;min-height:90px">'+esc(d.qrCode)+'</textarea><p>Não marque a comanda como paga. A baixa ocorrerá após a confirmação do gateway.</p>';toast('✓ Cobrança '+providerLabel(gateway)+' criada.');return;}
+    else {toast('✓ Cobrança criada; aguardando confirmação do gateway.');open('payments');}
    }catch(e){toast('Não foi possível gerar a cobrança: '+e.message);b.disabled=false;b.textContent='✓ Gerar cobrança'}
   },{once:true});
  },40);
