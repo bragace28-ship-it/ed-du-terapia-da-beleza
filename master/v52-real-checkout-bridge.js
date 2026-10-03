@@ -60,3 +60,5 @@ setTimeout(async()=>{try{const u=new URL(location.href);if(u.searchParams.get('p
 window.EDDU_MASTER_V53_UNIFIED_GATEWAYS=true;
 })();
 /* live E2E trigger */
+
+/* E2E retry 2026-10-03 */
