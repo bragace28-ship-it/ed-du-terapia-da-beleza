@@ -42,17 +42,22 @@ if(process.argv.includes('--check')){console.log('V33 VISUAL LOCK: PASS');proces
 let output=html;
 if(deployMaster){
   const runtimeFiles=['master/v49-final-functional-hotfix.js','master/v46-final-homologation-runtime.js','master/v46-final-hardening.js','master/v46-runtime-fixes.js','master/v48-navigation-hardening.js','master/v50-navigation-final-bridge.js','master/neon-live-bridge.js'];
+  const runtimeTags=[];
   for(const file of runtimeFiles){
     const code=await readFile(resolve(root,file),'utf8');
     if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(code)) throw new Error('Legacy Supabase reference found in '+file);
     const encoded=Buffer.from(code,'utf8').toString('base64');
-    const tag='<script>(function(){try{(0,eval)(atob('+JSON.stringify(encoded)+'));}catch(e){console.error("EDDU Master runtime load failed:",e);}})();</script></body>';
-    output=output.replace('</body>',tag);
+    runtimeTags.push('<script>(function(){try{(0,eval)(atob('+JSON.stringify(encoded)+'));}catch(e){console.error("EDDU Master runtime load failed:",e);}})();</script>');
   }
   const authClient=await readFile(resolve(root,'master','neon-auth-client.js'),'utf8');
   const authEncoded=Buffer.from(authClient,'utf8').toString('base64');
-  const authTag='<script>(function(){try{(0,eval)(atob('+JSON.stringify(authEncoded)+'));}catch(e){console.error("EDDU Neon Auth client load failed:",e);}})();</script></body>';
-  output=output.replace('</body>',authTag);
+  runtimeTags.push('<script>(function(){try{(0,eval)(atob('+JSON.stringify(authEncoded)+'));}catch(e){console.error("EDDU Neon Auth client load failed:",e);}})();</script>');
+  // IMPORTANT: the Master source contains literal </body> inside a PDF/HTML string.
+  // Never use String.replace('</body>', ...) because it would inject runtime code inside that JS string.
+  const bodyMarker='</body>';
+  const bodyPos=output.toLowerCase().lastIndexOf(bodyMarker);
+  if(bodyPos<0) throw new Error('MASTER source has no final </body> marker.');
+  output=output.slice(0,bodyPos)+runtimeTags.join('')+output.slice(bodyPos);
 }
 await rm(dist,{recursive:true,force:true});
 await mkdir(dist,{recursive:true});
