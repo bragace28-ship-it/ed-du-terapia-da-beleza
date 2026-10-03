@@ -78,17 +78,20 @@ var ensureUserPerms=function(){if(typeof window.renderUserPermsV20!=='function')
 var oldOpenUserEdit=window.openUserEditV20;
 window.openUserEditV20=function(id){if(typeof oldOpenUserEdit==='function')oldOpenUserEdit(id);setTimeout(ensureUserPerms,50);setTimeout(ensureUserPerms,180)};
 
-function clientNames(){var a=(window.data&&window.data.clients)||(window.state&&window.state.clients)||read('eddu_data',{}).clients||read('eddu_state',{}).clients||[];var n=a.map(function(x){return typeof x==='string'?x:(x.name||x.fullName||'')}).filter(Boolean);return [...new Set(['Mariana','Juliana','Camila','Renata','Paula','Fernanda'].concat(n))]}
-window.v46OpenNewClientFromAgenda=function(){if(typeof window.openSheet==='function')window.openSheet('newClient')};
+function clientNames(){var a=(window.data&&window.data.clients)||(window.state&&window.state.clients)||[];var n=a.map(function(x){return typeof x==='string'?x:(x.name||x.fullName||'')}).filter(Boolean);return [...new Set(n)]}
+window.v46OpenNewClientFromAgenda=function(){if(typeof window.openNewClientFromAgenda==='function')return window.openNewClientFromAgenda();if(typeof window.openSheet==='function')window.openSheet('newClient')};
 var oldOpenAgendaAdd=window.openAgendaAddM;
 window.openAgendaAddM=function(day){
-  var d=day||new Date().toISOString().slice(0,10),names=clientNames();
-  window.views=window.views||{};
-  window.views.agendaAdd=function(){return '<h2>Adicionar agendamento</h2><p class="sub">Novo atendimento diretamente na Agenda.</p><div class="card"><label>Cliente</label><select id="aptClient"><option value="__NEW__">＋ Adicionar novo cliente</option>'+names.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>'}).join('')+'</select><label>Profissional</label><select id="aptProfessional">'+(typeof professionalOptionsM==='function'?professionalOptionsM('Profissional ED'):'<option>Profissional ED</option>')+'</select><label>Serviço</label><select id="aptService">'+(typeof serviceOptionsM==='function'?serviceOptionsM('Limpeza de Pele'):'<option>Limpeza de Pele</option>')+'</select><div class="row"><div><label>Data</label><input id="aptDate" type="date" value="'+d+'"></div><div><label>Início</label><input id="aptStart" type="time" value="10:00"></div></div><div class="row"><div><label>Término</label><input id="aptEnd" type="time" value="11:00"></div><div><label>Status</label><select id="aptStatus"><option>Confirmado</option><option>Pendente</option></select></div></div><div class="action-row"><button class="btn primary full" onclick="saveAgendaAddM()">Salvar agendamento</button><button class="btn full" onclick="openSheet(\'agenda\')">Cancelar</button></div></div>'};
-  openSheet('agendaAdd');setTimeout(function(){var s=document.getElementById('aptClient');if(s)s.onchange=function(){if(s.value==='__NEW__')v46OpenNewClientFromAgenda()}},50);
+  if(typeof oldOpenAgendaAdd==='function')return oldOpenAgendaAdd(day);
+  if(typeof window.openSheet==='function')window.openSheet('agendaAdd');
 };
 var oldSaveAgendaAdd=window.saveAgendaAddM;
-window.saveAgendaAddM=function(){var s=document.getElementById('aptClient');if(s?.value==='__NEW__')return v46OpenNewClientFromAgenda();if(typeof oldSaveAgendaAdd==='function')return oldSaveAgendaAdd()};
+window.saveAgendaAddM=function(){
+  var s=document.getElementById('aptClient');
+  if(s?.value==='__NEW__')return v46OpenNewClientFromAgenda();
+  if(typeof oldSaveAgendaAdd==='function')return oldSaveAgendaAdd();
+  return toastF('Função de agendamento indisponível');
+};
 
 window.v46BlockWholeDay=function(day){
   var d=day||new Date().toISOString().slice(0,10),blocks=window.data?.blocks||[],apps=window.data?.appointments||[];
