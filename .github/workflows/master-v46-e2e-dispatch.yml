@@ -17,7 +17,7 @@ jobs:
         run: |
           git init .
           git remote add origin https://github.com/bragace28-ship-it/ed-du-terapia-da-beleza.git
-          git fetch --no-tags --depth=1 origin ${{ github.event.pull_request.head.sha }}
+          git fetch --no-tags --depth=1 origin ${{ github.event.pull_request.head.sha || github.sha }}
           git checkout --detach FETCH_HEAD
       - name: Setup Node 22
         uses: actions/setup-node@v4
