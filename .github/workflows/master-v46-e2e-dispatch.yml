@@ -1,6 +1,7 @@
 name: ED DU Master V46 E2E Dispatch
 
 on:
+  workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened]
 
