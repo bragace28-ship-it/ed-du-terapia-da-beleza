@@ -47,6 +47,12 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=ed-du-terapia-da-beleza --branch=master-v46-e2e --commit-hash=${{ github.sha }} --commit-message="Master V46 E2E preview"
+      - name: Inspect configured Cloudflare secret names
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx --yes wrangler@3.90.0 pages secret list --project-name=ed-du-terapia-da-beleza
       - name: Smoke test deployed runtime
         env:
           DEPLOY_URL: https://master-v46-e2e.ed-du-terapia-da-beleza.pages.dev
@@ -56,4 +62,4 @@ jobs:
           echo "$health"
           ranking="$(curl -fsS --retry 5 --retry-delay 2 "$DEPLOY_URL/api/payments?mode=rank&amount=120&method=pix&installments=1")"
           echo "$ranking"
-          node -e 'const h=JSON.parse(process.argv[1]); const r=JSON.parse(process.argv[2]); if(!h.ok) process.exit(1); if(!r.ok || !Array.isArray(r.ranking) || !r.ranking.length) process.exit(2);' "$health" "$ranking"
+          node -e 'const h=JSON.parse(process.argv[1]); const r=JSON.parse(process.argv[2]); if(!h.ok) process.exit(1); if(!r.ok) process.exit(2); if(!Array.isArray(r.ranking)||!r.ranking.length){console.error("PAYMENT_GATEWAY_NOT_CONFIGURED: nenhum gateway está configurado no Cloudflare Pages."); process.exit(3)}' "$health" "$ranking"
