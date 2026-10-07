@@ -19,12 +19,12 @@ for(const marker of required)
   if(!html.includes(marker)) throw new Error('MASTER missing required Agenda marker: '+marker);
 
 const runtimeFiles=[
-  'master/v49-final-functional-hotfix.js',
-  'master/v46-final-homologation-runtime.js',
-  'master/v46-final-hardening.js',
-  'master/v46-runtime-fixes.js',
-  'master/v48-navigation-hardening.js',
-  'master/v50-navigation-final-bridge.js',
+  'master/runtime-functional-hotfix.js',
+  'master/runtime-homologation.js',
+  'master/runtime-hardening.js',
+  'master/runtime-fixes.js',
+  'master/runtime-navigation-hardening.js',
+  'master/runtime-navigation-bridge.js',
   'master/neon-live-bridge.js','master/neon-auth-client.js'
 ];
 
