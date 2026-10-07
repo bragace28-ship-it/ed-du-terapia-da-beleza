@@ -96,6 +96,30 @@ jobs:
             --data '{"production_branch":"main","preview_deployment_setting":"none","production_deployments_enabled":true}')"
           echo "$response" | python3 -c 'import json,sys; x=json.load(sys.stdin); assert x.get("success") is True, x'
 
+      - name: Require canonical Master runtime secrets
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          ASAAS_API_KEY: ${{ secrets.ASAAS_API_KEY }}
+          ASAAS_WEBHOOK_TOKEN: ${{ secrets.ASAAS_WEBHOOK_TOKEN }}
+          PAGBANK_TOKEN: ${{ secrets.PAGBANK_TOKEN }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          PICPAY_CLIENT_ID: ${{ secrets.PICPAY_CLIENT_ID }}
+          PICPAY_CLIENT_SECRET: ${{ secrets.PICPAY_CLIENT_SECRET }}
+          PICPAY_WEBHOOK_TOKEN: ${{ secrets.PICPAY_WEBHOOK_TOKEN }}
+          NUPAY_MERCHANT_KEY: ${{ secrets.NUPAY_MERCHANT_KEY }}
+          NUPAY_MERCHANT_TOKEN: ${{ secrets.NUPAY_MERCHANT_TOKEN }}
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in NEON_DATABASE_URL ASAAS_API_KEY ASAAS_WEBHOOK_TOKEN PAGBANK_TOKEN STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET PICPAY_CLIENT_ID PICPAY_CLIENT_SECRET PICPAY_WEBHOOK_TOKEN NUPAY_MERCHANT_KEY NUPAY_MERCHANT_TOKEN; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing required Master runtime secret: $name"
+              missing=1
+            fi
+          done
+          test "$missing" -eq 0
+
       - name: Sync configured runtime secrets to Cloudflare production
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
