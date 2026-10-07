@@ -21,13 +21,13 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Validate immutable V33
-        run: npm run check
+      - name: Validate canonical Master
+        run: npm run master:check
 
       - name: Build production bundle
         run: npm run build
 
-      - name: Static application QA
+      - name: Canonical Master build QA
         run: node scripts/qa.mjs
 
       - name: Runtime surface inventory
