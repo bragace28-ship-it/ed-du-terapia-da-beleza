@@ -84,6 +84,18 @@ jobs:
           npx --yes wrangler@3.90.0 pages project list
           npx --yes wrangler@3.90.0 pages deployment list --project-name=ed-du-terapia-da-beleza
 
+      - name: Set Cloudflare production branch to main
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          response="$(curl --fail --silent --show-error -X PATCH "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/ed-du-terapia-da-beleza" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{"production_branch":"main"}')"
+          echo "$response" | python3 -c 'import json,sys; x=json.load(sys.stdin); assert x.get("success") is True, x'
+
       - name: Deploy canonical Master V46 to Cloudflare production
         uses: cloudflare/wrangler-action@v3
         with:
