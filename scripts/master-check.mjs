@@ -14,7 +14,7 @@ if(Buffer.byteLength(html)<3000000)
 const stripEmbeddedDataImages=s=>s.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/gi,'');
 const legacyFree=stripEmbeddedDataImages(html);
 if(/(?:V33|v33|fin33|eddu_v33)/i.test(legacyFree))
-  throw new Error('Legacy V33 reference found in Master source.');
+  throw new Error('Legacy version reference found in Master source.');
 if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(legacyFree))
   throw new Error('Legacy Supabase reference found in Master source.');
 const agendaDecl=html.indexOf('const agendaDataM={};');
@@ -58,7 +58,7 @@ for(let i=0;i<blocks.length;i++) await check('html-'+(i+1),blocks[i]);
 for(const file of [...runtimeFiles,...apiFiles]){
   const code=await readFile(resolve(root,file),'utf8');
   if(/(?:V33|v33|fin33|eddu_v33)/i.test(stripEmbeddedDataImages(code)))
-    throw new Error('Legacy V33 reference found in '+file);
+    throw new Error('Legacy version reference found in '+file);
   if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(code))
     throw new Error('Legacy Supabase reference found in '+file);
   await check(file.replace(/[^a-z0-9]+/gi,'-'),code);
