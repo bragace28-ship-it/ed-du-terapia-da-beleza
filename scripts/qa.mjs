@@ -3,7 +3,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 
-const html = await readFile('index.html','utf8');
+const html = await readFile('dist/index.html','utf8');
 
 for (const token of ['ED & DU','Terapia da Beleza']) {
   if (!html.includes(token)) throw new Error('Required production marker missing: '+token);
