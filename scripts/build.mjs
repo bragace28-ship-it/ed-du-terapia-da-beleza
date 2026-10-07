@@ -13,7 +13,7 @@ if(sourceBlob!==lock.master_index_git_blob_sha) throw new Error('MASTER APPROVED
 if(!html.includes('ED & DU')||!html.includes('Terapia da Beleza')) throw new Error('Required ED & DU branding missing.');
 const stripEmbeddedDataImages=s=>s.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/gi,'');
 const legacyFree=stripEmbeddedDataImages(html);
-if(/(?:V33|v33|fin33|eddu_v33)/i.test(legacyFree)) throw new Error('Legacy V33 reference found in Master source.');
+if(/(?:V33|v33|fin33|eddu_v33)/i.test(legacyFree)) throw new Error('Legacy version reference found in Master source.');
 if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(legacyFree)) throw new Error('Legacy Supabase reference found in Master UI.');
 
 if(process.argv.includes('--check')){
@@ -35,7 +35,7 @@ const runtimeFiles=[
 ];
 for(const file of runtimeFiles){
   const code=await readFile(resolve(root,file),'utf8');
-  if(/(?:V33|v33|fin33|eddu_v33)/i.test(stripEmbeddedDataImages(code))) throw new Error('Legacy V33 reference found in '+file);
+  if(/(?:V33|v33|fin33|eddu_v33)/i.test(stripEmbeddedDataImages(code))) throw new Error('Legacy version reference found in '+file);
   if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(code)) throw new Error('Legacy Supabase reference found in '+file);
   output=output.replace('</body>','<script>'+code+'\n</script></body>');
 }
