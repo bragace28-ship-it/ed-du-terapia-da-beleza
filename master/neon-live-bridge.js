@@ -1,4 +1,4 @@
-/* ED & DU MASTER — Neon live bridge (additive; V33 visual remains untouched) */
+/* ED & DU MASTER — Neon live bridge (additive; the approved Master UI remains untouched) */
 (function(){
 'use strict';
 const KEY='eddu_neon_bridge_v1';
