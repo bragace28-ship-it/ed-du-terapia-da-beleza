@@ -96,6 +96,14 @@ jobs:
             --data '{"production_branch":"main","preview_deployment_setting":"none","production_deployments_enabled":true}')"
           echo "$response" | python3 -c 'import json,sys; x=json.load(sys.stdin); assert x.get("success") is True, x'
 
+      - name: Inspect Cloudflare production secret bindings
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@3.90.0 pages secret list --project-name=ed-du-terapia-da-beleza
+
       - name: Preserve Cloudflare production runtime secrets
         run: |
           set -euo pipefail
