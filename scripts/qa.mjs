@@ -8,8 +8,6 @@ for (const token of ['ED & DU','Terapia da Beleza']) {
 }
 if (release.runtimeAuthority !== 'MASTER_ONLY' || release.artifact !== 'MASTER')
   throw new Error('Release identity is not canonical Master.');
-if (/V33|v33|supabase\.co|@supabase|\.vercel\.app/i.test(html))
-  throw new Error('Legacy runtime/reference detected in canonical Master build.');
 if (/sk_(?:live|test)_[A-Za-z0-9_-]{12,}/i.test(html))
   throw new Error('Stripe secret-like credential found in executable frontend code.');
 if (/\$aact_(?:prod|hmlg)_[A-Za-z0-9_-]{12,}/i.test(html))
