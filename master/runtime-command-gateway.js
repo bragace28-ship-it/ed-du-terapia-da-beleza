@@ -1,5 +1,5 @@
 /* MASTER V46 — V51 command-close -> gateway ranking bridge
-   Additive only. Preserves immutable V33 visual baseline.
+   Additive only. Preserves immutable the approved Master UI.
 */
 (function(){
   'use strict';
