@@ -1,5 +1,5 @@
 /* MASTER V46 FINAL HOMOLOGATION RUNTIME
-   Functional hardening only. Does not change V33 baseline or visual source.
+   Functional hardening only. Does not change the approved Master UI or visual source.
 */
 (function(){
 'use strict';
@@ -144,7 +144,7 @@ window.views.gatewaySettings=function(){
 /* 7. Financial report: real rows + readable HTML print, plus direct PDF download fallback. */
 function financialSnapshot(){
  const f=window.data?.financial||window.state?.financial||{};
- const fin=JSON.parse(localStorage.getItem('eddu_fin33')||'{}');
+ const fin=JSON.parse(localStorage.getItem('eddu_finance')||'{}');
  const pays=Array.isArray(fin.payables)?fin.payables:[], rec=Array.isArray(fin.receivables)?fin.receivables:[];
  const rows=[...rec.map(x=>({kind:'Entrada',desc:x.service||x.command||x.client||'Recebimento',date:x.due||'',status:x.status||'',value:Number(x.paid||x.total||0)})),...pays.map(x=>({kind:'Saída',desc:x.desc||'Conta a pagar',date:x.due||'',status:x.status||'',value:Number(x.amount||0)}))];
  const inV=rows.filter(x=>x.kind==='Entrada').reduce((a,x)=>a+x.value,0),outV=rows.filter(x=>x.kind==='Saída').reduce((a,x)=>a+x.value,0);
