@@ -1,5 +1,5 @@
 /* MASTER V46 FINAL FUNCTIONAL HOTFIX — 2026-09-30
-   Additive only. V33/index.html remains immutable.
+   Additive only. the approved Master UI remains immutable.
    Purpose: make the homologation flows deterministic before cloud E2E tests.
 */
 (function(){
@@ -88,12 +88,12 @@
   window.saveAgendaDayBlockM=function(){
     const d=document.getElementById('dayBlkDate')?.value,r=document.getElementById('dayBlkReason')?.value.trim()||'Dia inteiro bloqueado';
     if(!d)return toastF('Informe a data');
-    const store=read('eddu_v33_master_data_v1',{appointments:[],blocks:[]});
+    const store=read('eddu_master_data_v1',{appointments:[],blocks:[]});
     store.blocks=Array.isArray(store.blocks)?store.blocks:[];
     if(store.appointments?.some(a=>a.date===d))return toastF('Existem agendamentos nesse dia. Cancele/remaneje antes de bloquear.');
     store.blocks=store.blocks.filter(b=>!(b.date===d&&b.start==='00:00'&&b.end==='23:59'));
     store.blocks.push({id:'DAY-'+Date.now(),date:d,start:'00:00',end:'23:59',reason:r,wholeDay:true});
-    write('eddu_v33_master_data_v1',store);
+    write('eddu_master_data_v1',store);
     toastF('✓ Dia bloqueado com sucesso');
     window.openSheet('agenda');
   };
@@ -200,7 +200,7 @@
   window.v27DownloadQuotePDF=window.v46DownloadQuotePDF;
 
   window.v46PrintFinancialReport=function(){
-    const f=read('eddu_fin33',{}),data=read('eddu_v33_master_data_v1',{});
+    const f=read('eddu_finance',{}),data=read('eddu_master_data_v1',{});
     const payables=Array.isArray(f.payables)?f.payables:[],receivables=Array.isArray(f.receivables)?f.receivables:[],payments=Array.isArray(f.payments)?f.payments:(Array.isArray(data.payments)?data.payments:[]);
     const entries=receivables.reduce((a,x)=>a+Number(x.paid||x.total||0),0),exits=payables.reduce((a,x)=>a+Number(x.amount||0),0),net=entries-exits;
     const lines=['RELATÓRIO FINANCEIRO','Período: '+(new Date()).toLocaleDateString('pt-BR'),'Entradas: '+money(entries),'Saídas pagas/devidas: '+money(exits),'Resultado líquido: '+money(net),'','CONTAS A RECEBER'];
