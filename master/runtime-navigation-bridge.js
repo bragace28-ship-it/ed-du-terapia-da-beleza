@@ -1,5 +1,5 @@
 /* MASTER V46 — V50 navigation + agenda final bridge
-   Additive only. The immutable V33 visual source is never changed.
+   Additive only. The immutable the approved Master UI is never changed.
 */
 (function(){
   'use strict';
