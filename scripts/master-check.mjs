@@ -15,7 +15,7 @@ const stripEmbeddedDataImages=s=>s.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+
 const legacyFree=stripEmbeddedDataImages(html);
 if(/(?:V33|v33|fin33|eddu_v33)/i.test(legacyFree))
   throw new Error('Legacy V33 reference found in Master source.');
-if(/@supabase|VITE_SUPABASE|supabase\\.co/i.test(legacyFree))
+if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(legacyFree))
   throw new Error('Legacy Supabase reference found in Master source.');
 const agendaDecl=html.indexOf('const agendaDataM={};');
 const agendaSync=html.indexOf('syncAgendaCalendarM();');
