@@ -93,11 +93,16 @@ jobs:
           response="$(curl --fail --silent --show-error -X PATCH "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/ed-du-terapia-da-beleza" \
             -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
             -H "Content-Type: application/json" \
-            --data '{"production_branch":"main"}')"
+            --data '{"production_branch":"main","preview_deployment_setting":"none","production_deployments_enabled":true}')"
           echo "$response" | python3 -c 'import json,sys; x=json.load(sys.stdin); assert x.get("success") is True, x'
 
-      - name: Deploy canonical Master V46 to Cloudflare production
-      - name: Disable legacy Cloudflare preview deployment chain
+      - name: Deploy canonical Master to Cloudflare production
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=ed-du-terapia-da-beleza --commit-hash=${{ github.sha }} --commit-message="Canonical Master production"
+
       - name: Delete legacy Cloudflare preview deployments
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -116,20 +121,3 @@ jobs:
               if env == 'preview' and dep:
                   subprocess.run(['npx','--yes','wrangler@3.90.0','pages','deployment','delete',dep,'--project-name=ed-du-terapia-da-beleza','--force'],check=True)
           PY
-
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          set -euo pipefail
-          response="$(curl --fail --silent --show-error -X PATCH "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/ed-du-terapia-da-beleza" \
-            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            --data '{"production_branch":"main","preview_deployment_setting":"none","production_deployments_enabled":true}')"
-          echo "$response" | python3 -c 'import json,sys; x=json.load(sys.stdin); assert x.get("success") is True, x'
-
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=ed-du-terapia-da-beleza --commit-hash=${{ github.sha }} --commit-message="Canonical Master production"
