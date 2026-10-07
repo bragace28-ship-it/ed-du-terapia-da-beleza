@@ -2,7 +2,7 @@
   "artifact": "EDDU_MASTER_APPROVED_LOCK",
   "canonical_artifact": "MASTER",
   "canonical_release": "46.0.0",
-  "master_index_git_blob_sha": "28c2f2bd68236e1521d4fcce5b81c52b7c1bce5f",
+  "master_index_git_blob_sha": "5ef3590ac9826f2f5e861200ffe67cca9f8d2a15",
   "runtime_authority": "MASTER_ONLY",
   "legacy_versions": "NOT_DEPLOYABLE"
 }
