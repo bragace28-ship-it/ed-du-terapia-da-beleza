@@ -7,7 +7,8 @@ const dist=resolve(root,'dist');
 const v33Source=resolve(root,'index.html');
 const masterSource=resolve(root,'master','index.html');
 const lock=JSON.parse(await readFile(resolve(root,'V33_VISUAL_LOCK.json'),'utf8'));
-const deployMaster=process.env.MASTER_DEPLOY==='1';
+// MASTER V46 is the only deployable application artifact. V33 remains visual baseline only.
+const deployMaster=true;
 const source=deployMaster?masterSource:v33Source;
 const v33=await readFile(v33Source,'utf8');
 let html=await readFile(source,'utf8');
