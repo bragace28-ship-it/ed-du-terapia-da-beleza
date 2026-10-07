@@ -20,14 +20,14 @@ if(process.argv.includes('--check')){
 
 let output=html;
 const runtimeFiles=[
-  'master/v49-final-functional-hotfix.js',
-  'master/v46-final-homologation-runtime.js',
-  'master/v46-final-hardening.js',
-  'master/v46-runtime-fixes.js',
-  'master/v48-navigation-hardening.js',
-  'master/v50-navigation-final-bridge.js',
-  'master/v51-command-close-gateway-bridge.js',
-  'master/v52-real-checkout-bridge.js',
+  'master/runtime-functional-hotfix.js',
+  'master/runtime-homologation.js',
+  'master/runtime-hardening.js',
+  'master/runtime-fixes.js',
+  'master/runtime-navigation-hardening.js',
+  'master/runtime-navigation-bridge.js',
+  'master/runtime-command-gateway.js',
+  'master/runtime-real-checkout.js',
   'master/neon-live-bridge.js'
 ];
 for(const file of runtimeFiles){
