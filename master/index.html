@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>ED & DU — MASTER MASTER • Teste Local</title>
+<title>ED & DU — MASTER • Teste Local</title>
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:#f4f0f7;font-family:Arial,Helvetica,sans-serif;color:#28202f}
@@ -1991,7 +1991,7 @@ views.payables=()=>`<h2>Contas a pagar</h2><div class="option" onclick="openShee
 
 
 <script>
-/* MASTER MASTER LOCAL — camada de homologação sobre a base visual canônica.
+/* MASTER LOCAL — camada de homologação sobre a base visual canônica.
    Regra: não recria nem substitui o dashboard MASTER. Acrescenta somente testes/fluxos.
 */
 (function(){
@@ -2055,7 +2055,7 @@ views.payables=()=>`<h2>Contas a pagar</h2><div class="option" onclick="openShee
 ['045','Profissionais','Cadastrar profissional',()=>masterForm('045','Profissional',[['name','Nome','text'],['specialty','Especialidade','text']],v=>{data.users.push({id:'PRO-'+Date.now(),...v,role:'Profissional',status:'Ativo'});persist();pass('045','Profissional cadastrado');renderMaster();})],
 ['046','Níveis de acesso','Definir nível',()=>masterForm('046','Nível de acesso',[['user','Usuário','text'],['level','Nível','text']],v=>{data.logs.push({type:'access_level',...v,at:Date.now()});persist();pass('046','Nível salvo');renderMaster();})],
 ['047','Status de usuário','Ativar/inativar',()=>{const u=data.users[0];if(!u)return fail('047','Crie um usuário primeiro');u.status=u.status==='Ativo'?'Inativo':'Ativo';persist();pass('047','Usuário agora '+u.status);renderMaster();}],
-['048','PIN financeiro','PIN desativado no teste local',()=>masterInfo('048','PIN financeiro','Neste MASTER MASTER LOCAL o PIN permanece OFF para permitir homologação livre, conforme solicitado.')],
+['048','PIN financeiro','PIN desativado no teste local',()=>masterInfo('048','PIN financeiro','Neste MASTER LOCAL o PIN permanece OFF para permitir homologação livre, conforme solicitado.')],
 ['049','Comportamento do PIN','Validar ausência de bloqueio',()=>{pass('049','PIN não bloqueia a navegação local');renderMaster();}],
 ['050','Onde PIN não deve ser solicitado','Agenda/Comandas sem PIN',()=>{pass('050','Agenda e Comandas permanecem sem PIN');renderMaster();}],
 ['051','Dashboard profissional','Abrir área profissional',()=>{try{switchRole('professional');pass('051','Dashboard profissional aberto')}catch(e){fail('051',e.message)}}],
@@ -2068,13 +2068,13 @@ views.payables=()=>`<h2>Contas a pagar</h2><div class="option" onclick="openShee
 ['058','Taxa de simulação','Calcular taxa',()=>masterForm('058','Taxa',[['amount','Valor','number'],['fee','Taxa %','number']],v=>{const a=Number(v.amount||0),f=Number(v.fee||0),fee=a*f/100;pass('058',`Taxa ${moneyM(fee)} · líquido ${moneyM(a-fee)}`);renderMaster();})],
 ['059','Orçamento','Criar orçamento',()=>masterQuote('059')],
 ['060','Orçamento PDF','Gerar PDF/print',()=>masterQuote('060',true)],
-['061','Compartilhar orçamento','Abrir compartilhamento',()=>{if(navigator.share)navigator.share({title:'Orçamento ED & DU',text:'Orçamento MASTER MASTER de teste'}).catch(()=>{});pass('061','Compartilhamento acionado');}],
+['061','Compartilhar orçamento','Abrir compartilhamento',()=>{if(navigator.share)navigator.share({title:'Orçamento ED & DU',text:'Orçamento MASTER de teste'}).catch(()=>{});pass('061','Compartilhamento acionado');}],
 ['062','Mensagem WhatsApp do orçamento','Preparar mensagem',()=>{const msg=encodeURIComponent('Olá! Segue seu orçamento ED & DU | Terapia da Beleza.');window.open('https://wa.me/?text='+msg,'_blank');pass('062','WhatsApp acionado')}],
 ['063','Descontos no orçamento','Aplicar desconto',()=>masterForm('063','Desconto',[['amount','Valor','number'],['discount','Desconto %','number']],v=>{const a=Number(v.amount||0),d=Number(v.discount||0);pass('063','Valor final '+moneyM(a*(1-d/100)));renderMaster();})],
 ['064','Mensagem de fidelidade','Registrar mensagem',()=>masterMessage('064','fidelidade')],
 ['065','Mensagem de novo cliente','Registrar mensagem',()=>masterMessage('065','novo_cliente')],
 ['066','Catálogo de serviços','Abrir catálogo',()=>{try{openSheet('serviceCatalog');pass('066','Catálogo aberto')}catch(e){fail('066',e.message)}}],
-['067','Programa de indicação','Abrir indicações',()=>{try{openSheet('referralsPro');pass('067','Indicações abertas')}catch(e){masterInfo('067','Programa de indicação','Fluxo de indicação disponível no MASTER MASTER');pass('067','Fluxo registrado')}}],
+['067','Programa de indicação','Abrir indicações',()=>{try{openSheet('referralsPro');pass('067','Indicações abertas')}catch(e){masterInfo('067','Programa de indicação','Fluxo de indicação disponível no MASTER');pass('067','Fluxo registrado')}}],
 ['068','Envio individual','Enviar para um cliente',()=>masterForm('068','Envio individual',[['client','Cliente','text'],['message','Mensagem','text']],v=>{data.notifications.push({type:'individual',...v,at:Date.now()});persist();pass('068','Envio individual registrado');renderMaster();})],
 ['069','Envio em massa','Enviar para lista',()=>masterForm('069','Envio em massa',[['segment','Segmento','text'],['message','Mensagem','text']],v=>{data.notifications.push({type:'mass',...v,at:Date.now()});persist();pass('069','Envio em massa registrado');renderMaster();})],
 ['070','Gift Card','Criar Gift Card',()=>masterForm('070','Gift Card',[['client','Cliente','text'],['value','Valor','number']],v=>{data.giftCards.push({id:'GIFT-'+Date.now(),...v,code:'EDDU-'+Math.random().toString(36).slice(2,7).toUpperCase(),status:'Ativo'});persist();pass('070','Gift Card criado');renderMaster();})],
@@ -2082,8 +2082,8 @@ views.payables=()=>`<h2>Contas a pagar</h2><div class="option" onclick="openShee
 ['072','Popup de indicação','Abrir popup',()=>masterInfo('072','Indicação','Popup de indicação de teste aberto. <button class="btn primary" onclick="toast(\'Indicação enviada\')">Enviar</button>')],
 ['073','Home do cliente','Abrir cliente',()=>{try{switchRole('client');pass('073','Home do cliente aberta')}catch(e){fail('073',e.message)}}],
 ['074','Sino','Testar notificações',()=>masterInfo('074','Notificações','Sino/central de notificações validado no modo de teste.')],
-['075','Notificações','Criar notificação',()=>{data.notifications.push({id:'NOT-'+Date.now(),message:'Notificação MASTER MASTER',read:false});persist();pass('075','Notificação criada');renderMaster();}],
-['076','Push','Simular push',()=>{if('Notification' in window && Notification.permission==='granted')new Notification('ED & DU',{body:'Push MASTER MASTER'});pass('076','Push simulado');renderMaster();}],
+['075','Notificações','Criar notificação',()=>{data.notifications.push({id:'NOT-'+Date.now(),message:'Notificação MASTER',read:false});persist();pass('075','Notificação criada');renderMaster();}],
+['076','Push','Simular push',()=>{if('Notification' in window && Notification.permission==='granted')new Notification('ED & DU',{body:'Push MASTER'});pass('076','Push simulado');renderMaster();}],
 ['077','Alertas de crédito','Criar alerta',()=>{data.notifications.push({type:'credit',message:'Crédito disponível',read:false});persist();pass('077','Alerta de crédito criado');renderMaster();}],
 ['078','Deep link de pagamento','Criar link de teste',()=>{const link=location.href.split('#')[0]+'#pagamento=TEST-'+Date.now();navigator.clipboard?.writeText(link).catch(()=>{});pass('078','Deep link criado: '+link);renderMaster();}],
 ['079','Regra de integridade','Verificar dados locais',()=>{const ok=Array.isArray(data.payments)&&Array.isArray(data.commands)&&Array.isArray(data.receivables);if(ok)pass('079','Integridade estrutural OK');else fail('079','Estrutura inválida');renderMaster();}],
@@ -2123,11 +2123,11 @@ views.payables=()=>`<h2>Contas a pagar</h2><div class="option" onclick="openShee
       pass(id,pdf?'Orçamento aberto para salvar em PDF':'Orçamento criado'); renderMaster();
     })
   }
-  function masterMessage(id,type){data.notifications.push({type,message:'Mensagem de '+type+' — MASTER MASTER',at:Date.now()});persist();pass(id,'Mensagem registrada');renderMaster()}
+  function masterMessage(id,type){data.notifications.push({type,message:'Mensagem de '+type+' — MASTER',at:Date.now()});persist();pass(id,'Mensagem registrada');renderMaster()}
   function renderMaster(){
     const p=items.filter(x=>itemStatus(x[0])==='PASS').length,f=items.filter(x=>itemStatus(x[0])==='FAIL').length;
     const rows=items.map(x=>'<div class="option"><span style="flex:1"><b>'+x[0]+' · '+escM(x[1])+'</b><small>'+escM(x[2])+'</small></span><span>'+statusBadge(x[0])+'</span><button class="btn primary" onclick="window.__masterTest(\''+x[0]+'\')">Testar</button></div>').join('');
-    const html='<h2>MASTER MASTER — 86 itens</h2><p class="sub">Base visual MASTER intacta. Esta é somente a camada de homologação. <b>PASS '+p+'/86</b> · <b>FAIL '+f+'</b>.</p><div class="card"><div class="row"><span>Persistência local</span><b>✓ ativa</b></div><div class="row"><span>Login/PIN</span><b>OFF</b></div><div class="row"><span>Produção</span><b>bloqueada</b></div></div>'+rows;
+    const html='<h2>MASTER — 86 itens</h2><p class="sub">Base visual MASTER intacta. Esta é somente a camada de homologação. <b>PASS '+p+'/86</b> · <b>FAIL '+f+'</b>.</p><div class="card"><div class="row"><span>Persistência local</span><b>✓ ativa</b></div><div class="row"><span>Login/PIN</span><b>OFF</b></div><div class="row"><span>Produção</span><b>bloqueada</b></div></div>'+rows;
     document.getElementById('view').innerHTML=html;
     document.getElementById('shade').classList.add('show');
   }
@@ -2252,7 +2252,7 @@ views.payables=()=>`<h2>Contas a pagar</h2><div class="option" onclick="openShee
     h+='<div class="action-row" style="margin-top:14px"><button class="btn primary" onclick="openAgendaAddM(\''+selectedDayM+'\')">＋ Adicionar agendamento</button><button class="btn" '+(editId?'':'disabled')+' onclick="editFirstAgendaM()">✎ Editar agendamento</button></div>';
     return h;
   };
-  window.EDDU_MASTER_AUDIT={items,version:'MASTER MASTER LOCAL',baseSha256:'520988ef7e8ae6b0b338e2921b3c3a0ec0b08e51b8f57046e8c1954165cd8a6e'};
+  window.EDDU_MASTER_AUDIT={items,version:'MASTER LOCAL',baseSha256:'520988ef7e8ae6b0b338e2921b3c3a0ec0b08e51b8f57046e8c1954165cd8a6e'};
 })();
 </script>
 <script id="bloco08-financeiro">
