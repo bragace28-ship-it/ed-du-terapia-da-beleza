@@ -72,3 +72,9 @@ const EDDU_NEON_DATA_API_URL='https://ep-sweet-meadow-b43jne0i.apirest.c-6.us-ea
     window.__EDDU_NEON_READY=false;
   }
 })();
+if(location.hash==='#e2e-agenda'){
+  queueMicrotask(()=>{
+    try{window.switchRole?.('professional');window.openSheet?.('agenda');}
+    catch(err){document.documentElement.dataset.edduE2EError=String(err?.message||err)}
+  });
+}
