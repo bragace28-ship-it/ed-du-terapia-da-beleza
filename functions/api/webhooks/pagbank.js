@@ -38,7 +38,7 @@ async function resolvePublicKey(env){
   if(!env.PAGBANK_TOKEN)return '';
   const base=String(env.PAGBANK_API_BASE||'https://sandbox.api.pagseguro.com').replace(/\/$/,'');
   try{
-    const r=await fetch(base+'/public-keys/webhook',{headers:{Authorization:'Bearer '+env.PAGBANK_TOKEN,Accept:'application/json'}});
+    const r=await fetch(base+'/public-keys?type=webhook',{headers:{Authorization:'Bearer '+env.PAGBANK_TOKEN,Accept:'application/json'}});
     const data=await r.json().catch(()=>({}));
     return String(data?.public_key||'');
   }catch{return '';}
