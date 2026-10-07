@@ -117,6 +117,37 @@ jobs:
           set -euo pipefail
           npx --yes wrangler@3.90.0 pages secret list --project-name=ed-du-terapia-da-beleza
 
+      - name: Reuse configured GitHub runtime secrets in Cloudflare production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          ASAAS_API_KEY: ${{ secrets.ASAAS_API_KEY }}
+          ASAAS_WEBHOOK_TOKEN: ${{ secrets.ASAAS_WEBHOOK_TOKEN }}
+          PAGBANK_TOKEN: ${{ secrets.PAGBANK_TOKEN }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          PICPAY_CLIENT_ID: ${{ secrets.PICPAY_CLIENT_ID }}
+          PICPAY_CLIENT_SECRET: ${{ secrets.PICPAY_CLIENT_SECRET }}
+          PICPAY_WEBHOOK_TOKEN: ${{ secrets.PICPAY_WEBHOOK_TOKEN }}
+          NUPAY_MERCHANT_KEY: ${{ secrets.NUPAY_MERCHANT_KEY }}
+          NUPAY_MERCHANT_TOKEN: ${{ secrets.NUPAY_MERCHANT_TOKEN }}
+        run: |
+          set -euo pipefail
+          put_secret() {
+            local name="$1"
+            local value="${!name:-}"
+            if [ -n "$value" ]; then
+              printf "%s" "$value" | npx --yes wrangler@3.90.0 pages secret put "$name" --project-name=ed-du-terapia-da-beleza
+              echo "reused configured secret: $name"
+            else
+              echo "GitHub Actions secret not configured: $name"
+            fi
+          }
+          for name in NEON_DATABASE_URL ASAAS_API_KEY ASAAS_WEBHOOK_TOKEN PAGBANK_TOKEN STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET PICPAY_CLIENT_ID PICPAY_CLIENT_SECRET PICPAY_WEBHOOK_TOKEN NUPAY_MERCHANT_KEY NUPAY_MERCHANT_TOKEN; do
+            put_secret "$name"
+          done
+
       - name: Preserve Cloudflare production runtime secrets
         run: |
           set -euo pipefail
