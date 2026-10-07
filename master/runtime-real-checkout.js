@@ -1,5 +1,5 @@
 /* MASTER V46 — unified gateway ranking/checkout bridge
-   Functional-only layer. V33 visual baseline remains immutable.
+   Functional-only layer. the approved Master UI remains immutable.
 */
 (function(){
 'use strict';
