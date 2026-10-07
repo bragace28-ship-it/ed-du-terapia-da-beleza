@@ -96,6 +96,41 @@ jobs:
             --data '{"production_branch":"main","preview_deployment_setting":"none","production_deployments_enabled":true}')"
           echo "$response" | python3 -c 'import json,sys; x=json.load(sys.stdin); assert x.get("success") is True, x'
 
+      - name: Sync configured runtime secrets to Cloudflare production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          ASAAS_API_KEY: ${{ secrets.ASAAS_API_KEY }}
+          ASAAS_WEBHOOK_TOKEN: ${{ secrets.ASAAS_WEBHOOK_TOKEN }}
+          ASAAS_BASE_URL: ${{ secrets.ASAAS_BASE_URL }}
+          PAGBANK_TOKEN: ${{ secrets.PAGBANK_TOKEN }}
+          PAGBANK_API_BASE: ${{ secrets.PAGBANK_API_BASE }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          PICPAY_CLIENT_ID: ${{ secrets.PICPAY_CLIENT_ID }}
+          PICPAY_CLIENT_SECRET: ${{ secrets.PICPAY_CLIENT_SECRET }}
+          PICPAY_WEBHOOK_TOKEN: ${{ secrets.PICPAY_WEBHOOK_TOKEN }}
+          PICPAY_API_BASE: ${{ secrets.PICPAY_API_BASE }}
+          NUPAY_MERCHANT_KEY: ${{ secrets.NUPAY_MERCHANT_KEY }}
+          NUPAY_MERCHANT_TOKEN: ${{ secrets.NUPAY_MERCHANT_TOKEN }}
+          NUPAY_API_BASE: ${{ secrets.NUPAY_API_BASE }}
+        run: |
+          set -euo pipefail
+          put_secret() {
+            local name="$1"
+            local value="${!name:-}"
+            if [ -n "$value" ]; then
+              printf '%s' "$value" | npx --yes wrangler@3.90.0 pages secret put "$name" --project-name=ed-du-terapia-da-beleza
+              echo "configured $name"
+            else
+              echo "not configured in GitHub Actions: $name"
+            fi
+          }
+          for name in NEON_DATABASE_URL ASAAS_API_KEY ASAAS_WEBHOOK_TOKEN ASAAS_BASE_URL PAGBANK_TOKEN PAGBANK_API_BASE STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET PICPAY_CLIENT_ID PICPAY_CLIENT_SECRET PICPAY_WEBHOOK_TOKEN PICPAY_API_BASE NUPAY_MERCHANT_KEY NUPAY_MERCHANT_TOKEN NUPAY_API_BASE; do
+            put_secret "$name"
+          done
+
       - name: Deploy canonical Master to Cloudflare production
         uses: cloudflare/wrangler-action@v3
         with:
