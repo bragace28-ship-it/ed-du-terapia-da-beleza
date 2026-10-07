@@ -96,64 +96,12 @@ jobs:
             --data '{"production_branch":"main","preview_deployment_setting":"none","production_deployments_enabled":true}')"
           echo "$response" | python3 -c 'import json,sys; x=json.load(sys.stdin); assert x.get("success") is True, x'
 
-      - name: Require canonical Master runtime secrets
-        env:
-          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
-          ASAAS_API_KEY: ${{ secrets.ASAAS_API_KEY }}
-          ASAAS_WEBHOOK_TOKEN: ${{ secrets.ASAAS_WEBHOOK_TOKEN }}
-          PAGBANK_TOKEN: ${{ secrets.PAGBANK_TOKEN }}
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          PICPAY_CLIENT_ID: ${{ secrets.PICPAY_CLIENT_ID }}
-          PICPAY_CLIENT_SECRET: ${{ secrets.PICPAY_CLIENT_SECRET }}
-          PICPAY_WEBHOOK_TOKEN: ${{ secrets.PICPAY_WEBHOOK_TOKEN }}
-          NUPAY_MERCHANT_KEY: ${{ secrets.NUPAY_MERCHANT_KEY }}
-          NUPAY_MERCHANT_TOKEN: ${{ secrets.NUPAY_MERCHANT_TOKEN }}
+      - name: Preserve Cloudflare production runtime secrets
         run: |
           set -euo pipefail
-          missing=0
-          for name in NEON_DATABASE_URL ASAAS_API_KEY ASAAS_WEBHOOK_TOKEN PAGBANK_TOKEN STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET PICPAY_CLIENT_ID PICPAY_CLIENT_SECRET PICPAY_WEBHOOK_TOKEN NUPAY_MERCHANT_KEY NUPAY_MERCHANT_TOKEN; do
-            if [ -z "${!name:-}" ]; then
-              echo "::error::Missing required Master runtime secret: $name"
-              missing=1
-            fi
-          done
-          test "$missing" -eq 0
-
-      - name: Sync configured runtime secrets to Cloudflare production
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
-          ASAAS_API_KEY: ${{ secrets.ASAAS_API_KEY }}
-          ASAAS_WEBHOOK_TOKEN: ${{ secrets.ASAAS_WEBHOOK_TOKEN }}
-          ASAAS_BASE_URL: ${{ secrets.ASAAS_BASE_URL }}
-          PAGBANK_TOKEN: ${{ secrets.PAGBANK_TOKEN }}
-          PAGBANK_API_BASE: ${{ secrets.PAGBANK_API_BASE }}
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-          PICPAY_CLIENT_ID: ${{ secrets.PICPAY_CLIENT_ID }}
-          PICPAY_CLIENT_SECRET: ${{ secrets.PICPAY_CLIENT_SECRET }}
-          PICPAY_WEBHOOK_TOKEN: ${{ secrets.PICPAY_WEBHOOK_TOKEN }}
-          PICPAY_API_BASE: ${{ secrets.PICPAY_API_BASE }}
-          NUPAY_MERCHANT_KEY: ${{ secrets.NUPAY_MERCHANT_KEY }}
-          NUPAY_MERCHANT_TOKEN: ${{ secrets.NUPAY_MERCHANT_TOKEN }}
-          NUPAY_API_BASE: ${{ secrets.NUPAY_API_BASE }}
-        run: |
-          set -euo pipefail
-          put_secret() {
-            local name="$1"
-            local value="${!name:-}"
-            if [ -n "$value" ]; then
-              printf '%s' "$value" | npx --yes wrangler@3.90.0 pages secret put "$name" --project-name=ed-du-terapia-da-beleza
-              echo "configured $name"
-            else
-              echo "not configured in GitHub Actions: $name"
-            fi
-          }
-          for name in NEON_DATABASE_URL ASAAS_API_KEY ASAAS_WEBHOOK_TOKEN ASAAS_BASE_URL PAGBANK_TOKEN PAGBANK_API_BASE STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET PICPAY_CLIENT_ID PICPAY_CLIENT_SECRET PICPAY_WEBHOOK_TOKEN PICPAY_API_BASE NUPAY_MERCHANT_KEY NUPAY_MERCHANT_TOKEN NUPAY_API_BASE; do
-            put_secret "$name"
-          done
+          echo "Cloudflare production secrets are managed in the Pages project."
+          echo "This pipeline deliberately does not overwrite them from GitHub Actions."
+          echo "They are consumed by Pages Functions through context.env at runtime."
 
       - name: Deploy canonical Master to Cloudflare production
         uses: cloudflare/wrangler-action@v3
@@ -161,6 +109,27 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=ed-du-terapia-da-beleza --commit-hash=${{ github.sha }} --commit-message="Canonical Master production"
+
+      - name: Smoke test production runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://ed-du-terapia-da-beleza.pages.dev"
+          for i in {1..12}; do
+            health="$(curl --silent --show-error --max-time 20 "$base/api/health" || true)"
+            echo "health_attempt=$i $health"
+            if python3 -c 'import json,sys; x=json.loads(sys.argv[1]); raise SystemExit(0 if x.get("ok") is True and x.get("reachable") is True else 1)' "$health"; then
+              break
+            fi
+            if [ "$i" -eq 12 ]; then
+              echo "::error::Production /api/health did not become healthy."
+              exit 1
+            fi
+            sleep 5
+          done
+          rank="$(curl --silent --show-error --max-time 20 "$base/api/payments?mode=rank&amount=100&method=pix&installments=1")"
+          echo "payment_rank=$rank"
+          python3 -c 'import json,sys; x=json.loads(sys.argv[1]); assert x.get("ok") is True, x; assert x.get("ranking"), "No configured payment gateway is available in production"; print("Production payment ranking: PASS")' "$rank"
 
       - name: Delete legacy Cloudflare preview deployments
         env:
