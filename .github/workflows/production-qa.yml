@@ -89,4 +89,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=ed-du-terapia-da-beleza --branch=main --commit-hash=${{ github.sha }} --commit-message="Canonical Master V46 production"
+          command: pages deploy dist --project-name=ed-du-terapia-da-beleza --commit-hash=${{ github.sha }} --commit-message="Canonical Master production"
