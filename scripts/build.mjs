@@ -14,7 +14,7 @@ if(!html.includes('ED & DU')||!html.includes('Terapia da Beleza')) throw new Err
 const stripEmbeddedDataImages=s=>s.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/gi,'');
 const legacyFree=stripEmbeddedDataImages(html);
 if(/(?:V33|v33|fin33|eddu_v33)/i.test(legacyFree)) throw new Error('Legacy V33 reference found in Master source.');
-if(/@supabase|VITE_SUPABASE|supabase\\.co/i.test(legacyFree)) throw new Error('Legacy Supabase reference found in Master UI.');
+if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(legacyFree)) throw new Error('Legacy Supabase reference found in Master UI.');
 
 if(process.argv.includes('--check')){
   console.log('MASTER APPROVED LOCK: PASS');
