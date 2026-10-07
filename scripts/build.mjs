@@ -11,7 +11,7 @@ const sourceBytes=Buffer.from(html,'utf8');
 const sourceBlob=createHash('sha1').update(Buffer.from('blob '+sourceBytes.length+'\0','utf8')).update(sourceBytes).digest('hex');
 if(sourceBlob!==lock.master_index_git_blob_sha) throw new Error('MASTER APPROVED LOCK FAILED: master/index.html changed from the approved artifact.');
 if(!html.includes('ED & DU')||!html.includes('Terapia da Beleza')) throw new Error('Required ED & DU branding missing.');
-const stripEmbeddedDataImages=s=>s.replace(/data:image\\/[^;]+;base64,[A-Za-z0-9+/=]+/gi,'');
+const stripEmbeddedDataImages=s=>s.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/gi,'');
 const legacyFree=stripEmbeddedDataImages(html);
 if(/(?:V33|v33|fin33|eddu_v33)/i.test(legacyFree)) throw new Error('Legacy V33 reference found in Master source.');
 if(/@supabase|VITE_SUPABASE|supabase\\.co/i.test(legacyFree)) throw new Error('Legacy Supabase reference found in Master UI.');
