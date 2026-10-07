@@ -118,7 +118,7 @@ jobs:
           page=1
           deleted=0
           while True:
-              req=urllib.request.Request(f'{base}',headers=headers)
+              req=urllib.request.Request(f'{base}?page={page}',headers=headers)
               with urllib.request.urlopen(req) as resp:
                   data=json.load(resp)
               items=data.get('result') or []
