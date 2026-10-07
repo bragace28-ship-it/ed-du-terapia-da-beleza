@@ -5,7 +5,7 @@ const release = JSON.parse(await readFile('dist/version.json','utf8'));
 const legacyFree=html.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/gi,'');
 
 if (/(?:V33|v33|fin33|eddu_v33)/i.test(legacyFree))
-  throw new Error('Legacy V33 reference found in built Master artifact.');
+  throw new Error('Legacy version reference found in built Master artifact.');
 
 for (const token of ['ED & DU','Terapia da Beleza']) {
   if (!html.includes(token)) throw new Error('Required Master marker missing: '+token);
