@@ -32,7 +32,7 @@
     const raw=el.getAttribute('onclick')||'',m=raw.match(/openSheet\(\s*['"]([^'"]+)['"]\s*\)/);
     if(!m||!clientRoutes.has(m[1]))return;
     e.preventDefault();e.stopImmediatePropagation();
-    try{if(typeof window.openSheet==='function')window.openSheet(m[1]);}catch(err){toastF('Não foi possível abrir esta tela: '+err.message)}
+    try{if(typeof window.openSheet==='function')window.openSheet(m[1]);}catch(err){toastF('Não foi possível abrir esta tela: '+String(err?.message||'falha inesperada'))}
   },true);
 
   /* 3. Agenda: client is a selector; first option opens the real client-registration screen. */
