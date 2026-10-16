@@ -4,12 +4,19 @@
 const KEY='eddu_neon_bridge_v1';
 const mapKey='eddu_neon_id_map_v1';
 const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch{return d}};
-const write=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+const write=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){window.__EDDU_NEON_LAST_ERROR='Falha ao gravar estado local: '+String(e?.message||e);return false}};
 const stateMap=read(mapKey,{});
-const waitClient=async()=>{
+const waitClient=async(timeoutMs=10000)=>{
   if(window.__EDDU_NEON_CLIENT)return window.__EDDU_NEON_CLIENT;
   if(window.__EDDU_NEON_READY===false)throw new Error(window.__EDDU_NEON_LAST_ERROR||'Neon client unavailable');
-  await new Promise(resolve=>window.addEventListener('eddu-neon-ready',resolve,{once:true}));
+  await new Promise((resolve,reject)=>{
+    let done=false,timer;
+    const finish=err=>{if(done)return;done=true;clearTimeout(timer);window.removeEventListener('eddu-neon-ready',ready);err?reject(err):resolve()};
+    const ready=()=>finish();
+    timer=setTimeout(()=>finish(new Error('Tempo limite aguardando conexão com Neon')),timeoutMs);
+    window.addEventListener('eddu-neon-ready',ready,{once:true});
+    if(window.__EDDU_NEON_CLIENT)finish();
+  });
   if(!window.__EDDU_NEON_CLIENT)throw new Error('Neon Auth client unavailable');
   return window.__EDDU_NEON_CLIENT;
 };
@@ -57,11 +64,12 @@ async function load(entity){
     if(entity==='financial_transactions')data.financialTransactions=d;
     if(entity==='agenda_blocks')data.blocks=d;
     window.data=data;
-    write('eddu_neon_'+entity,d);
-  }catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e)}
+    if(!write('eddu_neon_'+entity,d))throw new Error(window.__EDDU_NEON_LAST_ERROR||'Falha ao atualizar cache local');
+    return {ok:true,entity,count:d.length};
+  }catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e);throw e}
 }
 async function pushMapped(entity,items,normalizer){
-  if(!Array.isArray(items))return;
+  if(!Array.isArray(items))throw new Error('Lista inválida para sincronizar: '+entity);
   stateMap[entity]=stateMap[entity]||{};
   for(const item of items){
     const local=String(item?.id||item?.name||'');
@@ -71,9 +79,9 @@ async function pushMapped(entity,items,normalizer){
     try{
       const r=await api(entity,'POST',payload);
       if(r.data?.id)stateMap[entity][local]=r.data.id;
-    }catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e)}
+    }catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e);throw new Error('Falha ao persistir '+entity+' ('+local+'): '+window.__EDDU_NEON_LAST_ERROR)}
   }
-  write(mapKey,stateMap);
+  if(!write(mapKey,stateMap))throw new Error(window.__EDDU_NEON_LAST_ERROR||'Falha ao gravar mapa de sincronização');
 }
 async function pushNewClients(){
   const data=window.data||read('eddu_data',{});
@@ -103,9 +111,9 @@ async function pushNewAppointments(){
     try{
       const r=await api('appointments','POST',payload);
       if(r.data?.id)stateMap.appointments[local]=r.data.id;
-    }catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e)}
+    }catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e);throw new Error('Falha ao persistir appointments ('+local+'): '+window.__EDDU_NEON_LAST_ERROR)}
   }
-  write(mapKey,stateMap);
+  if(!write(mapKey,stateMap))throw new Error(window.__EDDU_NEON_LAST_ERROR||'Falha ao gravar mapa de agendamentos');
 }
 
 const GENERIC_MAP={
@@ -139,8 +147,8 @@ function genericPayload(entity,item){
 }
 async function pushGenericEntity(entity,localProp){
   const data=window.data||read('eddu_data',{}),items=Array.isArray(data[localProp])?data[localProp]:[];stateMap[entity]=stateMap[entity]||{};
-  for(const item of items){const local=String(item?.id||item?.code||item?.name||'');if(!local||stateMap[entity][local])continue;const payload=genericPayload(entity,item);if(!Object.keys(payload).length)continue;try{const r=await api(entity,'POST',payload);if(r.data?.id)stateMap[entity][local]=r.data.id}catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e)}}
-  write(mapKey,stateMap);
+  for(const item of items){const local=String(item?.id||item?.code||item?.name||'');if(!local||stateMap[entity][local])continue;const payload=genericPayload(entity,item);if(!Object.keys(payload).length)continue;try{const r=await api(entity,'POST',payload);if(!r.data?.id)throw new Error('Servidor não confirmou ID do registro');stateMap[entity][local]=r.data.id}catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e);throw new Error('Falha ao persistir '+entity+' ('+local+'): '+window.__EDDU_NEON_LAST_ERROR)}}
+  if(!write(mapKey,stateMap))throw new Error(window.__EDDU_NEON_LAST_ERROR||'Falha ao gravar mapa de sincronização');
 }
 async function pushGenericEntities(){
   for(const [prop,entity] of Object.entries(GENERIC_MAP))await pushGenericEntity(entity,prop);
@@ -150,6 +158,9 @@ async function sync(){
   if(window.__EDDU_NEON_SYNCING)return;
   window.__EDDU_NEON_SYNCING=true;
   try{
+    window.__EDDU_NEON_CONNECTED=false;
+    window.__EDDU_NEON_SYNC_STATUS='syncing';
+    window.dispatchEvent(new CustomEvent('eddu-neon-sync-status',{detail:{status:'syncing'}}));
     await pushNewClients();
     await pushNewProfessionals();
     await pushNewServices();
@@ -165,10 +176,19 @@ async function sync(){
     await load('financial_transactions');
     await load('agenda_blocks');
     for(const entity of Object.values(GENERIC_MAP)) await load(entity);
+    if(!write(KEY,{connectedAt:new Date().toISOString(),scope:['clients','professionals','services','products','appointments','commands','financial_transactions','agenda_blocks'],status:'confirmed'}))throw new Error(window.__EDDU_NEON_LAST_ERROR||'Falha ao gravar estado confirmado');
     window.__EDDU_NEON_CONNECTED=true;
-    write(KEY,{connectedAt:new Date().toISOString(),scope:['clients','professionals','services','products','appointments','commands','financial_transactions','agenda_blocks']});
-  }catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e)}
-  finally{window.__EDDU_NEON_SYNCING=false}
+    window.__EDDU_NEON_SYNC_STATUS='confirmed';
+    window.__EDDU_NEON_LAST_ERROR=null;
+    window.dispatchEvent(new CustomEvent('eddu-neon-sync-status',{detail:{status:'confirmed'}}));
+  }catch(e){
+    window.__EDDU_NEON_CONNECTED=false;
+    window.__EDDU_NEON_SYNC_STATUS='error';
+    window.__EDDU_NEON_LAST_ERROR=String(e?.message||e);
+    write(KEY,{status:'error',error:window.__EDDU_NEON_LAST_ERROR,at:new Date().toISOString()});
+    window.dispatchEvent(new CustomEvent('eddu-neon-sync-status',{detail:{status:'error',error:window.__EDDU_NEON_LAST_ERROR}}));
+    if(typeof window.toast==='function')window.toast('Não foi possível confirmar a sincronização com o servidor. '+window.__EDDU_NEON_LAST_ERROR);
+  }finally{window.__EDDU_NEON_SYNCING=false}
 }
 const originalPersist=window.persist;
 if(typeof originalPersist==='function'&&!window.__EDDU_NEON_PERSIST_WRAPPED){
