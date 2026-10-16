@@ -107,7 +107,8 @@ async function pushNewAppointments(){
     const local=String(a.id||((a.date||'')+'|'+(a.start||'')+'|'+(a.client||a.clientName||'')));
     if(!local||stateMap.appointments[local])continue;
     const payload=normalizeAppointment(a);
-    if(!payload.starts_at||!payload.ends_at)continue;
+    if(!payload.client_id||!payload.professional_id||!payload.service_id)throw new Error('Agendamento local '+local+' sem IDs reais de cliente, profissional ou serviço; não será sincronizado como válido.');
+    if(!payload.starts_at||!payload.ends_at||new Date(payload.ends_at)<=new Date(payload.starts_at))throw new Error('Agendamento local '+local+' possui data/horário inválido.');
     try{
       const r=await api('appointments','POST',payload);
       if(r.data?.id)stateMap.appointments[local]=r.data.id;
