@@ -111,7 +111,7 @@ window.saveAgendaAddM=async function(){
      client.from('professionals').select('id,name,active').eq('id',professionalId).limit(1),
      client.from('services').select('id,name,active,duration_minutes').eq('id',serviceId).limit(1)
    ]);
-   for(const [label,result] of [['cliente',c],['profissional',p],['serviço',s]])if(result?.error)throw new Error('Não foi possível validar '+label+': '+result.error.message);
+   for(const [label,result] of [['cliente',c],['profissional',p],['serviço',s]])if(result?.error)throw new Error('Não foi possível validar '+label+': '+String(result.error?.message||'erro de validação sem detalhes'));
    if(!c?.data?.[0]||c.data[0].active===false)throw new Error('O cliente selecionado não existe ou está inativo.');
    if(!p?.data?.[0]||p.data[0].active===false)throw new Error('O profissional selecionado não existe ou está inativo.');
    if(!s?.data?.[0]||s.data[0].active===false)throw new Error('O serviço selecionado não existe ou está inativo.');
@@ -121,20 +121,20 @@ window.saveAgendaAddM=async function(){
      client.from('appointments').select('id').eq('professional_id',professionalId).lt('starts_at',endIso).gt('ends_at',startIso).not('status','in','(Cancelado,cancelled,Cancelled)'),
      client.from('agenda_blocks').select('id').eq('professional_id',professionalId).lt('starts_at',endIso).gt('ends_at',startIso)
    ]);
-   if(conflicts?.error)throw new Error('Não foi possível verificar conflitos na agenda: '+conflicts.error.message);
-   if(blocks?.error)throw new Error('Não foi possível verificar bloqueios da agenda: '+blocks.error.message);
+   if(conflicts?.error)throw new Error('Não foi possível verificar conflitos na agenda: '+String(conflicts.error?.message||'erro de consulta sem detalhes'));
+   if(blocks?.error)throw new Error('Não foi possível verificar bloqueios da agenda: '+String(blocks.error?.message||'erro de consulta sem detalhes'));
    if((conflicts.data||[]).length)throw new Error('Conflito de horário: o profissional já possui um atendimento neste intervalo.');
    if((blocks.data||[]).length)throw new Error('Conflito de horário: existe um bloqueio neste intervalo.');
    if(button)button.textContent='Gravando no Neon…';
    const inserted=await client.from('appointments').insert({client_id:clientId,professional_id:professionalId,service_id:serviceId,starts_at:startIso,ends_at:endIso,status,source:'app'}).select('*').limit(1);
-   if(inserted?.error)throw new Error('O Neon recusou a gravação. Agendamento não confirmado: '+inserted.error.message);
+   if(inserted?.error)throw new Error('O Neon recusou a gravação. Agendamento não confirmado: '+String(inserted.error?.message||'erro de gravação sem detalhes'));
    const saved=inserted?.data?.[0];if(!saved?.id)throw new Error('O servidor não retornou confirmação do agendamento. Não considere o registro concluído.');
    window.data=window.data||{};window.data.appointments=Array.isArray(window.data.appointments)?window.data.appointments:[];window.data.appointments.unshift(saved);
    try{localStorage.setItem('eddu_neon_appointments',JSON.stringify(window.data.appointments))}catch(_){}
    window.dispatchEvent(new CustomEvent('eddu-appointment-confirmed',{detail:{appointment:saved,client:c.data[0],professional:p.data[0],service:s.data[0]}}));
    toastF('Agendamento confirmado pelo Neon e associado ao cliente '+c.data[0].name+'.');
    window.openSheet('agenda');
- }catch(e){toastF('Agendamento não confirmado: '+String(e?.message||e));}
+ }catch(e){toastF('Agendamento não confirmado: '+String(e?.message||'Falha inesperada sem detalhes técnicos. A operação não foi confirmada.'));}
  finally{if(button){button.disabled=false;button.textContent='Salvar agendamento';}}
 };
 window.openAgendaBlockDayM=function(day){
