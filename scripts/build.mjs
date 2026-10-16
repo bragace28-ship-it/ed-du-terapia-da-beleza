@@ -22,7 +22,7 @@ if(process.argv.includes('--check')){
 }
 
 let output=html;
-const localTitle=/<title>[^<]*Teste Local[^<]*<\\/title>/i;
+const localTitle=new RegExp('<title>[^<]*Teste Local[^<]*</title>','i');
 if(!localTitle.test(output)) throw new Error('Expected local-test title marker not found; refusing ambiguous production build.');
 output=output.replace(localTitle,'<title>ED & DU | Terapia da Beleza — Master 46.0.0</title>');
 const injectBeforeClosingBody=(document,markup)=>{
