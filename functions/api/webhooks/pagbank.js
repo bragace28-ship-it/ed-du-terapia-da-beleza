@@ -77,13 +77,14 @@ export async function onRequestPost({request,env}){
     : await sql`select * from payments where gateway='PagBank' and metadata->>'reference'=${reference} order by created_at desc limit 1`;
   const pay=rows[0];
   if(!pay)return json({ok:true,matched:false});
+  if(['PAID','RECEIVED','CONFIRMED'].includes(String(pay.status||'').toUpperCase()))return json({ok:true,paid:true,duplicate:true,payment_id:pay.id});
 
   const meta={...(pay.metadata||{}),lastWebhook:p,webhookStatus:status,webhookReceivedAt:new Date().toISOString()};
   await sql`update payments set status=${paid?'PAID':status||'PENDING'},paid_at=case when ${paid} then coalesce(paid_at,now()) else paid_at end,metadata=${JSON.stringify(meta)}::jsonb,updated_at=now() where id=${pay.id}`;
 
   if(paid&&pay.command_id){
     const sums=await sql`select coalesce(sum(amount),0) total from payments where command_id=${pay.command_id} and status in ('PAID','RECEIVED','CONFIRMED')`;
-    const cmd=await sql`select id,total,status from commands where id=${pay.command_id} limit 1`;
+    const cmd=await sql`select id,coalesce(net_amount,total,0) as total,status from commands where id=${pay.command_id} limit 1`;
     const commandTotal=Number(cmd[0]?.total||0);
     if(cmd[0]&&Number(sums[0]?.total||0)+.009>=commandTotal){
       await sql`update commands set status='Fechada',updated_at=now() where id=${pay.command_id} and status<>'Fechada'`;
