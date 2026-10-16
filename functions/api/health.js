@@ -6,7 +6,6 @@ export async function onRequestGet({env}){
     Asaas:Boolean(env?.ASAAS_API_KEY),
     PagBank:Boolean(env?.PAGBANK_TOKEN),
     Stripe:Boolean(env?.STRIPE_SECRET_KEY),
-    PicPay:Boolean(env?.PICPAY_CLIENT_ID&&env?.PICPAY_CLIENT_SECRET)
   };
   if(!env?.NEON_DATABASE_URL){
     return Response.json({ok:false,service:'neon',transport:'serverless',status:503,reachable:false,latencyMs:Date.now()-started,error:'NEON_DATABASE_URL não configurada',gatewayConfiguration:gateways},{status:503,headers:{'Cache-Control':'no-store'}});
