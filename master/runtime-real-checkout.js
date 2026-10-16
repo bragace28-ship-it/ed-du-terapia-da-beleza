@@ -6,14 +6,14 @@
 const toast=m=>{try{if(typeof window.toast==='function')window.toast(m);else alert(m)}catch(_){}};
 const money=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const gateways=['PagBank','Asaas','Stripe','PicPay','Nubank'];
+const gateways=['PagBank','Asaas','Stripe','PicPay'];
 function currentCommand(){try{const c=[window.state?.currentCommand,window.state?.selectedCommand,window.data?.currentCommand,window.currentCommand,window.selectedCommand].find(Boolean);if(c)return c;for(const k of ['eddu_current_command_v46','eddu_current_command','eddu_command_draft']){const v=JSON.parse(localStorage.getItem(k)||'null');if(v)return v}}catch(_){}return null}
 function amountOf(c){return Number(c?.net_amount??c?.netAmount??c?.total??c?.amount??c?.valor??c?.grandTotal??c?.finalTotal??0)||0}
 function commandId(c){return c?.id||c?.commandId||c?.number||c?.codigo||'CMD-'+Date.now()}
 function clientOf(c){const x=c?.client||c?.customer||c?.cliente||{};return typeof x==='string'?{name:x}:{id:x?.id||c?.client_id||c?.clientId,name:x?.name||x?.nome||c?.clientName||c?.client_name,email:x?.email||c?.clientEmail||c?.client_email,phone:x?.phone||x?.telefone||c?.clientPhone||c?.client_phone,document:x?.cpf||x?.document||c?.clientCpf||c?.cpf}}
 function open(route){return typeof window.openSheet==='function'?window.openSheet(route):typeof window.__masterOpenSheet==='function'?window.__masterOpenSheet(route):false}
 function persist(p){try{localStorage.setItem('eddu_gateway_checkout_pending',JSON.stringify(p))}catch(_){}}
-function providerLabel(g){return g==='Nubank'?'Nubank / NuPay':g}
+function providerLabel(g){return g}
 window.__edduOpenGatewayRanking=async function(command){
  const c=command||currentCommand()||{},p={commandId:commandId(c),amount:amountOf(c),command:c,client:clientOf(c)};window.__edduPendingPayment=p;
  window.views=window.views||{};
@@ -56,6 +56,5 @@ window.__edduSelectGateway=function(gateway,method){
 function isClose(el){if(!el)return false;const t=((el.innerText||el.textContent||'')+' '+(el.getAttribute('aria-label')||'')).toLowerCase().replace(/\s+/g,' ');return /(fechar|finalizar|encerrar)\s*(comanda|atendimento)|fechar\s*comanda|finalizar\s*comanda/.test(t)}
 document.addEventListener('click',e=>{const el=e.target?.closest?.('button,a,[role="button"],[onclick]');if(!isClose(el)||el.closest('.gateway-choice')||el.id==='v52Checkout')return;e.preventDefault();e.stopImmediatePropagation();window.__edduOpenGatewayRanking(currentCommand())},true);
 window.closeCommandAndOpenGateway=c=>window.__edduOpenGatewayRanking(c||currentCommand());
-setTimeout(async()=>{try{const u=new URL(location.href);if(u.searchParams.get('payment')!=='nupay_return')return;const sessionId=u.searchParams.get('sessionId');const commandId=u.searchParams.get('command');if(!sessionId)return;const r=await fetch('/api/payments?mode=nupay-status&sessionId='+encodeURIComponent(sessionId)+'&commandId='+encodeURIComponent(commandId||''));const d=await r.json().catch(()=>({}));if(d.status==='PAID'){toast('✓ NuPay confirmou o pagamento.');open('payments')}else if(d.status==='canceled'||d.status==='expired'){toast('NuPay encerrou a sessão sem pagamento.')}else if(d.status==='pending'||d.status==='approved'){toast('NuPay ainda está aguardando a conclusão do pagamento.')}}catch(e){console.warn('NuPay return handling',e)}},250);
 window.EDDU_MASTER_V53_UNIFIED_GATEWAYS=true;
 })();
