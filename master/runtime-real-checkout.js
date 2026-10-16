@@ -24,7 +24,7 @@ window.__edduOpenGatewayRanking=async function(command){
   const render=async()=>{const method=methodEl?.value||'pix';if(method==='pdv'){box.innerHTML='<div class="option"><span><b>PDV presencial</b><small>Registrar pagamento feito na máquina/PDV.</small></span><strong>›</strong></div><button class="btn primary full" id="v52Pdv" type="button">Registrar pagamento no PDV</button>';document.getElementById('v52Pdv')?.addEventListener('click',()=>window.__edduSelectGateway('PDV'));return}
    try{const u='/api/payments?mode=rank&amount='+encodeURIComponent(p.amount)+'&method='+method+'&installments=1';const r=await fetch(u);const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||'Falha ao consultar ranking');const rows=d.ranking||[];box.innerHTML=rows.length?rows.map(x=>'<button class="option gateway-choice" data-gateway="'+esc(x.gateway)+'" style="width:100%;text-align:left;margin:7px 0" type="button"><span><b>'+esc(x.position)+'. '+esc(providerLabel(x.gateway))+'</b><small>'+(x.fee_known?('Líquido estimado: '+money(x.net_amount)+' · taxa '+Number(x.fee_percent).toFixed(2)+'%'):'Conectado · taxa a confirmar')+'</small></span><strong>›</strong></button>').join(''):'<p>Nenhum gateway com credencial disponível no ambiente.</p>';
     box.querySelectorAll('.gateway-choice').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();window.__edduSelectGateway(b.dataset.gateway,method)}));
-   }catch(e){box.innerHTML='<p>Não foi possível consultar o ranking: '+esc(e.message)+'</p>'}
+   }catch(e){if(box)box.innerHTML='<p>Não foi possível consultar o ranking: '+esc(String(e?.message||'Falha inesperada ao consultar os gateways.'))+'</p>'}
   };
   methodEl?.addEventListener('change',render);render();
  },30);
@@ -38,7 +38,7 @@ window.__edduSelectGateway=function(gateway,method){
  open('gatewayPayment');
  setTimeout(()=>{
   const methodEl=document.getElementById('v52PayMethod'),inst=document.getElementById('v52Installments'),info=document.getElementById('v52CheckoutInfo');
-  const sync=()=>{const card=methodEl?.value==='card';if(inst)inst.disabled=!card;if(!card&&inst)inst.value='1';if(info)info.innerHTML=card?'<div class="row"><span>Parcelamento</span><b>'+inst?.value+'x</b></div>':'<div class="row"><span>Valor</span><b>'+money(p.amount)+'</b></div>'};methodEl?.addEventListener('change',sync);inst?.addEventListener('change',sync);sync();
+  const sync=()=>{const card=methodEl?.value==='card';if(inst)inst.disabled=!card;if(!card&&inst)inst.value='1';if(info)info.innerHTML=card?'<div class="row"><span>Parcelamento</span><b>'+String(inst?.value||1)+'x</b></div>':'<div class="row"><span>Valor</span><b>'+money(p.amount)+'</b></div>'};methodEl?.addEventListener('change',sync);inst?.addEventListener('change',sync);sync();
   document.getElementById('v52Checkout')?.addEventListener('click',async()=>{
    const b=document.getElementById('v52Checkout');b.disabled=true;b.textContent='Gerando cobrança…';
    try{
@@ -49,7 +49,7 @@ window.__edduSelectGateway=function(gateway,method){
     if(d.checkoutUrl){window.open(d.checkoutUrl,'_blank','noopener,noreferrer');toast('✓ Checkout '+providerLabel(gateway)+' aberto. A comanda só será quitada após a confirmação do gateway.');}
     else if(d.qrCode){info.innerHTML='<p><b>QR/PIX '+esc(providerLabel(gateway))+' gerado.</b></p><textarea readonly style="width:100%;min-height:90px">'+esc(d.qrCode)+'</textarea><p>Não marque a comanda como paga. A baixa ocorrerá após a confirmação do gateway.</p>';toast('✓ Cobrança '+providerLabel(gateway)+' criada.');return;}
     else {toast('✓ Cobrança criada; aguardando confirmação do gateway.');open('payments');}
-   }catch(e){toast('Não foi possível gerar a cobrança: '+e.message);b.disabled=false;b.textContent='✓ Gerar cobrança'}
+   }catch(e){toast('Não foi possível gerar a cobrança: '+String(e?.message||'Falha inesperada. Nenhuma confirmação de pagamento foi registrada.'));if(b){b.disabled=false;b.textContent='✓ Gerar cobrança'}}
   },{once:true});
  },40);
 };
