@@ -52,9 +52,6 @@ const requiredRuntime=[
   'PAGBANK_TOKEN',
   'STRIPE_SECRET_KEY',
   'STRIPE_WEBHOOK_SECRET',
-  'PICPAY_CLIENT_ID',
-  'PICPAY_CLIENT_SECRET',
-  'PICPAY_WEBHOOK_TOKEN',
 ];
 
 const missing=requiredRuntime.filter(k=>!process.env[k]);
