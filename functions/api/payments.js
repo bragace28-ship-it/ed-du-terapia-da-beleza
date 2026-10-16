@@ -87,6 +87,8 @@ export async function onRequestGet({request,env}){
     const base=String(env.NUPAY_API_BASE||'https://sandbox-api.spinpay.com.br').replace(/\/$/,'');const sql=neon(env.NEON_DATABASE_URL);
     const rows=await sql`select * from payments where gateway='Nubank' and (external_id=${sessionId} or metadata->>'reference'=${u.searchParams.get('reference')||''}) order by created_at desc limit 1`;const pay=rows[0];
     if(!pay)return json({ok:false,error:'Pagamento NuPay não encontrado'},404);
+    if(commandId&&String(pay.command_id||'')!==commandId)return json({ok:false,error:'A comanda não corresponde ao pagamento NuPay'},409);
+    if(['PAID','RECEIVED','CONFIRMED'].includes(String(pay.status||'').toUpperCase()))return json({ok:true,status:'PAID',duplicate:true,payment_id:pay.id,command_id:pay.command_id});
     const sr=await fetch(base+'/v1/checkouts/sessions/'+encodeURIComponent(sessionId),{headers:{'X-Merchant-Key':key,'X-Merchant-Token':token,Accept:'application/json'}});const session=await sr.json().catch(()=>({}));if(!sr.ok)return json({ok:false,error:'Falha ao consultar sessão NuPay',status:sr.status},502);
     if(session.status==='canceled'||session.status==='expired'){await sql`update payments set status='CANCELLED',metadata=${JSON.stringify({...pay.metadata,lastSession:session})}::jsonb,updated_at=now() where id=${pay.id}`;return json({ok:true,status:session.status,payment:pay});}
     if(session.status!=='approved')return json({ok:true,status:session.status,payment:pay});
