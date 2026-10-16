@@ -84,8 +84,8 @@ export async function onRequestPost({request,env}){
 
   if(paid&&pay.command_id){
     const sums=await sql`select coalesce(sum(amount),0) total from payments where command_id=${pay.command_id} and status in ('PAID','RECEIVED','CONFIRMED')`;
-    const cmd=await sql`select id,coalesce(net_amount,total,0) as total,status from commands where id=${pay.command_id} limit 1`;
-    const commandTotal=Number(cmd[0]?.total||0);
+    const cmd=await sql`select * from commands where id=${pay.command_id} limit 1`;
+    const commandTotal=Number(cmd[0]?.net_amount??cmd[0]?.total??0);
     if(cmd[0]&&Number(sums[0]?.total||0)+.009>=commandTotal){
       await sql`update commands set status='Fechada',updated_at=now() where id=${pay.command_id} and status<>'Fechada'`;
     }
