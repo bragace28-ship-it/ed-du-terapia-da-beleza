@@ -38,12 +38,7 @@
   /* 3. Agenda: client is a selector; first option opens the real client-registration screen. */
   const clients=()=>{
     const a=read('eddu_master_clients_v1',null);
-    if(Array.isArray(a)&&a.length)return a;
-    return [
-      {id:'CLI-001',name:'Mariana',phone:'(11) 99999-0001'},
-      {id:'CLI-002',name:'Juliana',phone:'(11) 99999-0002'},
-      {id:'CLI-003',name:'Camila',phone:'(11) 99999-0003'}
-    ];
+    return Array.isArray(a)?a:[];
   };
   function clientOptions(selected){
     return '<option value="__NEW__">＋ Adicionar novo cliente</option>'+
