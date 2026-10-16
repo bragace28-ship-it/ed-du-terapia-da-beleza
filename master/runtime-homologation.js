@@ -211,7 +211,7 @@ window.views.giftCardBulkTest=function(){
  return '<h2>Envio em massa — homologação</h2><p class="sub">Modo de teste exclusivo. O servidor valida novamente cada destinatário contra a lista de teste permitida. Não use dados de clientes reais.</p>'+
  '<div class="card"><label>Token temporário de homologação</label><input id="gcBulkToken" type="password" autocomplete="off" placeholder="Token de teste do servidor">'+
  '<label>ID do lote (único, 8–80 caracteres)</label><input id="gcBulkBatch" value="TEST-'+Date.now().toString(36).toUpperCase()+'" maxlength="80">'+
- '<label>Destinatários (JSON)</label><textarea id="gcBulkRecipients" rows="8" placeholder='[{"email":"teste@example.test","name":"Destinatário QA","value":25,"title":"Gift Card QA"}]'></textarea>'+
+ '<label>Destinatários (JSON)</label><textarea id="gcBulkRecipients" rows="8" placeholder="[{&quot;email&quot;:&quot;teste@example.test&quot;,&quot;name&quot;:&quot;Destinatário QA&quot;,&quot;value&quot;:25,&quot;title&quot;:&quot;Gift Card QA&quot;}]"></textarea>'+
  '<p class="sub">Somente endereços previamente configurados em GIFT_CARD_TEST_RECIPIENTS serão aceitos. O servidor registra sucesso/falha individual no Neon.</p>'+
  '<button class="btn primary full" id="gcBulkSend" type="button" onclick="window.v46SendGiftCardBulkTest()">Executar lote de teste</button><div id="gcBulkResult" role="status" aria-live="polite"></div></div>'+
  '<button class="btn full" onclick="openSheet(\'giftCard\')">← Voltar aos Gift Cards</button>';
