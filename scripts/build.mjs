@@ -36,7 +36,9 @@ for(const file of runtimeFiles){
   const code=await readFile(resolve(root,file),'utf8');
   if(/(?:V33|v33|fin33|eddu_v33)/i.test(stripEmbeddedDataImages(code))) throw new Error('Legacy version reference found in '+file);
   if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(code)) throw new Error('Legacy Supabase reference found in '+file);
-  output=output.replace('</body>','<script>'+code+'\n</script></body>');
+  const bodyClose=output.lastIndexOf('</body>');
+  if(bodyClose<0) throw new Error('MASTER HTML has no closing body tag.');
+  output=output.slice(0,bodyClose)+'<script>'+code+'\n</script>\n'+output.slice(bodyClose);
 }
 const authClient=await readFile(resolve(root,'master','neon-auth-client.js'),'utf8');
 output=output.replace('</body>','<script type="module">'+authClient+'\n</script></body>');
