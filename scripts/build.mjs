@@ -24,7 +24,6 @@ if(process.argv.includes('--check')){
 let output=html;
 const runtimeFiles=[
   'master/runtime-functional-hotfix.js',
-  'master/runtime-homologation.js',
   'master/runtime-hardening.js',
   'master/runtime-fixes.js',
   'master/runtime-navigation-hardening.js',
