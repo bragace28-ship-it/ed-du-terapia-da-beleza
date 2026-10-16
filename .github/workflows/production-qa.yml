@@ -130,8 +130,6 @@ jobs:
           PICPAY_CLIENT_ID: ${{ secrets.PICPAY_CLIENT_ID }}
           PICPAY_CLIENT_SECRET: ${{ secrets.PICPAY_CLIENT_SECRET }}
           PICPAY_WEBHOOK_TOKEN: ${{ secrets.PICPAY_WEBHOOK_TOKEN }}
-          NUPAY_MERCHANT_KEY: ${{ secrets.NUPAY_MERCHANT_KEY }}
-          NUPAY_MERCHANT_TOKEN: ${{ secrets.NUPAY_MERCHANT_TOKEN }}
         run: |
           set -euo pipefail
           put_secret() {
@@ -144,7 +142,7 @@ jobs:
               echo "GitHub Actions secret not configured: $name"
             fi
           }
-          for name in NEON_DATABASE_URL ASAAS_API_KEY ASAAS_WEBHOOK_TOKEN PAGBANK_TOKEN STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET PICPAY_CLIENT_ID PICPAY_CLIENT_SECRET PICPAY_WEBHOOK_TOKEN NUPAY_MERCHANT_KEY NUPAY_MERCHANT_TOKEN; do
+          for name in NEON_DATABASE_URL ASAAS_API_KEY ASAAS_WEBHOOK_TOKEN PAGBANK_TOKEN STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET PICPAY_CLIENT_ID PICPAY_CLIENT_SECRET PICPAY_WEBHOOK_TOKEN; do
             put_secret "$name"
           done
 
