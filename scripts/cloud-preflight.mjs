@@ -55,8 +55,6 @@ const requiredRuntime=[
   'PICPAY_CLIENT_ID',
   'PICPAY_CLIENT_SECRET',
   'PICPAY_WEBHOOK_TOKEN',
-  'NUPAY_MERCHANT_KEY',
-  'NUPAY_MERCHANT_TOKEN'
 ];
 
 const missing=requiredRuntime.filter(k=>!process.env[k]);
