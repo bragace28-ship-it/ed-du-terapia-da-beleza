@@ -73,34 +73,69 @@ window.createManualCoupon=function(){
 };
 
 /* 4. Agenda: client dropdown with first option "Adicionar novo cliente"; day block; robust persistence. */
-function clientsList(){try{if(Array.isArray(window.data?.clients)&&data.clients.length)return data.clients.map(x=>typeof x==='string'?x:(x.name||x.nome||x.client||'')).filter(Boolean)}catch(_){} try{return (JSON.parse(localStorage.getItem('eddu_clients')||'[]')).map(x=>x.name||x.nome||x).filter(Boolean)}catch(_){return ['Mariana','Carlos','Juliana']}}
-window.openNewClientFromAgenda=function(){window.__masterReturnToAgenda=true; if(typeof window.openSheet==='function')window.openSheet('clientRegistration');};
-const oldAgendaAdd=window.openAgendaAddM;
+function agendaRows(key){
+  const rows=window.data?.[key];
+  return Array.isArray(rows)?rows.filter(x=>x&&x.id&&x.name&&x.active!==false):[];
+}
+function agendaOptions(rows,placeholder){
+  return '<option value="">'+esc(placeholder)+'</option>'+rows.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join('');
+}
+window.openNewClientFromAgenda=function(){window.__masterReturnToAgenda=true;if(typeof window.openSheet==='function')window.openSheet('clientRegistration');};
 window.openAgendaAddM=function(day){
- const d=day||new Date().toISOString().slice(0,10);
- window.views.agendaAdd=()=>'<h2>Adicionar agendamento</h2><p class="sub">Novo atendimento diretamente na Agenda.</p><div class="card">'+
- '<label>Cliente</label><select id="aptClient">'+
- '<option value="__NEW__">＋ Adicionar novo cliente</option>'+clientsList().map(n=>'<option>'+esc(n)+'</option>').join('')+
- '</select><label>Profissional</label><select id="aptProfessional"><option>Profissional ED</option><option>ED</option><option>DU</option></select>'+
- '<label>Serviço</label><select id="aptService"><option>Limpeza de Pele</option><option>Spa Capilar</option><option>Corte + Secagem</option><option>Bio Nutrição</option></select>'+
- '<div class="row"><div><label>Data</label><input id="aptDate" type="date" value="'+d+'"></div><div><label>Início</label><input id="aptStart" type="time" value="10:00"></div></div>'+
- '<div class="row"><div><label>Término</label><input id="aptEnd" type="time" value="11:00"></div><div><label>Status</label><select id="aptStatus"><option>Confirmado</option><option>Pendente</option><option>Cancelado</option></select></div></div>'+
- '<div class="action-row"><button class="btn primary full" onclick="saveAgendaAddM()">Salvar agendamento</button><button class="btn full" onclick="closeSheet()">Cancelar</button></div></div>';
- window.__masterAgendaClientHandler=true;
- window.__masterAgendaOriginalSave=window.saveAgendaAddM;
- window.saveAgendaAddM=function(){
-   const sel=document.getElementById('aptClient')?.value;
-   if(sel==='__NEW__'){window.openNewClientFromAgenda();return}
-   const a={id:'APT-'+Date.now(),date:document.getElementById('aptDate')?.value,start:document.getElementById('aptStart')?.value,end:document.getElementById('aptEnd')?.value,client:sel||'',professional:document.getElementById('aptProfessional')?.value,service:document.getElementById('aptService')?.value,status:document.getElementById('aptStatus')?.value};
-   if(!a.client)return toastF('Selecione um cliente.');
-   if(!a.date||!a.start||!a.end||a.start>=a.end)return toastF('Informe data e horário válidos.');
-   const d=JSON.parse(localStorage.getItem('eddu_data')||'{}');d.appointments=Array.isArray(d.appointments)?d.appointments:[];d.blocks=Array.isArray(d.blocks)?d.blocks:[];
-   if(d.blocks.some(b=>b.date===a.date&&a.start<b.end&&a.end>b.start)||d.appointments.some(x=>x.date===a.date&&a.start<x.end&&a.end>x.start))return toastF('Conflito: este horário já está ocupado/bloqueado.');
-   d.appointments.push(a);localStorage.setItem('eddu_data',JSON.stringify(d));try{if(window.data)window.data.appointments=d.appointments;window.data.blocks=d.blocks;if(typeof window.persist==='function')window.persist()}catch(_){}
-   toastF('✓ Agendamento salvo.');setTimeout(()=>window.openSheet('agenda'),120);
- };
- window.views.agendaAdd();
+ const d=day||new Date().toISOString().slice(0,10),clients=agendaRows('clients'),professionals=agendaRows('professionals'),services=agendaRows('services');
+ window.views.agendaAdd=()=>'<h2>Adicionar agendamento</h2><p class="sub">O agendamento será confirmado somente após gravação no Neon.</p><div class="card">'+
+ '<label>Cliente</label><select id="aptClient">'+agendaOptions(clients,'Selecione um cliente real')+'</select>'+
+ '<label>Profissional</label><select id="aptProfessional">'+agendaOptions(professionals,'Selecione um profissional ativo')+'</select>'+
+ '<label>Serviço</label><select id="aptService">'+agendaOptions(services,'Selecione um serviço ativo')+'</select>'+
+ '<div class="row"><div><label>Data</label><input id="aptDate" type="date" value="'+esc(d)+'"></div><div><label>Início</label><input id="aptStart" type="time" value="10:00"></div></div>'+
+ '<div class="row"><div><label>Término</label><input id="aptEnd" type="time" value="11:00"></div><div><label>Status</label><select id="aptStatus"><option value="Agendado">Agendado</option><option value="Pendente">Pendente</option></select></div></div>'+
+ (clients.length&&professionals.length&&services.length?'':'<p role="alert">Não há clientes, profissionais ou serviços reais carregados do servidor. Cadastre/sincronize os registros antes de agendar; nenhum dado de demonstração será usado.</p>')+
+ '<div class="action-row"><button class="btn primary full" id="saveAgendaReal" type="button" onclick="saveAgendaAddM()">Salvar agendamento</button><button class="btn full" onclick="closeSheet()">Cancelar</button></div></div>';
  window.openSheet('agendaAdd');
+};
+window.saveAgendaAddM=async function(){
+ const button=document.getElementById('saveAgendaReal'),clientId=document.getElementById('aptClient')?.value,professionalId=document.getElementById('aptProfessional')?.value,serviceId=document.getElementById('aptService')?.value,date=document.getElementById('aptDate')?.value,startTime=document.getElementById('aptStart')?.value,endTime=document.getElementById('aptEnd')?.value,status=document.getElementById('aptStatus')?.value||'Agendado';
+ if(button?.disabled)return;
+ if(!clientId||!professionalId||!serviceId)return toastF('Selecione um cliente, profissional e serviço reais.');
+ if(!date||!startTime||!endTime||startTime>=endTime)return toastF('Data ou horário inválido: o término deve ser posterior ao início.');
+ const startAt=new Date(date+'T'+startTime+':00'),endAt=new Date(date+'T'+endTime+':00');
+ if(!Number.isFinite(startAt.getTime())||!Number.isFinite(endAt.getTime())||endAt<=startAt)return toastF('Data e intervalo do agendamento inválidos.');
+ if(startAt.getTime()<Date.now()-60000)return toastF('Não é possível criar um agendamento no passado.');
+ const client=window.__EDDU_NEON_CLIENT;
+ if(!client||window.__EDDU_NEON_READY!==true)return toastF('Neon indisponível. O agendamento não foi salvo.');
+ if(!navigator.onLine)return toastF('Sem conexão com a internet. O agendamento não foi salvo.');
+ if(button){button.disabled=true;button.textContent='Validando disponibilidade…';}
+ try{
+   const [c,p,s]=await Promise.all([
+     client.from('clients').select('id,name,active').eq('id',clientId).limit(1),
+     client.from('professionals').select('id,name,active').eq('id',professionalId).limit(1),
+     client.from('services').select('id,name,active,duration_minutes').eq('id',serviceId).limit(1)
+   ]);
+   for(const [label,result] of [['cliente',c],['profissional',p],['serviço',s]])if(result?.error)throw new Error('Não foi possível validar '+label+': '+String(result.error?.message||'erro de validação sem detalhes'));
+   if(!c?.data?.[0]||c.data[0].active===false)throw new Error('O cliente selecionado não existe ou está inativo.');
+   if(!p?.data?.[0]||p.data[0].active===false)throw new Error('O profissional selecionado não existe ou está inativo.');
+   if(!s?.data?.[0]||s.data[0].active===false)throw new Error('O serviço selecionado não existe ou está inativo.');
+   if(Number(s.data[0].duration_minutes)>0&&Math.round((endAt-startAt)/60000)!==Number(s.data[0].duration_minutes))throw new Error('A duração informada não corresponde à duração cadastrada do serviço.');
+   const startIso=startAt.toISOString(),endIso=endAt.toISOString();
+   const [conflicts,blocks]=await Promise.all([
+     client.from('appointments').select('id').eq('professional_id',professionalId).lt('starts_at',endIso).gt('ends_at',startIso).not('status','in','(Cancelado,cancelled,Cancelled)'),
+     client.from('agenda_blocks').select('id').eq('professional_id',professionalId).lt('starts_at',endIso).gt('ends_at',startIso)
+   ]);
+   if(conflicts?.error)throw new Error('Não foi possível verificar conflitos na agenda: '+String(conflicts.error?.message||'erro de consulta sem detalhes'));
+   if(blocks?.error)throw new Error('Não foi possível verificar bloqueios da agenda: '+String(blocks.error?.message||'erro de consulta sem detalhes'));
+   if((conflicts.data||[]).length)throw new Error('Conflito de horário: o profissional já possui um atendimento neste intervalo.');
+   if((blocks.data||[]).length)throw new Error('Conflito de horário: existe um bloqueio neste intervalo.');
+   if(button)button.textContent='Gravando no Neon…';
+   const inserted=await client.from('appointments').insert({client_id:clientId,professional_id:professionalId,service_id:serviceId,starts_at:startIso,ends_at:endIso,status,source:'app'}).select('*').limit(1);
+   if(inserted?.error)throw new Error('O Neon recusou a gravação. Agendamento não confirmado: '+String(inserted.error?.message||'erro de gravação sem detalhes'));
+   const saved=inserted?.data?.[0];if(!saved?.id)throw new Error('O servidor não retornou confirmação do agendamento. Não considere o registro concluído.');
+   window.data=window.data||{};window.data.appointments=Array.isArray(window.data.appointments)?window.data.appointments:[];window.data.appointments.unshift(saved);
+   try{localStorage.setItem('eddu_neon_appointments',JSON.stringify(window.data.appointments))}catch(_){}
+   window.dispatchEvent(new CustomEvent('eddu-appointment-confirmed',{detail:{appointment:saved,client:c.data[0],professional:p.data[0],service:s.data[0]}}));
+   toastF('Agendamento confirmado pelo Neon e associado ao cliente '+c.data[0].name+'.');
+   window.openSheet('agenda');
+ }catch(e){toastF('Agendamento não confirmado: '+String(e?.message||'Falha inesperada sem detalhes técnicos. A operação não foi confirmada.'));}
+ finally{if(button){button.disabled=false;button.textContent='Salvar agendamento';}}
 };
 window.openAgendaBlockDayM=function(day){
  const d=day||new Date().toISOString().slice(0,10);
@@ -168,6 +203,46 @@ window.openUserEditV20=function(id){
  setTimeout(()=>{if(typeof window.renderUserPermsV20==='function')window.renderUserPermsV20();},50);return r;
 };
 document.addEventListener('change',e=>{if(e.target?.id==='u20role'&&typeof window.renderUserPermsV20==='function')setTimeout(()=>window.renderUserPermsV20(),0)},true);
+
+
+/* 10. Gift-card bulk test sender: UI submits only to the server-side allowlist endpoint. */
+window.views=window.views||{};
+window.views.giftCardBulkTest=function(){
+ return '<h2>Envio em massa — homologação</h2><p class="sub">Modo de teste exclusivo. O servidor valida novamente cada destinatário contra a lista de teste permitida. Não use dados de clientes reais.</p>'+
+ '<div class="card"><label>Token temporário de homologação</label><input id="gcBulkToken" type="password" autocomplete="off" placeholder="Token de teste do servidor">'+
+ '<label>ID do lote (único, 8–80 caracteres)</label><input id="gcBulkBatch" value="TEST-'+Date.now().toString(36).toUpperCase()+'" maxlength="80">'+
+ '<label>Destinatários (JSON)</label><textarea id="gcBulkRecipients" rows="8" placeholder="[{&quot;email&quot;:&quot;teste@example.test&quot;,&quot;name&quot;:&quot;Destinatário QA&quot;,&quot;value&quot;:25,&quot;title&quot;:&quot;Gift Card QA&quot;}]"></textarea>'+
+ '<p class="sub">Somente endereços previamente configurados em GIFT_CARD_TEST_RECIPIENTS serão aceitos. O servidor registra sucesso/falha individual no Neon.</p>'+
+ '<button class="btn primary full" id="gcBulkSend" type="button" onclick="window.v46SendGiftCardBulkTest()">Executar lote de teste</button><div id="gcBulkResult" role="status" aria-live="polite"></div></div>'+
+ '<button class="btn full" onclick="openSheet(\'giftCard\')">← Voltar aos Gift Cards</button>';
+};
+window.v46SendGiftCardBulkTest=async function(){
+ const token=document.getElementById('gcBulkToken')?.value||'',batchId=document.getElementById('gcBulkBatch')?.value?.trim()||'',raw=document.getElementById('gcBulkRecipients')?.value||'',button=document.getElementById('gcBulkSend'),out=document.getElementById('gcBulkResult');
+ if(!token||!batchId||!raw){toastF('Informe token, ID do lote e destinatários.');return {ok:false,error:'missing_fields'};}
+ let recipients;try{recipients=JSON.parse(raw)}catch{toastF('JSON de destinatários inválido. Nenhum envio iniciado.');return {ok:false,error:'invalid_json'};}
+ if(!Array.isArray(recipients)||!recipients.length){toastF('Informe uma lista de destinatários de teste.');return {ok:false,error:'empty_recipients'};}
+ if(button?.disabled)return {ok:false,error:'already_running'};
+ if(button){button.disabled=true;button.textContent='Processando destinatários de teste…';}
+ if(out)out.textContent='Enviando lote para validação do servidor…';
+ try{
+  const response=await fetch('/api/gift-cards/bulk-test',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({batchId,recipients})});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok&&!result.results)throw new Error(String(result.error||'Servidor recusou o lote. Nenhum sucesso foi presumido.'));
+  if(out)out.textContent='Lote '+batchId+': '+Number(result.sent||0)+' enviados; '+Number(result.failed||0)+' falhas. '+(result.results||[]).map(x=>x.email+': '+x.status+(x.error?' ('+x.error+')':'')).join(' | ');
+  toastF(result.ok?'Lote de teste concluído e registrado no Neon.':'Lote parcialmente concluído; consulte os status individuais.');
+  return result;
+ }catch(e){
+  const message=String(e?.message||'Falha inesperada. Nenhum sucesso foi presumido.');
+  if(out)out.textContent='Falha no lote: '+message;
+  toastF('Envio em massa não confirmado: '+message);
+  return {ok:false,error:message};
+ }finally{if(button){button.disabled=false;button.textContent='Executar lote de teste';}}
+};
+const originalGiftCardView=window.views.giftCard;
+window.views.giftCard=function(){
+ const base=typeof originalGiftCardView==='function'?String(originalGiftCardView()||''):'<h2>Gift Cards</h2><p class="sub">Área de gift cards.</p>';
+ return base+'<div class="card"><h3>Homologação de envio em massa</h3><p class="sub">Envio restrito a destinatários de teste allowlisted no servidor.</p><button class="btn full" type="button" onclick="openSheet(\'giftCardBulkTest\')">Abrir envio em massa (teste)</button></div>';
+};
 
 window.EDDU_MASTER_V46_FINAL_RUNTIME=true;
 })();

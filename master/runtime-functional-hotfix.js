@@ -32,18 +32,13 @@
     const raw=el.getAttribute('onclick')||'',m=raw.match(/openSheet\(\s*['"]([^'"]+)['"]\s*\)/);
     if(!m||!clientRoutes.has(m[1]))return;
     e.preventDefault();e.stopImmediatePropagation();
-    try{if(typeof window.openSheet==='function')window.openSheet(m[1]);}catch(err){toastF('Não foi possível abrir esta tela: '+err.message)}
+    try{if(typeof window.openSheet==='function')window.openSheet(m[1]);}catch(err){toastF('Não foi possível abrir esta tela: '+String(err?.message||'falha inesperada'))}
   },true);
 
   /* 3. Agenda: client is a selector; first option opens the real client-registration screen. */
   const clients=()=>{
     const a=read('eddu_master_clients_v1',null);
-    if(Array.isArray(a)&&a.length)return a;
-    return [
-      {id:'CLI-001',name:'Mariana',phone:'(11) 99999-0001'},
-      {id:'CLI-002',name:'Juliana',phone:'(11) 99999-0002'},
-      {id:'CLI-003',name:'Camila',phone:'(11) 99999-0003'}
-    ];
+    return Array.isArray(a)?a:[];
   };
   function clientOptions(selected){
     return '<option value="__NEW__">＋ Adicionar novo cliente</option>'+
@@ -119,19 +114,68 @@
   };
 
   /* 6. OCR: file intake + deterministic extraction + human confirmation. */
-  window.v46RunOCR=function(){
+  async function v46ExtractDocumentText(file){
+    if(!file)throw new Error('Selecione um documento.');
+    const type=String(file.type||'').toLowerCase();
+    if(type==='application/pdf'||/\.pdf$/i.test(file.name||'')){
+      const pdfjs=window.pdfjsLib||window.pdfjs;
+      if(!pdfjs?.getDocument)throw new Error('Leitura de PDF indisponível: biblioteca PDF.js não carregada. Nenhum dado foi extraído.');
+      const bytes=await file.arrayBuffer(),pdf=await pdfjs.getDocument({data:bytes}).promise,parts=[];
+      for(let n=1;n<=pdf.numPages;n++){
+        const page=await pdf.getPage(n),content=await page.getTextContent();
+        parts.push(content.items.map(x=>x.str||'').join(' '));
+      }
+      const text=parts.join('\n').trim();
+      if(!text)throw new Error('O PDF não contém texto selecionável. É necessário OCR de imagem; nenhum dado foi lançado.');
+      return text;
+    }
+    if(type.startsWith('image/')){
+      if(!window.Tesseract?.recognize)throw new Error('OCR de imagem indisponível: motor Tesseract não carregado. Nenhum dado foi extraído.');
+      const result=await window.Tesseract.recognize(file,'por');
+      const text=String(result?.data?.text||'').trim();
+      if(!text)throw new Error('Não foi possível reconhecer texto na imagem.');
+      return text;
+    }
+    throw new Error('Formato não suportado. Envie PDF ou imagem.');
+  }
+  function v46ParseFinancialDocument(text){
+    const normalized=String(text||'').replace(/\u00a0/g,' ');
+    const amountMatches=[...normalized.matchAll(/(?:valor\s*(?:total|a pagar|da fatura)?|total\s*(?:a pagar|da fatura)?|amount due|total due|R\$)\s*[:\-]?\s*(?:R\$\s*)?([0-9]{1,3}(?:\.[0-9]{3})*(?:,[0-9]{2})|[0-9]+,[0-9]{2}|[0-9]+\.[0-9]{2})/ig)];
+    const rawAmount=amountMatches.length?amountMatches[amountMatches.length-1][1]:null;
+    const amount=rawAmount?Number(rawAmount.includes(',')?rawAmount.replace(/\./g,'').replace(',','.'):rawAmount):0;
+    const cnpj=(normalized.match(/\b\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}\b/)||[])[0]||'';
+    const cpf=(normalized.match(/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/)||[])[0]||'';
+    const date=(normalized.match(/(?:vencimento|vence|due date|venc\.)[^\d]{0,20}(\d{2}[\/.-]\d{2}[\/.-]\d{4}|\d{4}-\d{2}-\d{2})/i)||[])[1]||'';
+    const desc=(normalized.split(/\r?\n/).map(s=>s.trim()).find(s=>s.length>=5&&!/^(?:CNPJ|CPF|valor|total|vencimento|data)\b/i.test(s))||'').slice(0,240);
+    const due=date?(date.includes('-')&&/^\d{4}-/.test(date)?date:date.split(/[\/.-]/).reverse().join('-')):'';
+    const missing=[];
+    if(!(amount>0))missing.push('valor total');
+    if(!cnpj&&!cpf)missing.push('CNPJ/CPF');
+    if(!due||!/^\d{4}-\d{2}-\d{2}$/.test(due))missing.push('data de vencimento');
+    if(!desc)missing.push('descrição');
+    return {valid:missing.length===0,missing,description:desc,amount,due,document:cnpj||cpf,text:normalized};
+  }
+  window.v46RunOCR=async function(){
     const file=document.getElementById('fpfile')?.files?.[0];
-    if(!file)return toastF('Selecione a fatura/documento primeiro');
-    const name=file.name||'Documento';
-    const text=name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ');
-    const amount=(text.match(/(?:R\$|BRL)?\s*(\d{1,3}(?:[.\s]\d{3})*(?:,\d{2})|\d+(?:[.,]\d{2}))/i)||[])[1];
-    const value=amount?Number(amount.replace(/\./g,'').replace(',','.')):0;
-    const due=(text.match(/(\d{2})[\/-](\d{2})[\/-](\d{4})/)||[]);
-    if(document.getElementById('fpdesc'))document.getElementById('fpdesc').value=text;
-    if(document.getElementById('fpamount')&&value)document.getElementById('fpamount').value=value.toFixed(2);
-    if(document.getElementById('fpdue')&&due.length)document.getElementById('fpdue').value=due[3]+'-'+due[2]+'-'+due[1];
-    write('eddu_v46_ocr_audit',[...read('eddu_v46_ocr_audit',[]),{file:name,size:file.size,extracted:{description:text,amount:value,due:due.length?due[0]:null},at:new Date().toISOString()}]);
-    toastF(value||due.length?'✓ OCR concluído — confira os campos antes de salvar':'✓ Documento lido. Confira os campos antes de salvar.');
+    if(!file)return toastF('Selecione a fatura/documento primeiro.');
+    const button=[...document.querySelectorAll('button')].find(b=>(b.innerText||'').toLowerCase().includes('conferir documento'));
+    if(button){button.disabled=true;button.dataset.previousText=button.textContent;button.textContent='Lendo documento…';}
+    try{
+      const text=await v46ExtractDocumentText(file),parsed=v46ParseFinancialDocument(text);
+      if(!parsed.valid)throw new Error('Documento lido, mas não pode ser lançado. Campos ausentes/ambíguos: '+parsed.missing.join(', ')+'. Revise o documento e tente novamente.');
+      const desc=document.getElementById('fpdesc'),amount=document.getElementById('fpamount'),due=document.getElementById('fpdue');
+      if(desc)desc.value=parsed.description;
+      if(amount)amount.value=parsed.amount.toFixed(2);
+      if(due)due.value=parsed.due;
+      write('eddu_v46_ocr_audit',[...read('eddu_v46_ocr_audit',[]),{file:file.name,size:file.size,mime:file.type,extracted:{description:parsed.description,amount:parsed.amount,due:parsed.due,document:parsed.document},source:'document-content',validated:true,at:new Date().toISOString()}]);
+      window.__EDDU_OCR_VALIDATION={file:file.name,validated:true,at:new Date().toISOString()};
+      toastF('Documento lido e campos essenciais validados. Confira os dados antes de salvar.');
+      return {ok:true,validated:true,fields:{description:parsed.description,amount:parsed.amount,due:parsed.due,document:parsed.document}};
+    }catch(e){
+      window.__EDDU_OCR_VALIDATION={file:file.name,validated:false,error:String(e?.message||e),at:new Date().toISOString()};
+      toastF('OCR não aprovado: '+String(e?.message||e));
+      return {ok:false,validated:false,error:String(e?.message||e)};
+    }finally{if(button){button.disabled=false;button.textContent=button.dataset.previousText||'Conferir documento';delete button.dataset.previousText;}}
   };
 
   /* 7. Card invoice: register upload immediately and show parsed metadata. */

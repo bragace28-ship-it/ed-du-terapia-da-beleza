@@ -43,7 +43,7 @@
       }
       return false;
     }catch(e){
-      try{window.toast('Não foi possível abrir a tela: '+e.message)}catch(_){}
+      try{window.toast('Não foi possível abrir a tela: '+String(e?.message||'falha inesperada'))}catch(_){}
       return false;
     }
   }

@@ -71,7 +71,7 @@
       ui.sheet.scrollTop=0;
       return true;
     }catch(e){
-      try{window.toast('Não foi possível abrir esta tela: '+e.message)}catch(_){}
+      try{window.toast('Não foi possível abrir esta tela: '+String(e?.message||'falha inesperada'))}catch(_){}
       return false;
     }
   };
