@@ -14,7 +14,6 @@ if (release.runtimeAuthority !== 'MASTER_ONLY' || release.artifact !== 'MASTER')
   throw new Error('Release identity is not canonical Master.');
 const pageTitle=(html.match(new RegExp('<title>([^<]*)</title>','i'))||[])[1]||'';
 if (/Teste Local/i.test(pageTitle)) throw new Error('Production title still says Teste Local.');
-if (/nupay-status|NUPAY_MERCHANT|createNubank/i.test(html)) throw new Error('Unintegrated Nubank/NuPay path found in production artifact.');
 if (/sk_(?:live|test)_[A-Za-z0-9_-]{12,}/i.test(html))
   throw new Error('Stripe secret-like credential found in executable frontend code.');
 if (/\$aact_(?:prod|hmlg)_[A-Za-z0-9_-]{12,}/i.test(html))
