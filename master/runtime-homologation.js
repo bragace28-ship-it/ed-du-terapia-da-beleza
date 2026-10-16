@@ -73,34 +73,69 @@ window.createManualCoupon=function(){
 };
 
 /* 4. Agenda: client dropdown with first option "Adicionar novo cliente"; day block; robust persistence. */
-function clientsList(){try{if(Array.isArray(window.data?.clients)&&data.clients.length)return data.clients.map(x=>typeof x==='string'?x:(x.name||x.nome||x.client||'')).filter(Boolean)}catch(_){} try{return (JSON.parse(localStorage.getItem('eddu_clients')||'[]')).map(x=>x.name||x.nome||x).filter(Boolean)}catch(_){return ['Mariana','Carlos','Juliana']}}
-window.openNewClientFromAgenda=function(){window.__masterReturnToAgenda=true; if(typeof window.openSheet==='function')window.openSheet('clientRegistration');};
-const oldAgendaAdd=window.openAgendaAddM;
+function agendaRows(key){
+  const rows=window.data?.[key];
+  return Array.isArray(rows)?rows.filter(x=>x&&x.id&&x.name&&x.active!==false):[];
+}
+function agendaOptions(rows,placeholder){
+  return '<option value="">'+esc(placeholder)+'</option>'+rows.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join('');
+}
+window.openNewClientFromAgenda=function(){window.__masterReturnToAgenda=true;if(typeof window.openSheet==='function')window.openSheet('clientRegistration');};
 window.openAgendaAddM=function(day){
- const d=day||new Date().toISOString().slice(0,10);
- window.views.agendaAdd=()=>'<h2>Adicionar agendamento</h2><p class="sub">Novo atendimento diretamente na Agenda.</p><div class="card">'+
- '<label>Cliente</label><select id="aptClient">'+
- '<option value="__NEW__">＋ Adicionar novo cliente</option>'+clientsList().map(n=>'<option>'+esc(n)+'</option>').join('')+
- '</select><label>Profissional</label><select id="aptProfessional"><option>Profissional ED</option><option>ED</option><option>DU</option></select>'+
- '<label>Serviço</label><select id="aptService"><option>Limpeza de Pele</option><option>Spa Capilar</option><option>Corte + Secagem</option><option>Bio Nutrição</option></select>'+
- '<div class="row"><div><label>Data</label><input id="aptDate" type="date" value="'+d+'"></div><div><label>Início</label><input id="aptStart" type="time" value="10:00"></div></div>'+
- '<div class="row"><div><label>Término</label><input id="aptEnd" type="time" value="11:00"></div><div><label>Status</label><select id="aptStatus"><option>Confirmado</option><option>Pendente</option><option>Cancelado</option></select></div></div>'+
- '<div class="action-row"><button class="btn primary full" onclick="saveAgendaAddM()">Salvar agendamento</button><button class="btn full" onclick="closeSheet()">Cancelar</button></div></div>';
- window.__masterAgendaClientHandler=true;
- window.__masterAgendaOriginalSave=window.saveAgendaAddM;
- window.saveAgendaAddM=function(){
-   const sel=document.getElementById('aptClient')?.value;
-   if(sel==='__NEW__'){window.openNewClientFromAgenda();return}
-   const a={id:'APT-'+Date.now(),date:document.getElementById('aptDate')?.value,start:document.getElementById('aptStart')?.value,end:document.getElementById('aptEnd')?.value,client:sel||'',professional:document.getElementById('aptProfessional')?.value,service:document.getElementById('aptService')?.value,status:document.getElementById('aptStatus')?.value};
-   if(!a.client)return toastF('Selecione um cliente.');
-   if(!a.date||!a.start||!a.end||a.start>=a.end)return toastF('Informe data e horário válidos.');
-   const d=JSON.parse(localStorage.getItem('eddu_data')||'{}');d.appointments=Array.isArray(d.appointments)?d.appointments:[];d.blocks=Array.isArray(d.blocks)?d.blocks:[];
-   if(d.blocks.some(b=>b.date===a.date&&a.start<b.end&&a.end>b.start)||d.appointments.some(x=>x.date===a.date&&a.start<x.end&&a.end>x.start))return toastF('Conflito: este horário já está ocupado/bloqueado.');
-   d.appointments.push(a);localStorage.setItem('eddu_data',JSON.stringify(d));try{if(window.data)window.data.appointments=d.appointments;window.data.blocks=d.blocks;if(typeof window.persist==='function')window.persist()}catch(_){}
-   toastF('✓ Agendamento salvo.');setTimeout(()=>window.openSheet('agenda'),120);
- };
- window.views.agendaAdd();
+ const d=day||new Date().toISOString().slice(0,10),clients=agendaRows('clients'),professionals=agendaRows('professionals'),services=agendaRows('services');
+ window.views.agendaAdd=()=>'<h2>Adicionar agendamento</h2><p class="sub">O agendamento será confirmado somente após gravação no Neon.</p><div class="card">'+
+ '<label>Cliente</label><select id="aptClient">'+agendaOptions(clients,'Selecione um cliente real')+'</select>'+
+ '<label>Profissional</label><select id="aptProfessional">'+agendaOptions(professionals,'Selecione um profissional ativo')+'</select>'+
+ '<label>Serviço</label><select id="aptService">'+agendaOptions(services,'Selecione um serviço ativo')+'</select>'+
+ '<div class="row"><div><label>Data</label><input id="aptDate" type="date" value="'+esc(d)+'"></div><div><label>Início</label><input id="aptStart" type="time" value="10:00"></div></div>'+
+ '<div class="row"><div><label>Término</label><input id="aptEnd" type="time" value="11:00"></div><div><label>Status</label><select id="aptStatus"><option value="Agendado">Agendado</option><option value="Pendente">Pendente</option></select></div></div>'+
+ (clients.length&&professionals.length&&services.length?'':'<p role="alert">Não há clientes, profissionais ou serviços reais carregados do servidor. Cadastre/sincronize os registros antes de agendar; nenhum dado de demonstração será usado.</p>')+
+ '<div class="action-row"><button class="btn primary full" id="saveAgendaReal" type="button" onclick="saveAgendaAddM()">Salvar agendamento</button><button class="btn full" onclick="closeSheet()">Cancelar</button></div></div>';
  window.openSheet('agendaAdd');
+};
+window.saveAgendaAddM=async function(){
+ const button=document.getElementById('saveAgendaReal'),clientId=document.getElementById('aptClient')?.value,professionalId=document.getElementById('aptProfessional')?.value,serviceId=document.getElementById('aptService')?.value,date=document.getElementById('aptDate')?.value,startTime=document.getElementById('aptStart')?.value,endTime=document.getElementById('aptEnd')?.value,status=document.getElementById('aptStatus')?.value||'Agendado';
+ if(button?.disabled)return;
+ if(!clientId||!professionalId||!serviceId)return toastF('Selecione um cliente, profissional e serviço reais.');
+ if(!date||!startTime||!endTime||startTime>=endTime)return toastF('Data ou horário inválido: o término deve ser posterior ao início.');
+ const startAt=new Date(date+'T'+startTime+':00'),endAt=new Date(date+'T'+endTime+':00');
+ if(!Number.isFinite(startAt.getTime())||!Number.isFinite(endAt.getTime())||endAt<=startAt)return toastF('Data e intervalo do agendamento inválidos.');
+ if(startAt.getTime()<Date.now()-60000)return toastF('Não é possível criar um agendamento no passado.');
+ const client=window.__EDDU_NEON_CLIENT;
+ if(!client||window.__EDDU_NEON_READY!==true)return toastF('Neon indisponível. O agendamento não foi salvo.');
+ if(!navigator.onLine)return toastF('Sem conexão com a internet. O agendamento não foi salvo.');
+ if(button){button.disabled=true;button.textContent='Validando disponibilidade…';}
+ try{
+   const [c,p,s]=await Promise.all([
+     client.from('clients').select('id,name,active').eq('id',clientId).limit(1),
+     client.from('professionals').select('id,name,active').eq('id',professionalId).limit(1),
+     client.from('services').select('id,name,active,duration_minutes').eq('id',serviceId).limit(1)
+   ]);
+   for(const [label,result] of [['cliente',c],['profissional',p],['serviço',s]])if(result?.error)throw new Error('Não foi possível validar '+label+': '+result.error.message);
+   if(!c?.data?.[0]||c.data[0].active===false)throw new Error('O cliente selecionado não existe ou está inativo.');
+   if(!p?.data?.[0]||p.data[0].active===false)throw new Error('O profissional selecionado não existe ou está inativo.');
+   if(!s?.data?.[0]||s.data[0].active===false)throw new Error('O serviço selecionado não existe ou está inativo.');
+   if(Number(s.data[0].duration_minutes)>0&&Math.round((endAt-startAt)/60000)!==Number(s.data[0].duration_minutes))throw new Error('A duração informada não corresponde à duração cadastrada do serviço.');
+   const startIso=startAt.toISOString(),endIso=endAt.toISOString();
+   const [conflicts,blocks]=await Promise.all([
+     client.from('appointments').select('id').eq('professional_id',professionalId).lt('starts_at',endIso).gt('ends_at',startIso).not('status','in','(Cancelado,cancelled,Cancelled)'),
+     client.from('agenda_blocks').select('id').eq('professional_id',professionalId).lt('starts_at',endIso).gt('ends_at',startIso)
+   ]);
+   if(conflicts?.error)throw new Error('Não foi possível verificar conflitos na agenda: '+conflicts.error.message);
+   if(blocks?.error)throw new Error('Não foi possível verificar bloqueios da agenda: '+blocks.error.message);
+   if((conflicts.data||[]).length)throw new Error('Conflito de horário: o profissional já possui um atendimento neste intervalo.');
+   if((blocks.data||[]).length)throw new Error('Conflito de horário: existe um bloqueio neste intervalo.');
+   if(button)button.textContent='Gravando no Neon…';
+   const inserted=await client.from('appointments').insert({client_id:clientId,professional_id:professionalId,service_id:serviceId,starts_at:startIso,ends_at:endIso,status,source:'app'}).select('*').limit(1);
+   if(inserted?.error)throw new Error('O Neon recusou a gravação. Agendamento não confirmado: '+inserted.error.message);
+   const saved=inserted?.data?.[0];if(!saved?.id)throw new Error('O servidor não retornou confirmação do agendamento. Não considere o registro concluído.');
+   window.data=window.data||{};window.data.appointments=Array.isArray(window.data.appointments)?window.data.appointments:[];window.data.appointments.unshift(saved);
+   try{localStorage.setItem('eddu_neon_appointments',JSON.stringify(window.data.appointments))}catch(_){}
+   window.dispatchEvent(new CustomEvent('eddu-appointment-confirmed',{detail:{appointment:saved,client:c.data[0],professional:p.data[0],service:s.data[0]}}));
+   toastF('Agendamento confirmado pelo Neon e associado ao cliente '+c.data[0].name+'.');
+   window.openSheet('agenda');
+ }catch(e){toastF('Agendamento não confirmado: '+String(e?.message||e));}
+ finally{if(button){button.disabled=false;button.textContent='Salvar agendamento';}}
 };
 window.openAgendaBlockDayM=function(day){
  const d=day||new Date().toISOString().slice(0,10);
