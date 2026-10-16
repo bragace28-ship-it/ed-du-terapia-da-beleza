@@ -22,6 +22,11 @@ if(process.argv.includes('--check')){
 }
 
 let output=html;
+const injectBeforeClosingBody=(document,markup)=>{
+  const index=document.toLowerCase().lastIndexOf('</body>');
+  if(index<0) throw new Error('MASTER build has no closing body tag.');
+  return document.slice(0,index)+markup+document.slice(index);
+};
 const runtimeFiles=[
   'master/runtime-functional-hotfix.js',
   'master/runtime-hardening.js',
@@ -41,7 +46,7 @@ for(const file of runtimeFiles){
   output=output.slice(0,bodyClose)+'<script>'+code+'\n</script>\n'+output.slice(bodyClose);
 }
 const authClient=await readFile(resolve(root,'master','neon-auth-client.js'),'utf8');
-output=output.replace('</body>','<script type="module">'+authClient+'\n</script></body>');
+output=injectBeforeClosingBody(output,'<script type="module">'+authClient+'\n</script>');
 
 await rm(dist,{recursive:true,force:true});
 await mkdir(dist,{recursive:true});
