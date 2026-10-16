@@ -70,7 +70,7 @@ export async function onRequestGet({request,env}){
   if(u.searchParams.get('mode')!=='rank')return json({ok:false,error:'mode=rank required'},400);
   const amount=money(u.searchParams.get('amount')),method=clean(u.searchParams.get('method')).toLowerCase()==='pix'?'pix':'card',installments=Math.max(1,Math.min(12,Number(u.searchParams.get('installments'))||1));
   if(!(amount>0))return json({ok:false,error:'amount required'},400);
-  const all=method==='pix'?['PagBank']:['PagBank','Asaas','Stripe','PicPay'];
+  const all=method==='pix'?['PagBank']:['PagBank','Asaas','Stripe'];
   const ranking=all.map(g=>({gateway:g,available:enabled(env,g),...estimate(amount,g,method,installments)})).filter(x=>x.available).sort((a,b)=>(b.net_amount??-Infinity)-(a.net_amount??-Infinity)).map((x,i)=>({...x,position:i+1}));
   return json({ok:true,method,installments,currency:'BRL',ranking,generated_at:new Date().toISOString()});
 }
@@ -78,7 +78,7 @@ export async function onRequestPost({request,env}){
   if(!env.NEON_DATABASE_URL)return json({ok:false,error:'NEON_DATABASE_URL não configurada'},503);
   let body;try{body=await request.json()}catch{return json({ok:false,error:'Invalid JSON'},400);}
   const amount=money(body.amount);const rawMethod=clean(body.method||body.billingType).toLowerCase().replace('credit_card','card');const method=['pix','card','wallet'].includes(rawMethod)?rawMethod:'card';
-  const gateway=clean(body.gateway||'').toLowerCase();const map={pagbank:'PagBank',stripe:'Stripe',asaas:'Asaas',picpay:'PicPay'};const provider=map[gateway];
+  const gateway=clean(body.gateway||'').toLowerCase();const map={pagbank:'PagBank',stripe:'Stripe',asaas:'Asaas'};const provider=map[gateway];
   const installments=Math.max(1,Math.min(12,Number(body.installments||body.installmentCount)||1));const commandId=clean(body.commandId||body.command_id);const clientId=clean(body.clientId||body.client_id);const idem=clean(request.headers.get('Idempotency-Key')||('EDDU-'+commandId+'-'+provider+'-'+method+'-'+installments));if(!(amount>0)||!provider)return json({ok:false,error:'gateway e valor válidos são obrigatórios'},400);if(method==='pix'&&provider!=='PagBank')return json({ok:false,error:'No EDDU, pagamentos por PIX devem ser gerados diretamente pelo checkout PagBank.'},400);if(method==='wallet'&&provider!=='PicPay')return json({ok:false,error:'Carteira é suportada neste fluxo apenas pelo PicPay'},400);
   const sql=neon(env.NEON_DATABASE_URL);const [existing]=await sql`select id,command_id,client_id,amount,method,gateway,installments,status,external_id,metadata from payments where idempotency_key=\${idem} limit 1`;if(existing)return json({ok:true,replayed:true,payment:existing,checkoutUrl:existing?.metadata?.checkoutUrl||null,qrCode:existing?.metadata?.qrCode||null});
   const origin=new URL(request.url).origin;const reference=('EDDU-'+(commandId||crypto.randomUUID())).slice(0,64);const customer={name:clean(body.customerName||body.customer?.name||'Cliente ED & DU'),email:clean(body.customerEmail||body.customer?.email),phone:clean(body.customerPhone||body.customer?.phone),document:clean(body.customerDocument||body.customer?.document),temporary_card_token:clean(body.temporary_card_token)};
