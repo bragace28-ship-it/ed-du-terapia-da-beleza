@@ -33,6 +33,7 @@ const runtimeFiles=[
   'master/runtime-fixes.js',
   'master/runtime-navigation-hardening.js',
   'master/runtime-navigation-bridge.js',
+  'master/runtime-render-guard.js',
   'master/neon-live-bridge.js','master/neon-auth-client.js'
 ];
 

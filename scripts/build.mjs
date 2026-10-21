@@ -36,6 +36,7 @@ const runtimeFiles=[
   'master/runtime-fixes.js',
   'master/runtime-navigation-hardening.js',
   'master/runtime-navigation-bridge.js',
+  'master/runtime-render-guard.js',
   'master/runtime-command-gateway.js',
   'master/runtime-real-checkout.js',
   'master/neon-live-bridge.js'
