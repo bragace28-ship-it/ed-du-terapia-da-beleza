@@ -32,3 +32,12 @@ A busca estática nos runtimes não encontrou a palavra `undefined` usada direta
 ## Decisão de prontidão
 
 **NÃO APROVADO PARA MERGE/PRODUÇÃO NESTE MOMENTO.** A branch contém correções e reforços relevantes, mas não há evidência de compilação/testes E2E bem-sucedidos nem homologação integral das 86 funcionalidades. Manter a PR em draft e a `main`/produção intactas até concluir os gates e registrar resultados verificáveis.
+
+
+## Retomada técnica — 31/10/2026
+
+- A `main` atual foi preservada como base; `master/runtime-render-guard.js` e sua validação em `scripts/master-check.mjs` permanecem presentes.
+- O primeiro CI da retomada detectou `ETARGET` porque `@neondatabase/neon-js@0.1.0` não existe no registry. A dependência foi corrigida para a versão publicada `0.9.0-beta`; a recompilação e os testes precisam ser repetidos antes de qualquer merge.
+- Produção responde em `/api/health` e identifica `46.0.0`, mas a inspeção do Neon encontrou zero clientes, profissionais, serviços, agendamentos, comandas, configurações de gateway e credenciais de PIN financeiro. Não considerar dados exibidos pela interface como persistidos sem confirmar as respectivas linhas no banco.
+- A verificação visual pública não encontrou `undefined` na tela inicial e abriu a Agenda, porém a Agenda exibiu dois atendimentos enquanto a tabela `appointments` estava vazia; portanto, esses itens não são evidência de persistência real.
+- Nenhum deployment foi feito nesta retomada. A PR permanece em draft e as etapas mutáveis de Cloudflare estão limitadas a push na `main`.
