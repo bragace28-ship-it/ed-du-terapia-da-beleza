@@ -53,7 +53,7 @@ const runtimeFiles=[
 if(production) runtimeFiles.push('master/runtime-production-guard.js');
 for(const file of runtimeFiles){
   let code=await readFile(resolve(root,file),'utf8');
-  if(production && file==='master/runtime-hardening.js') code=code.replace(\"['Mariana','Juliana','Camila','Renata','Paula','Fernanda'].concat(n)\",'n');
+  if(production && file==='master/runtime-hardening.js') code=code.replace("['Mariana','Juliana','Camila','Renata','Paula','Fernanda'].concat(n)",'n');
   if(/(?:V33|v33|fin33|eddu_v33)/i.test(stripEmbeddedDataImages(code))) throw new Error('Legacy version reference found in '+file);
   if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(code)) throw new Error('Legacy Supabase reference found in '+file);
   const bodyClose=output.lastIndexOf('</body>');
