@@ -21,11 +21,11 @@ jobs:
           node --input-type=module <<'NODE'
           import { readFileSync } from 'node:fs';
           const source = readFileSync('master/index.html', 'utf8');
-          for (const token of ['Mariana', '1.280', '7.000', 'DESEMPENHO COMERCIAL', 'Faturamento Esta semana']) {
+          for (const token of ['Mariana', 'Juliana Souza', 'Camila Alves', '1280', '7000', 'R$ 120', 'Faturamento Esta semana']) {
             let at = source.indexOf(token);
             let count = 0;
             while (at >= 0 && count < 3) {
-              console.log(`\\n--- ${token} @ ${at} ---\\n${source.slice(Math.max(0, at - 500), Math.min(source.length, at + 700))}`);
+              console.log(`\n--- ${token} @ ${at} ---\n${source.slice(Math.max(0, at - 500), Math.min(source.length, at + 700))}`);
               at = source.indexOf(token, at + token.length);
               count++;
             }
