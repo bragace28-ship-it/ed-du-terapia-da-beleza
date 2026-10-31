@@ -1,4 +1,5 @@
 import {rm,mkdir,readFile,writeFile,readdir} from 'node:fs/promises';
+import {build as esbuild} from 'esbuild';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 
@@ -32,6 +33,7 @@ const injectBeforeClosingBody=(document,markup)=>{
 };
 const runtimeFiles=[
   'master/runtime-functional-hotfix.js',
+  'master/runtime-homologation.js',
   'master/runtime-hardening.js',
   'master/runtime-fixes.js',
   'master/runtime-navigation-hardening.js',
@@ -49,11 +51,19 @@ for(const file of runtimeFiles){
   if(bodyClose<0) throw new Error('MASTER HTML has no closing body tag.');
   output=output.slice(0,bodyClose)+'<script>'+code+'\n</script>\n'+output.slice(bodyClose);
 }
-const authClient=await readFile(resolve(root,'master','neon-auth-client.js'),'utf8');
-output=injectBeforeClosingBody(output,'<script type="module">'+authClient+'\n</script>');
+output=injectBeforeClosingBody(output,'<script type="module" src="/neon-auth-client.bundle.js"></script>');
 
 await rm(dist,{recursive:true,force:true});
 await mkdir(dist,{recursive:true});
+await esbuild({
+  entryPoints:[resolve(root,'master','neon-auth-client.js')],
+  bundle:true,
+  format:'esm',
+  platform:'browser',
+  target:['es2022'],
+  legalComments:'none',
+  outfile:resolve(dist,'neon-auth-client.bundle.js')
+});
 await writeFile(resolve(dist,'index.html'),output,'utf8');
 
 const built=await readFile(resolve(dist,'index.html'),'utf8');
@@ -72,6 +82,6 @@ await writeFile(resolve(dist,'version.json'),JSON.stringify({
   legacyRuntime:'DISABLED'
 },null,2));
 const distFiles=await readdir(dist);
-const allowed=new Set(['index.html','_redirects','_routes.json','version.json']);
-if(distFiles.length!==4||distFiles.some(x=>!allowed.has(x))) throw new Error('Unexpected dist files: '+distFiles.join(','));
+const allowed=new Set(['index.html','_redirects','_routes.json','version.json','neon-auth-client.bundle.js']);
+if(distFiles.length!==5||distFiles.some(x=>!allowed.has(x))) throw new Error('Unexpected dist files: '+distFiles.join(','));
 console.log('Built canonical Master only.');

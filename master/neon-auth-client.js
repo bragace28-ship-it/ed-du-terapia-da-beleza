@@ -1,3 +1,4 @@
+import { createClient } from '@neondatabase/neon-js';
 /* ED & DU MASTER — Neon Auth + Data API client
    Public configuration only. No database secret is shipped to the browser.
 */
@@ -6,8 +7,7 @@ const EDDU_NEON_DATA_API_URL='https://ep-sweet-meadow-b43jne0i.apirest.c-6.us-ea
 
 (async()=>{
   try{
-    const mod=await import('https://esm.sh/@neondatabase/neon-js@0.1.0?bundle');
-    const client=mod.createClient({
+    const client=createClient({
       auth:{url:EDDU_NEON_AUTH_URL},
       dataApi:{url:EDDU_NEON_DATA_API_URL}
     });
