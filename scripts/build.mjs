@@ -16,6 +16,16 @@ if(sourceBlob!==lock.master_index_git_blob_sha) throw new Error('MASTER APPROVED
 if(!html.includes('ED & DU')||!html.includes('Terapia da Beleza')) throw new Error('Required ED & DU branding missing.');
 const stripEmbeddedDataImages=s=>s.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/gi,'');
 const legacyFree=stripEmbeddedDataImages(html);
+const inlineScriptPattern=/<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+let inlineMatch,inlineIndex=0;
+while((inlineMatch=inlineScriptPattern.exec(html))!==null){
+  const attrs=inlineMatch[1]||'',code=inlineMatch[2]||'';
+  if(/\bsrc\s*=/.test(attrs)||/\btype\s*=\s*["']module["']/.test(attrs)||!code.trim())continue;
+  const type=(attrs.match(/\btype\s*=\s*["']([^"']+)["']/i)||[])[1]||'text/javascript';
+  if(!/^(text|application)\/javascript$/i.test(type))continue;
+  inlineIndex++;
+  new Script(code,{filename:'master/index.html:inline-'+inlineIndex});
+}
 if(/(?:V33|v33|fin33|eddu_v33)/i.test(legacyFree)) throw new Error('Legacy version reference found in Master source.');
 if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(legacyFree)) throw new Error('Legacy Supabase reference found in Master UI.');
 
@@ -54,8 +64,8 @@ const runtimeFiles=[
 if(production) runtimeFiles.push('master/runtime-production-guard.js');
 for(const file of runtimeFiles){
   let code=await readFile(resolve(root,file),'utf8');
-  new Script(code,{filename:file});
   if(production && file==='master/runtime-hardening.js') code=code.replace("['Mariana','Juliana','Camila','Renata','Paula','Fernanda'].concat(n)",'n');
+  new Script(code,{filename:file});
   if(/(?:V33|v33|fin33|eddu_v33)/i.test(stripEmbeddedDataImages(code))) throw new Error('Legacy version reference found in '+file);
   if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(code)) throw new Error('Legacy Supabase reference found in '+file);
   const bodyClose=output.lastIndexOf('</body>');
