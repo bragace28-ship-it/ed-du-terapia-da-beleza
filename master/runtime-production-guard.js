@@ -86,6 +86,11 @@ views.command=function(){
  const cs=commands();
  return '<h2>Comandas</h2><p class="sub">Comandas persistidas no Neon.</p>'+(cs.length?cs.map(c=>'<div class="option"><span><b>Comanda '+esc(c.id)+'</b><small>'+esc(c.status||'Aberta')+' · '+esc(clientLabel(c.client_id))+'</small></span><b>'+money(c.total)+'</b></div>').join(''):empty('Nenhuma comanda aberta.','As comandas aparecerão após serem gravadas no servidor.'));
 };
+views.clientReferral=views.referralsPro;
+views.loyalty=function(){const c=clients().find(x=>String(x.id)===String(window.__EDDU_SELECTED_CLIENT_ID));return '<h2>Fidelidade</h2>'+(c?'<div class="card"><b>'+esc(c.name)+'</b><p>Pontos registrados: '+Number(c.loyalty_points||0)+'</p></div>':empty('Nenhum cliente selecionado.','Selecione um cliente cadastrado para consultar os pontos.'));};
+views.clientHistory=function(){const c=clients().find(x=>String(x.id)===String(window.__EDDU_SELECTED_CLIENT_ID));if(!c)return '<h2>Histórico do cliente</h2>'+empty('Nenhum cliente selecionado.','Abra um cliente cadastrado.');const ap=appointments().filter(a=>String(a.client_id)===String(c.id));return '<h2>Histórico de '+esc(c.name)+'</h2>'+(ap.length?ap.map(a=>'<div class="option"><span><b>'+esc(serviceLabel(a.service_id))+'</b><small>'+esc(dt(a.starts_at))+' · '+esc(a.status||'Pendente')+'</small></span></div>').join(''):empty('Nenhum atendimento registrado.','O histórico será preenchido com agendamentos persistidos.'));};
+views.documents=function(){return '<h2>Documentos</h2>'+empty('Nenhum documento sincronizado.','Os documentos serão exibidos quando o armazenamento estiver conectado ao Neon.');};
+views.finance=function(){const tx=transactions(),paid=tx.filter(isPaid),income=paid.filter(t=>!isOutgoing(t)).reduce((s,t)=>s+Number(t.amount||0),0),expense=paid.filter(isOutgoing).reduce((s,t)=>s+Number(t.amount||0),0);return '<h2>Financeiro</h2><p class="sub">Valores derivados de lançamentos persistidos.</p><div class="grid"><div class="card"><small>Entradas pagas</small><h3>'+money(income)+'</h3></div><div class="card"><small>Saídas pagas</small><h3>'+money(expense)+'</h3></div><div class="card"><small>Saldo</small><h3>'+money(income-expense)+'</h3></div></div>'+action('Pagamentos','window.openSheet(\'payments\')')+action('Contas a pagar','window.openSheet(\'payables\')')+action('Contas a receber','window.openSheet(\'receivables\')')+action('Relatórios','window.openSheet(\'reports\')');};
 views.referralsPro=function(){
  const rs=rows('referrals');
  return '<h2>Indicações</h2>'+(rs.length?rs.map(r=>'<div class="option"><span><b>'+esc(r.referred_name||'Indicação')+'</b><small>'+esc(r.status||'Pendente')+' · '+esc(r.referred_phone||'')+'</small></span></div>').join(''):empty('Nenhuma indicação registrada.','Não há indicações de demonstração.'));
@@ -147,6 +152,7 @@ disabled('v46SendGiftCardBulkTest','Envio em massa de Gift Cards');
 disabled('createTestReceivable','Recebível de teste');
 disabled('v8PrintReport','Relatório financeiro local');
 disabled('v46DownloadFinancialReport','Relatório financeiro local');
+try{if(window.state){window.state.command={client:'',service:'',amount:0,method:'',brand:'',installments:1,gateway:'',closed:false,grossAmount:0,netAmount:0,discount:0,coupon:'',cost:0};window.state.referrals=[];window.state.points=0;window.state.financial={grossSales:0,netSales:0,expenses:0,cpv:0};}}catch(_){}
 window.__EDDU_PRODUCTION_GUARD_ACTIVE=true;
 refreshOverlay();
 setInterval(refreshOverlay,2000);
