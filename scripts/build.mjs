@@ -2,9 +2,10 @@ import {rm,mkdir,readFile,writeFile,readdir} from 'node:fs/promises';
 import {build as esbuild} from 'esbuild';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
+import {Script} from 'node:vm';
 
 const root=process.cwd();
-const production=process.env.MASTER_DEPLOY==='1';
+const production=process.env.MASTER_DEPLOY==='1'||process.env.CF_PAGES==='1'||process.env.NODE_ENV==='production';
 const dist=resolve(root,'dist');
 const masterSource=resolve(root,'master','index.html');
 const lock=JSON.parse(await readFile(resolve(root,'MASTER_APPROVED_LOCK.json'),'utf8'));
@@ -53,6 +54,7 @@ const runtimeFiles=[
 if(production) runtimeFiles.push('master/runtime-production-guard.js');
 for(const file of runtimeFiles){
   let code=await readFile(resolve(root,file),'utf8');
+  new Script(code,{filename:file});
   if(production && file==='master/runtime-hardening.js') code=code.replace("['Mariana','Juliana','Camila','Renata','Paula','Fernanda'].concat(n)",'n');
   if(/(?:V33|v33|fin33|eddu_v33)/i.test(stripEmbeddedDataImages(code))) throw new Error('Legacy version reference found in '+file);
   if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(code)) throw new Error('Legacy Supabase reference found in '+file);
