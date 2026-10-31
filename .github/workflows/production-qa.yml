@@ -28,7 +28,7 @@ jobs:
         run: npm run master:check
 
       - name: Build production bundle
-        run: npm run build
+        run: npm run master:build
 
       - name: Canonical Master build QA
         run: node scripts/qa.mjs
