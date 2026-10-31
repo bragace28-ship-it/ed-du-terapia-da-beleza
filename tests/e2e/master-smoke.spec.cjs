@@ -21,7 +21,7 @@ test('Master V46 loads without a visible undefined error', async ({ page }) => {
   expect(bodyText, 'The visible UI must not print the literal undefined').not.toMatch(/\bundefined\b/i);
   expect(await page.title()).toContain('ED & DU');
   if (bodyText.includes('Acesso aos dados Master')) {
-    expect(bodyText, 'Unauthenticated UI must not expose a seeded profile').not.toMatch(/Olá,\\s*Mariana/i);
+    expect(bodyText, 'Unauthenticated UI must not expose a seeded profile').not.toMatch(/Olá,\s*Mariana/i);
     expect(bodyText, 'Unauthenticated UI must not expose sample revenue').not.toContain('R$ 1.280');
     expect(bodyText, 'Unauthenticated UI must not expose sample salon target').not.toContain('R$ 7.000');
   }
