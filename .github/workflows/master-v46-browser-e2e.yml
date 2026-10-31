@@ -16,6 +16,22 @@ jobs:
       - name: Checkout isolated audit branch
         uses: actions/checkout@v4
 
+      - name: Audit hardcoded dashboard seed values
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const source = readFileSync('master/index.html', 'utf8');
+          for (const token of ['Mariana', '1.280', '7.000', 'DESEMPENHO COMERCIAL', 'Faturamento Esta semana']) {
+            let at = source.indexOf(token);
+            let count = 0;
+            while (at >= 0 && count < 3) {
+              console.log(`\\n--- ${token} @ ${at} ---\\n${source.slice(Math.max(0, at - 500), Math.min(source.length, at + 700))}`);
+              at = source.indexOf(token, at + token.length);
+              count++;
+            }
+          }
+          NODE
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
