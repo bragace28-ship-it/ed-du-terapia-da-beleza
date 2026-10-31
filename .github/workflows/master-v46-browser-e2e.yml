@@ -43,7 +43,7 @@ jobs:
       - name: Validate and build canonical Master
         run: |
           npm run master:check
-          npm run build
+          npm run master:build
           npm run test
 
       - name: Install Playwright and Chromium
