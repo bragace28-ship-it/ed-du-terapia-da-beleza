@@ -30,6 +30,7 @@ const injectBeforeClosingBody=(document,markup)=>{
 };
 const runtimeFiles=[
   'master/runtime-functional-hotfix.js',
+  'master/runtime-homologation.js',
   'master/runtime-hardening.js',
   'master/runtime-fixes.js',
   'master/runtime-navigation-hardening.js',
