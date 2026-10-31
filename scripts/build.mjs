@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 
 const root=process.cwd();
+const production=process.env.MASTER_DEPLOY==='1';
 const dist=resolve(root,'dist');
 const masterSource=resolve(root,'master','index.html');
 const lock=JSON.parse(await readFile(resolve(root,'MASTER_APPROVED_LOCK.json'),'utf8'));
@@ -23,6 +24,11 @@ if(process.argv.includes('--check')){
 }
 
 let output=html;
+if(production){
+  const head=output.match(/<head[^>]*>/i)?.[0];
+  if(!head) throw new Error('Production build requires a head element.');
+  output=output.replace(head,head+'<script>window.__EDDU_PRODUCTION_BUILD__=true;</script>');
+}
 const localTitle=new RegExp('<title>[^<]*Teste Local[^<]*</title>','i');
 if(!localTitle.test(output)) throw new Error('Expected local-test title marker not found; refusing ambiguous production build.');
 output=output.replace(localTitle,'<title>ED & DU | Terapia da Beleza — Master 46.0.0</title>');
@@ -31,6 +37,7 @@ const injectBeforeClosingBody=(document,markup)=>{
   if(index<0) throw new Error('MASTER build has no closing body tag.');
   return document.slice(0,index)+markup+document.slice(index);
 };
+output=injectBeforeClosingBody(output,'<script>if(typeof views!==\"undefined\"){window.views=views;}if(typeof state!==\"undefined\"){window.state=state;}</script>');
 const runtimeFiles=[
   'master/runtime-functional-hotfix.js',
   'master/runtime-homologation.js',
@@ -43,8 +50,10 @@ const runtimeFiles=[
   'master/runtime-real-checkout.js',
   'master/neon-live-bridge.js'
 ];
+if(production) runtimeFiles.push('master/runtime-production-guard.js');
 for(const file of runtimeFiles){
-  const code=await readFile(resolve(root,file),'utf8');
+  let code=await readFile(resolve(root,file),'utf8');
+  if(production && file==='master/runtime-hardening.js') code=code.replace(\"['Mariana','Juliana','Camila','Renata','Paula','Fernanda'].concat(n)\",'n');
   if(/(?:V33|v33|fin33|eddu_v33)/i.test(stripEmbeddedDataImages(code))) throw new Error('Legacy version reference found in '+file);
   if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(code)) throw new Error('Legacy Supabase reference found in '+file);
   const bodyClose=output.lastIndexOf('</body>');
@@ -79,7 +88,8 @@ await writeFile(resolve(dist,'version.json'),JSON.stringify({
   artifact:'MASTER',
   sourceGitBlobSha:sourceBlob,
   builtSha256:builtSha,
-  legacyRuntime:'DISABLED'
+  legacyRuntime:'DISABLED',
+  productionDataGuard:production
 },null,2));
 const distFiles=await readdir(dist);
 const allowed=new Set(['index.html','_redirects','_routes.json','version.json','neon-auth-client.bundle.js']);
