@@ -103,6 +103,18 @@ window.saveAgendaAddM=async function(){
  if(startAt.getTime()<Date.now()-60000)return toastF('Não é possível criar um agendamento no passado.');
  const client=window.__EDDU_NEON_CLIENT;
  if(!client||window.__EDDU_NEON_READY!==true)return toastF('Neon indisponível. O agendamento não foi salvo.');
+ try{
+  const auth=await client.auth.getSession();
+  if(!auth?.data?.session){
+   if(typeof window.__EDDU_NEON_AUTH_REQUIRED==='function')window.__EDDU_NEON_AUTH_REQUIRED();
+   toastF('Entre com sua conta ED & DU para salvar o agendamento no banco. O registro não foi gravado.');
+   return {ok:false,error:'authentication_required'};
+  }
+ }catch(authError){
+  if(typeof window.__EDDU_NEON_AUTH_REQUIRED==='function')window.__EDDU_NEON_AUTH_REQUIRED();
+  toastF('Não foi possível validar sua sessão Neon. Entre novamente antes de salvar.');
+  return {ok:false,error:'session_validation_failed'};
+ }
  if(!navigator.onLine)return toastF('Sem conexão com a internet. O agendamento não foi salvo.');
  if(button){button.disabled=true;button.textContent='Validando disponibilidade…';}
  try{
