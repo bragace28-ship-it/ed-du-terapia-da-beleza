@@ -72,14 +72,6 @@ jobs:
       - name: Release identity
         run: cat dist/version.json
 
-      - name: Deploy isolated Cloudflare Pages preview for Master V46
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=ed-du-terapia-da-beleza --branch=master-v46-audit --commit-hash=${{ github.event.pull_request.head.sha }} --commit-message="Master V46 isolated authenticated E2E preview"
-
       - name: Verify Cloudflare production credentials
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
