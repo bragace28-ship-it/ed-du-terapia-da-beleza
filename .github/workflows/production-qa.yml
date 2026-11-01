@@ -33,6 +33,11 @@ jobs:
       - name: Canonical Master build QA
         run: node scripts/qa.mjs
 
+      - name: Validate Cloudflare function modules
+        run: |
+          find functions -name '*.js' -print0 | xargs -0 -n1 node --check
+          node -e "import('./functions/api/payments.js')"
+
       - name: Test gateway settlement and finance ledger
         run: node --test tests/payment-settlement.test.mjs
 
