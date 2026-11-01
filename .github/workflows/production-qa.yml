@@ -33,6 +33,9 @@ jobs:
       - name: Canonical Master build QA
         run: node scripts/qa.mjs
 
+      - name: Test gateway settlement and finance ledger
+        run: node --test tests/payment-settlement.test.mjs
+
       - name: Runtime surface inventory
         shell: bash
         run: |
