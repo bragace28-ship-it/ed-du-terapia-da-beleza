@@ -1,5 +1,3 @@
-import { neon } from '@neondatabase/serverless';
-
 /* Idempotent ledger settlement shared by provider webhooks and NuPay return checks. */
 export async function recordGatewaySettlement(sql, payment) {
   if (!payment?.id) throw new Error('payment_id_required');
