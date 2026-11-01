@@ -20,10 +20,10 @@ function estimate(amount,gateway,method,installments){
 }
 function enabled(env,g){
   if(g==='PagBank')return !!env.PAGBANK_TOKEN;
-  if(g==='Stripe')return !!env.STRIPE_SECRET_KEY;
-  if(g==='Asaas')return !!env.ASAAS_API_KEY;
-  if(g==='PicPay')return !!env.PICPAY_CLIENT_ID&&!!env.PICPAY_CLIENT_SECRET;
-  if(g==='Nubank')return !!env.NUPAY_MERCHANT_KEY&&!!env.NUPAY_MERCHANT_TOKEN;
+  if(g==='Stripe')return !!env.STRIPE_SECRET_KEY&&!!env.STRIPE_WEBHOOK_SECRET;
+  if(g==='Asaas')return !!env.ASAAS_API_KEY&&!!env.ASAAS_WEBHOOK_TOKEN;
+  if(g==='PicPay')return !!env.PICPAY_CLIENT_ID&&!!env.PICPAY_CLIENT_SECRET&&!!(env.PICPAY_WEBHOOK_TOKEN||env.PICPAY_NOTIFICATION_TOKEN);
+  if(g==='Nubank')return !!env.NUPAY_MERCHANT_KEY&&!!env.NUPAY_MERCHANT_TOKEN&&!!env.NUPAY_WEBHOOK_TOKEN;
   return false;
 }
 async function createPagBank({env,origin,commandId,amount,method,installments,customer,reference}){
