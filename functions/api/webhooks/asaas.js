@@ -18,9 +18,9 @@ export async function onRequestPost({request,env}) {
       const commandId=rows[0]?.command_id;
       if(commandId){
         const sums=await sql`select coalesce(sum(amount),0) total from payments where command_id=${commandId} and upper(status) in ('RECEIVED','CONFIRMED','PAID')`;
-        const commands=await sql`select id,net_amount from commands where id=${commandId} limit 1`;
-        if(commands[0]&&Number(sums[0]?.total||0)+0.009>=Number(commands[0].net_amount||0)){
-          await sql`update commands set status='Fechada',updated_at=now() where id=${commandId} and status<>'Fechada'`;
+        const commands=await sql`select id,total from commands where id=${commandId} limit 1`;
+        if(commands[0]&&Number(sums[0]?.total||0)+0.009>=Number(commands[0].total||0)){
+          await sql`update commands set status='closed',closed_at=coalesce(closed_at,now()),updated_at=now() where id=${commandId} and status<>'closed'`;
         }
       }
     }
@@ -35,9 +35,9 @@ export async function onRequestPost({request,env}) {
       const commandId=rows[0]?.command_id;
       if(commandId){
         const sums=await sql`select coalesce(sum(amount),0) total from payments where command_id=${commandId} and upper(status) in ('RECEIVED','CONFIRMED','PAID')`;
-        const commands=await sql`select id,net_amount from commands where id=${commandId} limit 1`;
-        if(commands[0]&&Number(sums[0]?.total||0)+0.009>=Number(commands[0].net_amount||0)){
-          await sql`update commands set status='Fechada',updated_at=now() where id=${commandId} and status<>'Fechada'`;
+        const commands=await sql`select id,total from commands where id=${commandId} limit 1`;
+        if(commands[0]&&Number(sums[0]?.total||0)+0.009>=Number(commands[0].total||0)){
+          await sql`update commands set status='closed',closed_at=coalesce(closed_at,now()),updated_at=now() where id=${commandId} and status<>'closed'`;
         }
       }
     }
