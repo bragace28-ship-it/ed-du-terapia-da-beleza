@@ -2,8 +2,10 @@ import { createClient } from '@neondatabase/neon-js';
 /* ED & DU MASTER — Neon Auth + Data API client
    Public configuration only. No database secret is shipped to the browser.
 */
-const EDDU_NEON_AUTH_URL='https://ep-sweet-meadow-b43jne0i.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
-const EDDU_NEON_DATA_API_URL='https://ep-sweet-meadow-b43jne0i.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1';
+const EDDU_IS_VERCEL_PREVIEW=location.hostname.endsWith('.vercel.app')&&location.hostname.startsWith('ed-du-terapia-da-belezaa-');
+const EDDU_NEON_ENDPOINT=EDDU_IS_VERCEL_PREVIEW?'ep-frosty-pond-b42j28j0':'ep-sweet-meadow-b43jne0i';
+const EDDU_NEON_AUTH_URL='https://'+EDDU_NEON_ENDPOINT+'.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
+const EDDU_NEON_DATA_API_URL='https://'+EDDU_NEON_ENDPOINT+'.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1';
 
 (async()=>{
   try{
@@ -14,6 +16,7 @@ const EDDU_NEON_DATA_API_URL='https://ep-sweet-meadow-b43jne0i.apirest.c-6.us-ea
     window.__EDDU_NEON_CLIENT=client;
     window.__EDDU_NEON_AUTH_URL=EDDU_NEON_AUTH_URL;
     window.__EDDU_NEON_DATA_API_URL=EDDU_NEON_DATA_API_URL;
+    window.__EDDU_NEON_ENVIRONMENT=EDDU_IS_VERCEL_PREVIEW?'isolated-homologation':'production';
     window.__EDDU_NEON_READY=true;
 
     window.EDDU_NEON_GET_SESSION=async()=>client.auth.getSession();
