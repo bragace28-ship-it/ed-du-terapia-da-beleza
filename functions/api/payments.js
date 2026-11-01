@@ -1,8 +1,40 @@
 import { neon } from '@neondatabase/serverless';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { recordGatewaySettlement } from '../_shared/settle-payment.js';
 
 const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store'}});
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const JWKS_CACHE=new Map();
+function neonAuthJwksUrl(env){
+  if(env.NEON_AUTH_JWKS_URL)return new URL(env.NEON_AUTH_JWKS_URL);
+  const dbUrl=new URL(env.NEON_DATABASE_URL);
+  const labels=dbUrl.hostname.split('.');
+  const endpoint=String(labels.shift()||'').replace(/-pooler$/,'');
+  const database=dbUrl.pathname.split('/').filter(Boolean)[0]||'neondb';
+  if(!endpoint.startsWith('ep-')||!labels.length)throw new Error('Unable to derive Neon Auth JWKS URL');
+  return new URL('https://'+endpoint+'.neonauth.'+labels.join('.')+'/'+database+'/auth/.well-known/jwks.json');
+}
+function neonJwks(env){
+  const url=neonAuthJwksUrl(env),key=url.toString();
+  if(!JWKS_CACHE.has(key))JWKS_CACHE.set(key,createRemoteJWKSet(url));
+  return JWKS_CACHE.get(key);
+}
+async function requirePaymentAdmin(request,env){
+  if(!env.NEON_DATABASE_URL)return {response:json({ok:false,error:'NEON_DATABASE_URL não configurada'},503)};
+  const token=(request.headers.get('authorization')||'').match(/^Bearer\\s+(.+)$/i)?.[1];
+  if(!token)return {response:json({ok:false,error:'Autenticação obrigatória para operações de pagamento.'},401)};
+  try{
+    const {payload}=await jwtVerify(token,neonJwks(env),{clockTolerance:5});
+    const userId=String(payload.sub||'');
+    if(!userId)return {response:json({ok:false,error:'Sessão inválida.'},401)};
+    const sql=neon(env.NEON_DATABASE_URL);
+    const rows=await sql`select role,status from public.app_users where auth_user_id=${userId} limit 1`;
+    if(!rows[0]||rows[0].role!=='admin'||rows[0].status!=='Ativo')return {response:json({ok:false,error:'Perfil sem permissão para operações de pagamento.'},403)};
+    return {userId};
+  }catch(error){
+    return {response:json({ok:false,error:'Token Neon inválido ou expirado.'},401)};
+  }
+}
 const clean=v=>String(v??'').trim();
 const digits=v=>clean(v).replace(/\D/g,'');
 const money=v=>Math.round(Number(v||0)*100)/100;
@@ -79,6 +111,7 @@ async function createNubank({env,origin,commandId,amount,customer,reference}){
   return {checkoutUrl:data?.redirectUrl||null,externalId:String(data?.id||''),providerData:data};
 }
 export async function onRequestGet({request,env}){
+  const access=await requirePaymentAdmin(request,env);if(access.response)return access.response;
   const u=new URL(request.url);
   if(u.searchParams.get('mode')==='nupay-status'){
     if(!env.NEON_DATABASE_URL)return json({ok:false,error:'NEON_DATABASE_URL não configurada'},503);
@@ -109,7 +142,7 @@ export async function onRequestGet({request,env}){
   return json({ok:true,method,installments,currency:'BRL',ranking,generated_at:new Date().toISOString()});
 }
 export async function onRequestPost({request,env}){
-  if(!env.NEON_DATABASE_URL)return json({ok:false,error:'NEON_DATABASE_URL não configurada'},503);
+  const access=await requirePaymentAdmin(request,env);if(access.response)return access.response;
   let body;try{body=await request.json()}catch{return json({ok:false,error:'Invalid JSON'},400);}
   const amount=money(body.amount);const rawMethod=clean(body.method||body.billingType).toLowerCase().replace('credit_card','card');const method=['pix','card','wallet'].includes(rawMethod)?rawMethod:'card';
   const gateway=clean(body.gateway||'').toLowerCase();const map={pagbank:'PagBank',stripe:'Stripe',asaas:'Asaas',picpay:'PicPay',nubank:'Nubank',nupay:'Nubank'};const provider=map[gateway];
