@@ -2,7 +2,7 @@
 -- Apply only after authenticated Neon E2E has passed in an isolated branch.
 -- This migration intentionally does NOT seed users or PIN credentials.
 -- PIN hashes are accessible only through SECURITY DEFINER RPCs; direct table
--- access by PUBLIC/anon/authenticated is denied.
+-- access by PUBLIC/authenticated is denied. This Neon project has no anon role.
 
 begin;
 
@@ -35,7 +35,7 @@ alter table public.finance_pin_credentials enable row level security;
 drop policy if exists finance_pin_credentials_self on public.finance_pin_credentials;
 
 revoke all privileges on table public.finance_pin_credentials
-  from public, anon, authenticated;
+  from public, authenticated;
 
 revoke all privileges on function public.finance_pin_status() from public;
 revoke all privileges on function public.set_finance_pin(text) from public;
@@ -53,6 +53,6 @@ commit;
 -- 1) app_users and finance_pin_credentials must have relrowsecurity = true.
 -- 2) app_users must have exactly the two policies defined above.
 -- 3) finance_pin_credentials must have zero policies and no table grants
---    for PUBLIC, anon or authenticated.
+--    for PUBLIC or authenticated.
 -- 4) all three PIN RPCs must be SECURITY DEFINER and EXECUTE granted to
 --    authenticated; none may be executable by PUBLIC.
