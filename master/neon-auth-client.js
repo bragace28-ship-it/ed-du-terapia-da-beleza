@@ -20,6 +20,7 @@ const EDDU_NEON_DATA_API_URL='https://'+EDDU_NEON_ENDPOINT+'.apirest.c-6.us-east
     window.__EDDU_NEON_READY=true;
 
     window.EDDU_NEON_GET_SESSION=async()=>client.auth.getSession();
+    window.EDDU_NEON_GET_TOKEN=async()=>client.auth.getJWTToken();
 
     window.EDDU_NEON_SIGNIN=async(email,password)=>{
       const result=await client.auth.signIn.email({email,password});
