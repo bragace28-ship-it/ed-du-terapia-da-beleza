@@ -26,7 +26,7 @@ export async function recordGatewaySettlement(sql, payment) {
   await sql`
     insert into public.financial_transactions
       (type, direction, command_id, client_id, description, amount, paid_at, status, category, metadata)
-    select 'sale', 'in', ${commandId}, ${clientId}, ${description},
+    select 'revenue', 'in', ${commandId}, ${clientId}, ${description},
       ${Number(payment.amount || 0)}, coalesce(${payment.paid_at || null}::timestamptz, now()),
       'paid', 'Recebimentos de serviços', ${JSON.stringify(metadata)}::jsonb
     where not exists (
