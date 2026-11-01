@@ -78,7 +78,7 @@ export async function onRequestPost({request,env}){
     : await sql`select * from payments where gateway='PagBank' and metadata->>'reference'=${reference} order by created_at desc limit 1`;
   const pay=rows[0];
   if(!pay)return json({ok:true,matched:false});
-  if(['PAID','RECEIVED','CONFIRMED'].includes(String(pay.status||'').toUpperCase()))return json({ok:true,paid:true,duplicate:true,payment_id:pay.id});
+  if(['PAID','RECEIVED','CONFIRMED'].includes(String(pay.status||'').toUpperCase())){await recordGatewaySettlement(sql,pay);return json({ok:true,paid:true,duplicate:true,payment_id:pay.id});}
 
   const meta={...(pay.metadata||{}),lastWebhook:p,webhookStatus:status,webhookReceivedAt:new Date().toISOString()};
   await sql`update payments set status=${paid?'PAID':status||'PENDING'},paid_at=case when ${paid} then coalesce(paid_at,now()) else paid_at end,metadata=${JSON.stringify(meta)}::jsonb,updated_at=now() where id=${pay.id}`;
