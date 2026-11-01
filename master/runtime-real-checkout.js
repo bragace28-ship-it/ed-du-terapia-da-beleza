@@ -14,6 +14,15 @@ function clientOf(c){const x=c?.client||c?.customer||c?.cliente||{};return typeo
 function open(route){return typeof window.openSheet==='function'?window.openSheet(route):typeof window.__masterOpenSheet==='function'?window.__masterOpenSheet(route):false}
 function persist(p){try{localStorage.setItem('eddu_gateway_checkout_pending',JSON.stringify(p))}catch(_){}}
 function providerLabel(g){return g==='Nubank'?'Nubank / NuPay':g}
+async function authHeaders(){
+ const client=window.__EDDU_NEON_CLIENT;
+ if(!client){if(typeof window.__EDDU_NEON_AUTH_REQUIRED==='function')window.__EDDU_NEON_AUTH_REQUIRED();throw new Error('Neon Auth indisponível.')}
+ const session=await client.auth.getSession();
+ if(!session?.data?.session){if(typeof window.__EDDU_NEON_AUTH_REQUIRED==='function')window.__EDDU_NEON_AUTH_REQUIRED();throw new Error('Entre com sua conta ED & DU para continuar.')}
+ const token=await client.auth.getJWTToken();
+ if(!token)throw new Error('Não foi possível obter o token seguro do Neon.');
+ return {Authorization:'Bearer '+token};
+}
 window.__edduOpenGatewayRanking=async function(command){
  const c=command||currentCommand()||{},p={commandId:commandId(c),amount:amountOf(c),command:c,client:clientOf(c)};window.__edduPendingPayment=p;
  window.views=window.views||{};
@@ -22,7 +31,7 @@ window.__edduOpenGatewayRanking=async function(command){
  setTimeout(async()=>{
   const methodEl=document.getElementById('v52Method'),box=document.getElementById('v52RankBox');
   const render=async()=>{const method=methodEl?.value||'pix';if(method==='pdv'){box.innerHTML='<div class="option"><span><b>PDV presencial</b><small>Registrar pagamento feito na máquina/PDV.</small></span><strong>›</strong></div><button class="btn primary full" id="v52Pdv" type="button">Registrar pagamento no PDV</button>';document.getElementById('v52Pdv')?.addEventListener('click',()=>window.__edduSelectGateway('PDV'));return}
-   try{const u='/api/payments?mode=rank&amount='+encodeURIComponent(p.amount)+'&method='+method+'&installments=1';const r=await fetch(u);const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||'Falha ao consultar ranking');const rows=d.ranking||[];box.innerHTML=rows.length?rows.map(x=>'<button class="option gateway-choice" data-gateway="'+esc(x.gateway)+'" style="width:100%;text-align:left;margin:7px 0" type="button"><span><b>'+esc(x.position)+'. '+esc(providerLabel(x.gateway))+'</b><small>'+(x.fee_known?('Líquido estimado: '+money(x.net_amount)+' · taxa '+Number(x.fee_percent).toFixed(2)+'%'):'Conectado · taxa a confirmar')+'</small></span><strong>›</strong></button>').join(''):'<p>Nenhum gateway com credencial disponível no ambiente.</p>';
+   try{const u='/api/payments?mode=rank&amount='+encodeURIComponent(p.amount)+'&method='+method+'&installments=1';const r=await fetch(u,{headers:await authHeaders()});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||'Falha ao consultar ranking');const rows=d.ranking||[];box.innerHTML=rows.length?rows.map(x=>'<button class="option gateway-choice" data-gateway="'+esc(x.gateway)+'" style="width:100%;text-align:left;margin:7px 0" type="button"><span><b>'+esc(x.position)+'. '+esc(providerLabel(x.gateway))+'</b><small>'+(x.fee_known?('Líquido estimado: '+money(x.net_amount)+' · taxa '+Number(x.fee_percent).toFixed(2)+'%'):'Conectado · taxa a confirmar')+'</small></span><strong>›</strong></button>').join(''):'<p>Nenhum gateway com credencial disponível no ambiente.</p>';
     box.querySelectorAll('.gateway-choice').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();window.__edduSelectGateway(b.dataset.gateway,method)}));
    }catch(e){if(box)box.innerHTML='<p>Não foi possível consultar o ranking: '+esc(String(e?.message||'Falha inesperada ao consultar os gateways.'))+'</p>'}
   };
@@ -44,7 +53,7 @@ window.__edduSelectGateway=function(gateway,method){
    try{
     const m=methodEl?.value||p.method||'pix',n=m==='card'?Number(inst?.value||1):1;
     const body={commandId:p.commandId,clientId:p.client?.id||null,amount:p.amount,gateway,method:m,installments:n,customerName:p.client?.name||'Cliente ED & DU',customerEmail:p.client?.email||'',customerPhone:p.client?.phone||'',customerDocument:p.client?.document||'',description:'Comanda '+p.commandId};
-    const idem='EDDU-'+p.commandId+'-'+gateway+'-'+m+'-'+n;const r=await fetch('/api/payments',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':idem},body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok||!d.ok)throw new Error(d.error||'Não foi possível gerar a cobrança.');
+    const idem='EDDU-'+p.commandId+'-'+gateway+'-'+m+'-'+n;const r=await fetch('/api/payments',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':idem,...await authHeaders()},body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok||!d.ok)throw new Error(d.error||'Não foi possível gerar a cobrança.');
     const record={...p,method:m,installments:n,payment:d.payment,checkoutUrl:d.checkoutUrl||null,qrCode:d.qrCode||null,status:'CHECKOUT_PENDING',createdAt:new Date().toISOString()};persist(record);window.__edduPendingPayment=record;
     if(d.checkoutUrl){window.open(d.checkoutUrl,'_blank','noopener,noreferrer');toast('✓ Checkout '+providerLabel(gateway)+' aberto. A comanda só será quitada após a confirmação do gateway.');}
     else if(d.qrCode){info.innerHTML='<p><b>QR/PIX '+esc(providerLabel(gateway))+' gerado.</b></p><textarea readonly style="width:100%;min-height:90px">'+esc(d.qrCode)+'</textarea><p>Não marque a comanda como paga. A baixa ocorrerá após a confirmação do gateway.</p>';toast('✓ Cobrança '+providerLabel(gateway)+' criada.');return;}
@@ -56,6 +65,6 @@ window.__edduSelectGateway=function(gateway,method){
 function isClose(el){if(!el)return false;const t=((el.innerText||el.textContent||'')+' '+(el.getAttribute('aria-label')||'')).toLowerCase().replace(/\s+/g,' ');return /(fechar|finalizar|encerrar)\s*(comanda|atendimento)|fechar\s*comanda|finalizar\s*comanda/.test(t)}
 document.addEventListener('click',e=>{const el=e.target?.closest?.('button,a,[role="button"],[onclick]');if(!isClose(el)||el.closest('.gateway-choice')||el.id==='v52Checkout')return;e.preventDefault();e.stopImmediatePropagation();window.__edduOpenGatewayRanking(currentCommand())},true);
 window.closeCommandAndOpenGateway=c=>window.__edduOpenGatewayRanking(c||currentCommand());
-setTimeout(async()=>{try{const u=new URL(location.href);if(u.searchParams.get('payment')!=='nupay_return')return;const sessionId=u.searchParams.get('sessionId');const commandId=u.searchParams.get('command');if(!sessionId)return;const r=await fetch('/api/payments?mode=nupay-status&sessionId='+encodeURIComponent(sessionId)+'&commandId='+encodeURIComponent(commandId||''));const d=await r.json().catch(()=>({}));if(d.status==='PAID'){toast('✓ NuPay confirmou o pagamento.');open('payments')}else if(d.status==='canceled'||d.status==='expired'){toast('NuPay encerrou a sessão sem pagamento.')}else if(d.status==='pending'||d.status==='approved'){toast('NuPay ainda está aguardando a conclusão do pagamento.')}}catch(e){console.warn('NuPay return handling',e)}},250);
+setTimeout(async()=>{try{const u=new URL(location.href);if(u.searchParams.get('payment')!=='nupay_return')return;const sessionId=u.searchParams.get('sessionId');const commandId=u.searchParams.get('command');if(!sessionId)return;const r=await fetch('/api/payments?mode=nupay-status&sessionId='+encodeURIComponent(sessionId)+'&commandId='+encodeURIComponent(commandId||''),{headers:await authHeaders()});const d=await r.json().catch(()=>({}));if(d.status==='PAID'){toast('✓ NuPay confirmou o pagamento.');open('payments')}else if(d.status==='canceled'||d.status==='expired'){toast('NuPay encerrou a sessão sem pagamento.')}else if(d.status==='pending'||d.status==='approved'){toast('NuPay ainda está aguardando a conclusão do pagamento.')}}catch(e){console.warn('NuPay return handling',e)}},250);
 window.EDDU_MASTER_V53_UNIFIED_GATEWAYS=true;
 })();
