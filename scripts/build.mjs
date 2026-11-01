@@ -61,6 +61,7 @@ const runtimeFiles=[
   'master/neon-live-bridge.js'
 ];
 if(production) runtimeFiles.push('master/runtime-production-guard.js');
+if(runtimeFiles.includes('master/runtime-command-gateway.js')||runtimeFiles.filter(x=>x==='master/runtime-real-checkout.js').length!==1) throw new Error('Checkout runtime conflict: exactly one unified API-backed gateway bridge is required.');
 for(const file of runtimeFiles){
   let code=await readFile(resolve(root,file),'utf8');
   if(production && file==='master/runtime-hardening.js') code=code.replace("['Mariana','Juliana','Camila','Renata','Paula','Fernanda'].concat(n)",'n');
