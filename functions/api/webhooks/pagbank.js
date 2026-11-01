@@ -1,4 +1,5 @@
 import { neon } from '@neondatabase/serverless';
+import { recordGatewaySettlement } from '../../_shared/settle-payment.js';
 
 const json=(x,s=200)=>Response.json(x,{status:s,headers:{'Cache-Control':'no-store'}});
 const enc=new TextEncoder();
@@ -81,6 +82,7 @@ export async function onRequestPost({request,env}){
 
   const meta={...(pay.metadata||{}),lastWebhook:p,webhookStatus:status,webhookReceivedAt:new Date().toISOString()};
   await sql`update payments set status=${paid?'PAID':status||'PENDING'},paid_at=case when ${paid} then coalesce(paid_at,now()) else paid_at end,metadata=${JSON.stringify(meta)}::jsonb,updated_at=now() where id=${pay.id}`;
+  if(paid) await recordGatewaySettlement(sql,{...pay,status:'PAID',paid_at:pay.paid_at||new Date().toISOString()});
 
   if(paid&&pay.command_id){
     const sums=await sql`select coalesce(sum(amount),0) total from payments where command_id=${pay.command_id} and status in ('PAID','RECEIVED','CONFIRMED')`;
