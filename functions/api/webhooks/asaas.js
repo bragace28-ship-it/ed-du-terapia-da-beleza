@@ -1,4 +1,5 @@
 import { neon } from '@neondatabase/serverless';
+import { recordGatewaySettlement } from '../../_shared/settle-payment.js';
 
 export async function onRequestPost({request,env}) {
   if(!env.NEON_DATABASE_URL) return Response.json({ok:false,error:'NEON_DATABASE_URL not configured'},{status:503});
@@ -13,6 +14,7 @@ export async function onRequestPost({request,env}) {
     const providerStatus=String(p.status||eventName);
     const paid=['RECEIVED','CONFIRMED'].includes(providerStatus);
     await sql`update payments set status=${providerStatus},paid_at=case when ${paid} then coalesce(paid_at,now()) else paid_at end,metadata=coalesce(metadata,'{}'::jsonb)||${JSON.stringify(event)}::jsonb,updated_at=now() where external_id=${String(p.id)}`;
+    if(paid){const settled=await sql`select * from payments where external_id=${String(p.id)} limit 1`;if(settled[0])await recordGatewaySettlement(sql,{...settled[0],status:providerStatus,paid_at:settled[0].paid_at||new Date().toISOString()});}
     if(paid){
       const rows=await sql`select command_id from payments where external_id=${String(p.id)} and command_id is not null limit 1`;
       const commandId=rows[0]?.command_id;
