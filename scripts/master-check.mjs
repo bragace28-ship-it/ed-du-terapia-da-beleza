@@ -29,7 +29,7 @@ for(const marker of required)
 const agendaRuntime=await readFile(resolve(root,'master','runtime-homologation.js'),'utf8');
 if(!agendaRuntime.includes("Agendado:'confirmed'") || !agendaRuntime.includes("Pendente:'requested'"))
   throw new Error('MASTER agenda status mapping does not match the Neon appointments constraint.');
-if(/insert\\(\\{[^}]*\\bsource\\s*:/.test(agendaRuntime))
+if(/insert\(\{[^}]*\bsource\s*:/.test(agendaRuntime))
   throw new Error('MASTER appointment insert contains a field not present in the Neon appointments schema.');
 
 const runtimeFiles=[
