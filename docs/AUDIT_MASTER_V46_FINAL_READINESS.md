@@ -41,3 +41,38 @@ A busca estática nos runtimes não encontrou a palavra `undefined` usada direta
 - Produção responde em `/api/health` e identifica `46.0.0`, mas a inspeção do Neon encontrou zero clientes, profissionais, serviços, agendamentos, comandas, configurações de gateway e credenciais de PIN financeiro. Não considerar dados exibidos pela interface como persistidos sem confirmar as respectivas linhas no banco.
 - A verificação visual pública não encontrou `undefined` na tela inicial e abriu a Agenda, porém a Agenda exibiu dois atendimentos enquanto a tabela `appointments` estava vazia; portanto, esses itens não são evidência de persistência real.
 - Nenhum deployment foi feito nesta retomada. A PR permanece em draft e as etapas mutáveis de Cloudflare estão limitadas a push na `main`.
+
+
+## Retomada técnica — 02/11/2026
+
+Branch: `audit/master-v46-rebase-20261031`  
+PR: https://github.com/bragace28-ship-it/ed-du-terapia-da-beleza/pull/19  
+Commit homologado: `18818408244d1700210fc83f8e7185d92429bffb`
+
+### Correções aplicadas nesta retomada
+
+- Agendamento: removido o campo `source` que não existe no schema; status de interface mapeados para `requested`/`confirmed`; payload preserva `client_id`, `professional_id` e `service_id`.
+- Bloqueio de agenda: sincronização de `agenda_blocks` implementada no bridge, com leitura normalizada e intervalo de dia inteiro de meia-noite a meia-noite.
+- Produção: o bloqueio de dia inteiro do guard usa intervalo exclusivo até a meia-noite seguinte; ações locais de cupom, fatura, pagamento de teste, exportação financeira e assinatura/envio de termo não informam sucesso sem persistência.
+- Agendamento: removidos valores fixos de cliente/profissional/serviço do fluxo de homologação; produção direciona para o formulário seguro da Agenda.
+- Regressão: build verifica payload, status, relacionamento de serviço, sincronização de bloqueios e ações locais desabilitadas em produção.
+
+### Evidência executada
+
+- `MASTER CHECK`: PASS — 19 scripts HTML, 9 módulos runtime, 4 módulos API e matriz estrutural com 86 IDs.
+- `Master V46 Browser E2E`: PASS — 6/6 testes em 02/11/2026. Os testes novos cobrem payload de agendamento, bloqueio de dia inteiro (inclusive leitura após gravação) e ausência de dados fictícios na tela de agendamento. **O Data API foi simulado nos testes de navegador; isso valida o contrato do frontend, não uma sessão autenticada real.**
+- `ED DU Production QA`: PASS — build/QA estático, inventário runtime, deploy Cloudflare isolado e `/api/health` com `ok=true` e `reachable=true`.
+- O endpoint de homologação Cloudflare usa a branch Neon isolada `br-broad-frog-b4re07y4`, compute `ep-frosty-pond-b42j28j0`; não é a branch de produção.
+- Na branch isolada: RLS habilitado em `appointments`, `agenda_blocks`, `app_users` e `finance_pin_credentials`; `appointments` e `agenda_blocks` possuem política `ALL` para staff; `app_users` possui gestão admin e leitura própria; `finance_pin_credentials` não possui políticas nem privilégios de tabela para `authenticated`. O check constraint de status aceita `requested`, `confirmed`, `rescheduled`, `in_progress`, `completed`, `cancelled` e `no_show`.
+
+### Bloqueios que permanecem
+
+1. Produção: RLS segue desabilitado em `app_users` e `finance_pin_credentials`, e o role `authenticated` mantém privilégios de tabela. A tabela de credenciais PIN está vazia no momento. A migração `005_master_v46_auth_rls_hardening.sql` está versionada e validada apenas na branch isolada; **não foi aplicada em produção**.
+2. Produção: `appointments.service_id` ainda não existe no schema de produção. A migração `007_master_v46_appointments_service_fk.sql` foi aplicada/validada apenas no ambiente isolado.
+3. Falta E2E com sessão Neon Auth real: autenticar com usuário autorizado, criar agendamento, confirmar a linha em `appointments`, reler na Agenda e validar RLS com usuário sem permissão.
+4. Gate de gateway: faltam eventos reais de sandbox para sucesso, pendente, recusa, cancelamento, assinatura inválida, replay e pagamento parcial.
+5. A matriz de 86 itens permanece sem evidência individual completa. Os seis testes de navegador não equivalem a 86/86.
+
+### Decisão
+
+**PR continua em draft. Não aprovado para merge/produção.** Não foi executada migração no banco de produção, não foi criada cobrança real e não houve deploy de produção. A próxima etapa deve ser E2E autenticado na branch isolada; depois, autorização explícita e plano de aplicação das migrações `005` e `007` em produção.
