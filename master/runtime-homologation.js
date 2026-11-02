@@ -94,7 +94,7 @@ window.openAgendaAddM=function(day){
  window.openSheet('agendaAdd');
 };
 window.saveAgendaAddM=async function(){
- const button=document.getElementById('saveAgendaReal'),clientId=document.getElementById('aptClient')?.value,professionalId=document.getElementById('aptProfessional')?.value,serviceId=document.getElementById('aptService')?.value,date=document.getElementById('aptDate')?.value,startTime=document.getElementById('aptStart')?.value,endTime=document.getElementById('aptEnd')?.value,status=document.getElementById('aptStatus')?.value||'Agendado';
+ const button=document.getElementById('saveAgendaReal'),clientId=document.getElementById('aptClient')?.value,professionalId=document.getElementById('aptProfessional')?.value,serviceId=document.getElementById('aptService')?.value,date=document.getElementById('aptDate')?.value,startTime=document.getElementById('aptStart')?.value,endTime=document.getElementById('aptEnd')?.value,statusRaw=document.getElementById('aptStatus')?.value||'Agendado',status=({Agendado:'confirmed',Confirmado:'confirmed',Pendente:'requested',requested:'requested',confirmed:'confirmed'})[statusRaw]||'requested';
  if(button?.disabled)return;
  if(!clientId||!professionalId||!serviceId)return toastF('Selecione um cliente, profissional e serviço reais.');
  if(!date||!startTime||!endTime||startTime>=endTime)return toastF('Data ou horário inválido: o término deve ser posterior ao início.');
@@ -138,7 +138,7 @@ window.saveAgendaAddM=async function(){
    if((conflicts.data||[]).length)throw new Error('Conflito de horário: o profissional já possui um atendimento neste intervalo.');
    if((blocks.data||[]).length)throw new Error('Conflito de horário: existe um bloqueio neste intervalo.');
    if(button)button.textContent='Gravando no Neon…';
-   const inserted=await client.from('appointments').insert({client_id:clientId,professional_id:professionalId,service_id:serviceId,starts_at:startIso,ends_at:endIso,status,source:'app'}).select('*').limit(1);
+   const inserted=await client.from('appointments').insert({client_id:clientId,professional_id:professionalId,service_id:serviceId,starts_at:startIso,ends_at:endIso,status}).select('*').limit(1);
    if(inserted?.error)throw new Error('O Neon recusou a gravação. Agendamento não confirmado: '+String(inserted.error?.message||'erro de gravação sem detalhes'));
    const saved=inserted?.data?.[0];if(!saved?.id)throw new Error('O servidor não retornou confirmação do agendamento. Não considere o registro concluído.');
    window.data=window.data||{};window.data.appointments=Array.isArray(window.data.appointments)?window.data.appointments:[];window.data.appointments.unshift(saved);
