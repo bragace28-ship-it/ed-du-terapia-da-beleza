@@ -217,6 +217,15 @@ async function sync(){
     if(typeof window.toast==='function')window.toast('Não foi possível confirmar a sincronização com o servidor. '+window.__EDDU_NEON_LAST_ERROR);
   }finally{window.__EDDU_NEON_SYNCING=false}
 }
+function wrapMutation(name){
+ const original=window[name];if(typeof original!=='function'||window['__EDDU_SYNC_WRAPPED_'+name])return;
+ window[name]=async function(){const result=await original.apply(this,arguments);await sync();return result;};
+ window['__EDDU_SYNC_WRAPPED_'+name]=true;
+}
+wrapMutation('saveAgendaAddM');
+wrapMutation('saveAgendaEditM');
+wrapMutation('saveAgendaDayBlockM');
+wrapMutation('saveAgendaBlockM');
 const originalPersist=window.persist;
 if(typeof originalPersist==='function'&&!window.__EDDU_NEON_PERSIST_WRAPPED){
   window.persist=function(){const r=originalPersist.apply(this,arguments);setTimeout(sync,0);return r};
