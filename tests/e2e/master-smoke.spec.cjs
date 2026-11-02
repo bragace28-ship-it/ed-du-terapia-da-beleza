@@ -71,3 +71,177 @@ test('visible buttons are not all inert placeholders', async ({ page }) => {
   }
   expect(actionable, 'Visible buttons should expose a label or action hook').toBeGreaterThan(0);
 });
+
+
+test('Agenda appointment save sends a schema-valid Neon payload (mocked Data API)', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1800);
+
+  const result = await page.evaluate(async () => {
+    const ids = {
+      client: '11111111-1111-4111-8111-111111111111',
+      professional: '22222222-2222-4222-8222-222222222222',
+      service: '33333333-3333-4333-8333-333333333333'
+    };
+    const tables = {
+      clients: [{ id: ids.client, name: 'Cliente QA', active: true }],
+      professionals: [{ id: ids.professional, name: 'Profissional QA', active: true }],
+      services: [{ id: ids.service, name: 'Serviço QA', active: true, duration_minutes: 60 }],
+      appointments: [], agenda_blocks: [], products: [], commands: [], financial_transactions: []
+    };
+    const writes = [];
+    const makeBuilder = entity => {
+      let operation = 'select', payload = null, filters = [];
+      const builder = {
+        select() { return builder; },
+        eq(key, value) { filters.push(['eq', key, value]); return builder; },
+        lt() { return builder; },
+        gt() { return builder; },
+        not() { return builder; },
+        insert(value) { operation = 'insert'; payload = value; return builder; },
+        limit(limit) {
+          if (operation === 'insert') {
+            const row = { id: '44444444-4444-4444-8444-444444444444', ...payload };
+            tables[entity] = tables[entity] || [];
+            tables[entity].push(row);
+            writes.push({ entity, payload });
+            return Promise.resolve({ data: [row], error: null });
+          }
+          let rows = tables[entity] || [];
+          for (const [kind, key, value] of filters) {
+            if (kind === 'eq') rows = rows.filter(row => String(row[key]) === String(value));
+          }
+          return Promise.resolve({ data: rows.slice(0, limit), error: null });
+        }
+      };
+      return builder;
+    };
+
+    window.__EDDU_NEON_CLIENT = {
+      auth: { getSession: async () => ({ data: { session: { user: { id: '55555555-5555-4555-8555-555555555555' } } } }) },
+      from: entity => makeBuilder(entity)
+    };
+    window.__EDDU_NEON_READY = true;
+    window.__EDDU_NEON_SYNCING = false;
+    window.__EDDU_NEON_SYNC_STATUS = 'idle';
+    localStorage.setItem('eddu_master_data_v1', JSON.stringify({
+      clients: [], professionals: [], services: [], products: [], appointments: [], blocks: []
+    }));
+    localStorage.setItem('eddu_neon_id_map_v1', '{}');
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const date = [tomorrow.getFullYear(), String(tomorrow.getMonth() + 1).padStart(2, '0'), String(tomorrow.getDate()).padStart(2, '0')].join('-');
+    const fields = {
+      aptClient: ids.client, aptProfessional: ids.professional, aptService: ids.service,
+      aptDate: date, aptStart: '10:00', aptEnd: '11:00', aptStatus: 'Agendado'
+    };
+    for (const [id, value] of Object.entries(fields)) {
+      const el = document.createElement(id === 'aptStatus' ? 'select' : 'input');
+      el.id = id;
+      el.value = value;
+      document.body.appendChild(el);
+    }
+    const save = document.createElement('button');
+    save.id = 'saveAgendaReal';
+    save.textContent = 'Salvar agendamento';
+    document.body.appendChild(save);
+
+    await window.saveAgendaAddM();
+    return {
+      syncStatus: window.__EDDU_NEON_SYNC_STATUS,
+      lastError: window.__EDDU_NEON_LAST_ERROR,
+      write: writes.find(item => item.entity === 'appointments') || null,
+      savedCount: tables.appointments.length
+    };
+  });
+
+  expect(result.syncStatus).toBe('confirmed');
+  expect(result.lastError).toBeFalsy();
+  expect(result.savedCount).toBe(1);
+  expect(result.write.payload.status).toBe('confirmed');
+  expect(result.write.payload.service_id).toBe('33333333-3333-4333-8333-333333333333');
+  expect(result.write.payload).not.toHaveProperty('source');
+});
+
+test('Full-day agenda blocks are persisted and reloaded from Neon (mocked Data API)', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1800);
+
+  const result = await page.evaluate(async () => {
+    const tables = { clients: [], professionals: [], services: [], products: [], appointments: [], agenda_blocks: [], commands: [], financial_transactions: [] };
+    const writes = [];
+    let sequence = 0;
+    const makeBuilder = entity => {
+      let operation = 'select', payload = null;
+      const builder = {
+        select() { return builder; },
+        eq() { return builder; },
+        lt() { return builder; },
+        gt() { return builder; },
+        not() { return builder; },
+        insert(value) { operation = 'insert'; payload = value; return builder; },
+        limit(limit) {
+          if (operation === 'insert') {
+            const row = { id: '66666666-6666-4666-8666-' + String(++sequence).padStart(12, '0'), ...payload };
+            tables[entity] = tables[entity] || [];
+            tables[entity].push(row);
+            writes.push({ entity, payload });
+            return Promise.resolve({ data: [row], error: null });
+          }
+          return Promise.resolve({ data: (tables[entity] || []).slice(0, limit), error: null });
+        }
+      };
+      return builder;
+    };
+    window.__EDDU_NEON_CLIENT = { from: entity => makeBuilder(entity) };
+    window.__EDDU_NEON_READY = true;
+    window.__EDDU_NEON_SYNCING = false;
+    window.__EDDU_NEON_SYNC_STATUS = 'idle';
+    localStorage.setItem('eddu_master_data_v1', JSON.stringify({
+      clients: [], professionals: [], services: [], products: [], appointments: [], blocks: []
+    }));
+    localStorage.setItem('eddu_neon_id_map_v1', '{}');
+
+    const dateAfter = days => {
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+    };
+    const addField = (id, value) => {
+      const el = document.createElement('input');
+      el.id = id;
+      el.value = value;
+      document.body.appendChild(el);
+    };
+
+    addField('dayBlkDate', dateAfter(1));
+    addField('dayBlkReason', 'Teste QA bloqueio A');
+    const first = await window.saveAgendaDayBlockM();
+
+    addField('blkDayDate', dateAfter(2));
+    addField('blkDayReason', 'Teste QA bloqueio B');
+    const second = await window.saveAgendaBlockDayM();
+
+    return {
+      first, second,
+      syncStatus: window.__EDDU_NEON_SYNC_STATUS,
+      rows: tables.agenda_blocks,
+      writes: writes.filter(item => item.entity === 'agenda_blocks'),
+      localBlocks: JSON.parse(localStorage.getItem('eddu_master_data_v1') || '{}').blocks || []
+    };
+  });
+
+  expect(result.first).toBe(true);
+  expect(result.second).toBe(true);
+  expect(result.syncStatus).toBe('confirmed');
+  expect(result.rows).toHaveLength(2);
+  expect(result.writes).toHaveLength(2);
+  for (const row of result.rows) {
+    expect(row.professional_id).toBeNull();
+    expect(new Date(row.ends_at).getTime() - new Date(row.starts_at).getTime()).toBe(24 * 60 * 60 * 1000);
+  }
+  expect(result.localBlocks).toHaveLength(2);
+});
