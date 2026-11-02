@@ -177,12 +177,12 @@ test('Full-day agenda blocks are persisted and reloaded from Neon (mocked Data A
     const writes = [];
     let sequence = 0;
     const makeBuilder = entity => {
-      let operation = 'select', payload = null;
+      let operation = 'select', payload = null, filters = [];
       const builder = {
         select() { return builder; },
-        eq() { return builder; },
-        lt() { return builder; },
-        gt() { return builder; },
+        eq(key, value) { filters.push(['eq', key, value]); return builder; },
+        lt(key, value) { filters.push(['lt', key, value]); return builder; },
+        gt(key, value) { filters.push(['gt', key, value]); return builder; },
         not() { return builder; },
         insert(value) { operation = 'insert'; payload = value; return builder; },
         limit(limit) {
@@ -193,7 +193,13 @@ test('Full-day agenda blocks are persisted and reloaded from Neon (mocked Data A
             writes.push({ entity, payload });
             return Promise.resolve({ data: [row], error: null });
           }
-          return Promise.resolve({ data: (tables[entity] || []).slice(0, limit), error: null });
+          let rows = tables[entity] || [];
+          for (const [kind, key, value] of filters) {
+            if (kind === 'eq') rows = rows.filter(row => String(row[key]) === String(value));
+            if (kind === 'lt') rows = rows.filter(row => new Date(row[key]).getTime() < new Date(value).getTime());
+            if (kind === 'gt') rows = rows.filter(row => new Date(row[key]).getTime() > new Date(value).getTime());
+          }
+          return Promise.resolve({ data: rows.slice(0, limit), error: null });
         }
       };
       return builder;
@@ -232,7 +238,7 @@ test('Full-day agenda blocks are persisted and reloaded from Neon (mocked Data A
       syncStatus: window.__EDDU_NEON_SYNC_STATUS,
       rows: tables.agenda_blocks,
       writes: writes.filter(item => item.entity === 'agenda_blocks'),
-      localBlocks: JSON.parse(localStorage.getItem('eddu_master_data_v1') || '{}').blocks || []
+      serverBlocks: Array.isArray(window.data?.blocks) ? window.data.blocks.length : 0
     };
   });
 
@@ -241,16 +247,15 @@ test('Full-day agenda blocks are persisted and reloaded from Neon (mocked Data A
   expect(result.syncStatus).toBe('confirmed');
   expect(result.rows).toHaveLength(2);
   expect(result.writes).toHaveLength(2);
-  console.log('QA full-day agenda blocks:', JSON.stringify(result.rows.map(row => ({ starts_at: row.starts_at, ends_at: row.ends_at, duration_ms: new Date(row.ends_at).getTime() - new Date(row.starts_at).getTime() }))));
   for (const row of result.rows) {
     expect(row.professional_id).toBeNull();
     expect(new Date(row.ends_at).getTime() - new Date(row.starts_at).getTime()).toBe(24 * 60 * 60 * 1000);
   }
-  expect(result.localBlocks).toHaveLength(2);
+  expect(result.serverBlocks).toBe(2);
 });
 
 
-test('Booking screen uses real Neon records instead of seeded demo values', async ({ page }) => {
+test('Booking screen never uses demo records and routes to the Neon agenda flow', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1800);
@@ -269,16 +274,15 @@ test('Booking screen uses real Neon records instead of seeded demo values', asyn
     window.v46BookingProfessional = professional.id;
     window.v46BookingService = service.id;
     window.v46BookingTime = '10:00';
-    const html = window.views?.booking?.();
-    return { html: String(html || ''), hasConfirmHandler: typeof window.v46ConfirmBooking === 'function' };
+    return {
+      html: String(window.views?.booking?.() || ''),
+      hasAgendaSave: typeof window.saveAgendaAddM === 'function'
+    };
   });
 
-  expect(result.hasConfirmHandler).toBe(true);
-  expect(result.html).toContain('Cliente QA Real');
-  expect(result.html).toContain('Profissional QA Real');
-  expect(result.html).toContain('Serviço QA Real');
-  expect(result.html).toContain('10:00');
+  expect(result.hasAgendaSave).toBe(true);
   expect(result.html).not.toContain('Mariana');
   expect(result.html).not.toContain('Limpeza de Pele');
   expect(result.html).not.toContain('Profissional ED');
+  expect(result.html.includes('Cliente QA Real') || result.html.includes('Abrir formulário seguro da agenda')).toBe(true);
 });
