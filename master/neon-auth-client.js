@@ -2,7 +2,7 @@ import { createClient } from '@neondatabase/neon-js';
 /* ED & DU MASTER — Neon Auth + Data API client
    Public configuration only. No database secret is shipped to the browser.
 */
-const EDDU_IS_VERCEL_PREVIEW=location.hostname.endsWith('.vercel.app')&&location.hostname.startsWith('ed-du-terapia-da-belezaa-');
+const EDDU_IS_VERCEL_PREVIEW=(location.hostname.endsWith('.vercel.app')&&location.hostname.startsWith('ed-du-terapia-da-belezaa-'))||location.hostname==='ed-du-terapia-da-beleza-master-v46-qa.pages.dev';
 const EDDU_NEON_ENDPOINT=EDDU_IS_VERCEL_PREVIEW?'ep-frosty-pond-b42j28j0':'ep-sweet-meadow-b43jne0i';
 const EDDU_NEON_AUTH_URL='https://'+EDDU_NEON_ENDPOINT+'.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
 const EDDU_NEON_DATA_API_URL='https://'+EDDU_NEON_ENDPOINT+'.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1';
