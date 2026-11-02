@@ -37,6 +37,12 @@ if(!/add column if not exists service_id uuid/i.test(appointmentMigration) || !/
 const neonBridge=await readFile(resolve(root,'master','neon-live-bridge.js'),'utf8');
 for(const marker of ['async function pushNewAgendaBlocks','await pushNewAgendaBlocks()','data.blocks=d.map(dbAgendaBlockToUi)',"wrapMutation('saveAgendaBlockDayM')"])
   if(!neonBridge.includes(marker)) throw new Error('MASTER agenda-block Neon sync is missing: '+marker);
+const runtimeFixes=await readFile(resolve(root,'master','runtime-fixes.js'),'utf8');
+const bookingStart=runtimeFixes.indexOf('window.v46BookingDay=');
+const bookingEnd=runtimeFixes.indexOf('window.v46SignTerm=',bookingStart);
+const bookingSource=bookingStart>=0&&bookingEnd>bookingStart?runtimeFixes.slice(bookingStart,bookingEnd):'';
+if(!bookingSource||/Mariana|Profissional ED|Limpeza de Pele|write\('eddu_data',arr\)/.test(bookingSource))
+  throw new Error('MASTER booking flow still contains demo records or local-only persistence.');
 const blockDayStart=agendaRuntime.indexOf('window.saveAgendaBlockDayM=function');
 const blockDayEnd=agendaRuntime.indexOf('};',blockDayStart);
 const blockDaySource=blockDayStart>=0&&blockDayEnd>blockDayStart?agendaRuntime.slice(blockDayStart,blockDayEnd):'';
