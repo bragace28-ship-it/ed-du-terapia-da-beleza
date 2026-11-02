@@ -82,15 +82,14 @@
   };
   window.saveAgendaDayBlockM=function(){
     const d=document.getElementById('dayBlkDate')?.value,r=document.getElementById('dayBlkReason')?.value.trim()||'Dia inteiro bloqueado';
-    if(!d)return toastF('Informe a data');
+    if(!d)return (toastF('Informe a data'),false);
     const store=read('eddu_master_data_v1',{appointments:[],blocks:[]});
     store.blocks=Array.isArray(store.blocks)?store.blocks:[];
-    if(store.appointments?.some(a=>a.date===d))return toastF('Existem agendamentos nesse dia. Cancele/remaneje antes de bloquear.');
+    if(store.appointments?.some(a=>a.date===d))return (toastF('Existem agendamentos nesse dia. Cancele/remaneje antes de bloquear.'),false);
     store.blocks=store.blocks.filter(b=>!(b.date===d&&b.start==='00:00'&&b.end==='23:59'));
-    store.blocks.push({id:'DAY-'+Date.now(),date:d,start:'00:00',end:'23:59',reason:r,wholeDay:true});
-    write('eddu_master_data_v1',store);
-    toastF('✓ Dia bloqueado com sucesso');
-    window.openSheet('agenda');
+    store.blocks.push({id:'DAY-'+Date.now(),date:d,start:'00:00',end:'23:59',reason:r,wholeDay:true,fullDay:true});
+    if(!write('eddu_master_data_v1',store))return (toastF('Não foi possível preparar o bloqueio local.'),false);
+    return true;
   };
 
   /* 5. Coupons: deterministic generator, independent of a legacy handler. */
