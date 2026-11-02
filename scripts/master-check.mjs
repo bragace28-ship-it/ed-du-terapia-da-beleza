@@ -51,6 +51,8 @@ if(!productionBlock.includes('end.setDate(end.getDate()+1)')||productionBlock.in
   throw new Error('Production full-day block must use a midnight-to-midnight interval.');
 if(!productionGuard.includes("disabled('v46AddTestPayment'"))
   throw new Error('Production must disable the test-payment helper.');
+if(!productionGuard.includes("disabled('v46ConfirmTermSign'")||!productionGuard.includes('views.termSign=function'))
+  throw new Error('Production must not report local-only term signatures as persisted.');
 const blockDayStart=agendaRuntime.indexOf('window.saveAgendaBlockDayM=function');
 const blockDayEnd=agendaRuntime.indexOf('};',blockDayStart);
 const blockDaySource=blockDayStart>=0&&blockDayEnd>blockDayStart?agendaRuntime.slice(blockDayStart,blockDayEnd):'';
