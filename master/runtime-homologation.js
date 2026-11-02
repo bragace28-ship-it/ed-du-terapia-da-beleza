@@ -152,7 +152,19 @@ window.saveAgendaAddM=async function(){
 window.openAgendaBlockDayM=function(day){
  const d=day||new Date().toISOString().slice(0,10);
  window.views.agendaDayBlock=()=>'<h2>Bloquear dia</h2><p class="sub">Bloqueia todos os horários do dia para novos atendimentos.</p><label>Data</label><input id="blkDayDate" type="date" value="'+d+'"><label>Motivo</label><input id="blkDayReason" placeholder="Ex.: Folga, feriado, manutenção"><button class="btn primary full" onclick="saveAgendaBlockDayM()">✓ Bloquear dia</button><button class="btn full" onclick="openSheet(\'agenda\')">Cancelar</button>';
- window.saveAgendaBlockDayM=function(){const date=document.getElementById('blkDayDate')?.value,reason=document.getElementById('blkDayReason')?.value.trim()||'Dia bloqueado';if(!date)return toastF('Informe a data.');const d=JSON.parse(localStorage.getItem('eddu_data')||'{}');d.appointments=Array.isArray(d.appointments)?d.appointments:[];d.blocks=Array.isArray(d.blocks)?d.blocks:[];if(d.appointments.some(a=>a.date===date))return toastF('Não é possível bloquear o dia: existem agendamentos.');d.blocks=d.blocks.filter(b=>b.date!==date);d.blocks.push({id:'DAYBLK-'+Date.now(),date,start:'00:00',end:'23:59',reason,fullDay:true});localStorage.setItem('eddu_data',JSON.stringify(d));try{if(window.data){data.blocks=d.blocks;data.appointments=d.appointments}if(typeof window.persist==='function')window.persist()}catch(_){}toastF('✓ Dia bloqueado.');setTimeout(()=>window.openSheet('agenda'),120)};
+ window.saveAgendaBlockDayM=function(){
+  const date=document.getElementById('blkDayDate')?.value,reason=document.getElementById('blkDayReason')?.value.trim()||'Dia bloqueado';
+  if(!date)return (toastF('Informe a data.'),false);
+  const d=JSON.parse(localStorage.getItem('eddu_master_data_v1')||'{}');
+  d.appointments=Array.isArray(d.appointments)?d.appointments:[];
+  d.blocks=Array.isArray(d.blocks)?d.blocks:[];
+  if(d.appointments.some(a=>a.date===date))return (toastF('Não é possível bloquear o dia: existem agendamentos.'),false);
+  d.blocks=d.blocks.filter(b=>!(b.date===date&&(b.fullDay||b.wholeDay||b.start==='00:00'&&b.end==='23:59')));
+  d.blocks.push({id:'DAYBLK-'+Date.now(),date,start:'00:00',end:'23:59',reason,fullDay:true,wholeDay:true});
+  localStorage.setItem('eddu_master_data_v1',JSON.stringify(d));
+  window.data=d;
+  return true;
+ };
  window.openSheet('agendaDayBlock');
 };
 function addDayBlockButton(){const shade=document.getElementById('shade');if(!shade)return;const view=document.getElementById('view');if(!view||!view.innerText.includes('Minha agenda'))return;if(view.querySelector('.master-day-block'))return;const b=document.createElement('button');b.className='btn full master-day-block';b.textContent='📅 Bloquear dia inteiro';b.onclick=()=>window.openAgendaBlockDayM();view.querySelector('.action-row')?.appendChild(b)}
