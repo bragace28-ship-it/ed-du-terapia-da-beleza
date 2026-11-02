@@ -114,19 +114,19 @@ async function pushNewClients(){
   await pushMapped('clients',Array.isArray(data.clients)?data.clients:[],normalizeClient);
 }
 async function pushNewProfessionals(){
-  const data=window.data||read('eddu_data',{});
+  const data=appData();
   await pushMapped('professionals',Array.isArray(data.professionals)?data.professionals:[],normalizeProfessional);
 }
 async function pushNewServices(){
-  const data=window.data||read('eddu_data',{});
+  const data=appData();
   await pushMapped('services',Array.isArray(data.services)?data.services:[],normalizeService);
 }
 async function pushNewProducts(){
-  const data=window.data||read('eddu_data',{});
+  const data=appData();
   await pushMapped('products',Array.isArray(data.products)?data.products:[],normalizeProduct);
 }
 async function pushNewAppointments(){
-  const data=window.data||read('eddu_data',{});
+  const data=appData();
   const apps=Array.isArray(data.appointments)?data.appointments:[];
   stateMap.appointments=stateMap.appointments||{};
   for(const a of apps){
