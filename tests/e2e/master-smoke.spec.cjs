@@ -241,6 +241,7 @@ test('Full-day agenda blocks are persisted and reloaded from Neon (mocked Data A
   expect(result.syncStatus).toBe('confirmed');
   expect(result.rows).toHaveLength(2);
   expect(result.writes).toHaveLength(2);
+  console.log('QA full-day agenda blocks:', JSON.stringify(result.rows.map(row => ({ starts_at: row.starts_at, ends_at: row.ends_at, duration_ms: new Date(row.ends_at).getTime() - new Date(row.starts_at).getTime() }))));
   for (const row of result.rows) {
     expect(row.professional_id).toBeNull();
     expect(new Date(row.ends_at).getTime() - new Date(row.starts_at).getTime()).toBe(24 * 60 * 60 * 1000);
