@@ -50,6 +50,12 @@ function estimate(amount,gateway,method,installments){
   if(r==null)return {fee_known:false,fee_percent:null,fee_amount:null,net_amount:null};
   const fee=money(amount*(r.pct||0)+(r.fixed||0));return {fee_known:true,fee_percent:r.pct*100,fee_amount:fee,net_amount:money(amount-fee)};
 }
+function supportsMethod(g,method){
+  if(method==='pix')return ['PagBank','Asaas','PicPay','Nubank'].includes(g);
+  if(method==='wallet')return g==='PicPay';
+  if(method==='card')return g!=='';
+  return false;
+}
 function enabled(env,g){
   if(g==='PagBank')return !!env.PAGBANK_TOKEN;
   if(g==='Stripe')return !!env.STRIPE_SECRET_KEY&&!!env.STRIPE_WEBHOOK_SECRET;
@@ -62,7 +68,7 @@ async function createPagBank({env,origin,commandId,amount,method,installments,cu
   const token=env.PAGBANK_TOKEN,base=String(env.PAGBANK_API_BASE||'https://sandbox.api.pagseguro.com').replace(/\/$/,'');
   if(!token||!base)throw new Error('PagBank não configurado no servidor.');
   const notificationUrl=origin+'/api/webhooks/pagbank';
-  const payload={reference_id:reference,expiration_date:new Date(Date.now()+60*60*1000).toISOString(),customer_modifiable:true,items:[{reference_id:commandId||reference,name:'ED & DU | Terapia da Beleza',quantity:1,unit_amount:Math.round(amount*100)}],payment_methods:[{type:method==='pix'?'PIX':'CREDIT_CARD'}],payment_methods_configs:method==='card'?[{type:'CREDIT_CARD',config_options:[{option:'INSTALLMENTS_LIMIT',value:String(Math.max(1,Math.min(12,installments||1)))}]}]:[],soft_descriptor:'EDDU BELEZA',redirect_url:origin+'/?payment=return&command='+encodeURIComponent(commandId),return_url:origin+'/?payment=return&command='+encodeURIComponent(commandId),notification_urls:[notificationUrl],payment_notification_urls:[notificationUrl]};
+  const payload={reference_id:reference,expiration_date:new Date(Date.now()+60*60*1000).toISOString(),customer_modifiable:true,items:[{reference_id:commandId||reference,name:'ED & DU | Terapia da Beleza',quantity:1,unit_amount:Math.round(amount*100)}],payment_methods:[{type:method==='pix'?'PIX':method==='wallet'?'WALLET':'CREDIT_CARD'}],payment_methods_configs:method==='card'?[{type:'CREDIT_CARD',config_options:[{option:'INSTALLMENTS_LIMIT',value:String(Math.max(1,Math.min(12,installments||1)))}]}]:[],soft_descriptor:'EDDU BELEZA',redirect_url:origin+'/?payment=return&command='+encodeURIComponent(commandId),return_url:origin+'/?payment=return&command='+encodeURIComponent(commandId),notification_urls:[notificationUrl],payment_notification_urls:[notificationUrl]};
   const r=await fetch(base+'/checkouts',{method:'POST',headers:{Authorization:'Bearer '+token,Accept:'application/json','Content-Type':'application/json','x-idempotency-key':reference},body:JSON.stringify(payload)});
   const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data?.message||'PagBank recusou o Checkout.');
   const url=data?.links?.find(x=>x.rel==='PAY')?.href||'';if(!url)throw new Error('PagBank não retornou o link de pagamento.');
@@ -138,7 +144,7 @@ export async function onRequestGet({request,env}){
   const amount=money(u.searchParams.get('amount')),method=clean(u.searchParams.get('method')).toLowerCase()==='pix'?'pix':'card',installments=Math.max(1,Math.min(12,Number(u.searchParams.get('installments'))||1));
   if(!(amount>0))return json({ok:false,error:'amount required'},400);
   const all=['PagBank','Asaas','Stripe','PicPay','Nubank'];
-  const ranking=all.map(g=>({gateway:g,available:enabled(env,g),...estimate(amount,g,method,installments)})).filter(x=>x.available).sort((a,b)=>(b.net_amount??-Infinity)-(a.net_amount??-Infinity)).map((x,i)=>({...x,position:i+1}));
+  const ranking=all.filter(g=>supportsMethod(g,method)).map(g=>({gateway:g,available:enabled(env,g),...estimate(amount,g,method,installments)})).filter(x=>x.available).sort((a,b)=>(b.net_amount??-Infinity)-(a.net_amount??-Infinity)).map((x,i)=>({...x,position:i+1}));
   return json({ok:true,method,installments,currency:'BRL',ranking,generated_at:new Date().toISOString()});
 }
 export async function onRequestPost({request,env}){
