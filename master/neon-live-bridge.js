@@ -78,7 +78,7 @@ function dbAppointmentToUi(row,data){
  const clock=d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
  const date=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
  const name=(table,id)=>((data[table]||[]).find(x=>x.id===id)?.name||'');
- return {id:local,serverId:row.id,clientId:row.client_id,professionalId:row.professional_id,serviceId:row.service_id,date:date(start),start:clock(start),end:clock(end),client:name('clients',row.client_id),professional:name('professionals',row.professional_id),service:name('services',row.service_id),status:String(row.status||'requested')==='confirmed'?'Confirmado':'Pendente',notes:row.notes||''};
+ return {id:local,serverId:row.id,clientId:row.client_id,professionalId:row.professional_id,serviceId:row.service_id,date:date(start),start:clock(start),end:clock(end),client:name('clients',row.client_id),professional:name('professionals',row.professional_id),service:name('services',row.service_id),status:String(row.status||'requested')==='confirmed'?'Confirmado':'Pendente',statusCode:String(row.status||'requested'),notes:row.notes||''};
 }
 function dbAgendaBlockToUi(row){
  const local=Object.keys(stateMap.agenda_blocks||{}).find(k=>stateMap.agenda_blocks[k]===row.id)||row.id;
