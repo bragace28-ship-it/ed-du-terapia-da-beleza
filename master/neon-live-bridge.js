@@ -3,6 +3,11 @@
 'use strict';
 const KEY='eddu_neon_bridge_v1';
 const mapKey='eddu_neon_id_map_v1';
+const APP_DATA_KEY='eddu_master_data_v1';
+const appData=()=>read(APP_DATA_KEY,{});
+const saveAppData=d=>{if(!write(APP_DATA_KEY,d))throw new Error(window.__EDDU_NEON_LAST_ERROR||'Falha ao salvar dados locais');window.data=d;};
+const rowOf=r=>Array.isArray(r?.data)?r.data[0]:(r?.data||null);
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch{return d}};
 const write=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){window.__EDDU_NEON_LAST_ERROR='Falha ao gravar estado local: '+String(e?.message||e);return false}};
 const stateMap=read(mapKey,{});
@@ -49,21 +54,42 @@ const normalizeClient=x=>({name:String(x.name||x.fullName||'').trim(),email:x.em
 const normalizeProfessional=x=>({user_id:x.user_id||x.userId||null,name:String(x.name||x.nome||'').trim(),email:x.email||null,phone:x.phone||null,specialty:x.specialty||x.especialidade||null,commission_rate:Number(x.commission_rate??x.commissionRate??x.commission??0)||0,active:x.active!==false});
 const normalizeService=x=>({category_id:x.category_id||x.categoryId||null,name:String(x.name||x.nome||x.service||'').trim(),description:x.description||null,price:Number(x.price??x.valor??x.value??0)||0,duration_minutes:Number(x.duration_minutes??x.duration??60)||60,active:x.active!==false,price_base:Number(x.price_base??x.priceBase??x.price??0)||0,price_long:Number(x.price_long??x.priceLong??x.price??0)||0,service_cost:Number(x.service_cost??x.serviceCost??x.cost??0)||0});
 const normalizeProduct=x=>({category_id:x.category_id||x.categoryId||null,sku:x.sku||null,name:String(x.name||x.nome||x.product||'').trim(),description:x.description||null,sale_price:Number(x.sale_price??x.salePrice??x.price??0)||0,cost_price:Number(x.cost_price??x.costPrice??x.cost??0)||0,stock:Number(x.stock??0)||0,minimum_stock:Number(x.minimum_stock??x.minimumStock??0)||0,active:x.active!==false});
-const normalizeAppointment=x=>({client_id:stateMap.clients?.[x.clientId||x.client_id]||null,professional_id:stateMap.professionals?.[x.professionalId||x.professional_id]||x.professionalId||x.professional_id||null,service_id:stateMap.services?.[x.serviceId||x.service_id]||x.serviceId||x.service_id||null,starts_at:x.starts_at||x.startsAt||((x.date||'')+'T'+(x.start||'00:00')+':00'),ends_at:x.ends_at||x.endsAt||((x.date||'')+'T'+(x.end||'01:00')+':00'),status:String(x.status||'confirmed').toLowerCase().replace('confirmado','confirmed').replace('pendente','requested'),notes:x.notes||null});
+async function resolveRecordId(entity,value){
+  const raw=String(value??'').trim();if(!raw)return null;
+  if(UUID.test(raw))return raw;
+  stateMap[entity]=stateMap[entity]||{};
+  if(stateMap[entity][raw])return stateMap[entity][raw];
+  const rows=(await api(entity)).data||[];
+  const found=rows.find(x=>String(x.name||'').trim().toLowerCase()===raw.toLowerCase());
+  if(found?.id){stateMap[entity][raw]=found.id;write(mapKey,stateMap);return found.id;}
+  throw new Error('Registro "'+raw+'" não encontrado no Neon ('+entity+'). Cadastre o registro antes de continuar.');
+}
+async function normalizeAppointment(x){
+  const clientValue=x.clientId||x.client_id||x.client||x.clientName;
+  const professionalValue=x.professionalId||x.professional_id||x.professional;
+  const serviceValue=x.serviceId||x.service_id||x.service;
+  const starts=x.starts_at||x.startsAt||new Date((x.date||'')+'T'+(x.start||'00:00')).toISOString();
+  const ends=x.ends_at||x.endsAt||new Date((x.date||'')+'T'+(x.end||'01:00')).toISOString();
+  return {client_id:await resolveRecordId('clients',clientValue),professional_id:await resolveRecordId('professionals',professionalValue),service_id:await resolveRecordId('services',serviceValue),starts_at:starts,ends_at:ends,status:String(x.status||'confirmed').toLowerCase().replace('confirmado','confirmed').replace('pendente','requested'),notes:x.notes||null};
+}
 async function load(entity){
   try{
     const r=await api(entity);
     const d=r.data||[];
-    const data=window.data||{};
+    const data=appData();
+    stateMap[entity]=stateMap[entity]||{};
+    for(const row of d)if(row?.id)stateMap[entity][row.id]=row.id;
+    write(mapKey,stateMap);
     if(entity==='clients')data.clients=d;
     if(entity==='professionals')data.professionals=d;
     if(entity==='services')data.services=d;
     if(entity==='products')data.products=d;
     if(entity==='appointments')data.appointments=d;
+    if(entity==='clients'||entity==='professionals'||entity==='services'||entity==='products')data[entity]=d;
     if(entity==='commands')data.commands=d;
     if(entity==='financial_transactions')data.financialTransactions=d;
     if(entity==='agenda_blocks')data.blocks=d;
-    window.data=data;
+    saveAppData(data);
     if(!write('eddu_neon_'+entity,d))throw new Error(window.__EDDU_NEON_LAST_ERROR||'Falha ao atualizar cache local');
     return {ok:true,entity,count:d.length};
   }catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e);throw e}
@@ -78,13 +104,13 @@ async function pushMapped(entity,items,normalizer){
     if(!payload.name)continue;
     try{
       const r=await api(entity,'POST',payload);
-      if(r.data?.id)stateMap[entity][local]=r.data.id;
+      const inserted=rowOf(r);if(inserted?.id)stateMap[entity][local]=inserted.id;
     }catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e);throw new Error('Falha ao persistir '+entity+' ('+local+'): '+window.__EDDU_NEON_LAST_ERROR)}
   }
   if(!write(mapKey,stateMap))throw new Error(window.__EDDU_NEON_LAST_ERROR||'Falha ao gravar mapa de sincronização');
 }
 async function pushNewClients(){
-  const data=window.data||read('eddu_data',{});
+  const data=appData();
   await pushMapped('clients',Array.isArray(data.clients)?data.clients:[],normalizeClient);
 }
 async function pushNewProfessionals(){
@@ -106,12 +132,12 @@ async function pushNewAppointments(){
   for(const a of apps){
     const local=String(a.id||((a.date||'')+'|'+(a.start||'')+'|'+(a.client||a.clientName||'')));
     if(!local||stateMap.appointments[local])continue;
-    const payload=normalizeAppointment(a);
+    const payload=await normalizeAppointment(a);
     if(!payload.client_id||!payload.professional_id||!payload.service_id)throw new Error('Agendamento local '+local+' sem IDs reais de cliente, profissional ou serviço; não será sincronizado como válido.');
     if(!payload.starts_at||!payload.ends_at||new Date(payload.ends_at)<=new Date(payload.starts_at))throw new Error('Agendamento local '+local+' possui data/horário inválido.');
     try{
       const r=await api('appointments','POST',payload);
-      if(r.data?.id)stateMap.appointments[local]=r.data.id;
+      const inserted=rowOf(r);if(inserted?.id)stateMap.appointments[local]=inserted.id;
     }catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e);throw new Error('Falha ao persistir appointments ('+local+'): '+window.__EDDU_NEON_LAST_ERROR)}
   }
   if(!write(mapKey,stateMap))throw new Error(window.__EDDU_NEON_LAST_ERROR||'Falha ao gravar mapa de agendamentos');
@@ -147,8 +173,8 @@ function genericPayload(entity,item){
   return out;
 }
 async function pushGenericEntity(entity,localProp){
-  const data=window.data||read('eddu_data',{}),items=Array.isArray(data[localProp])?data[localProp]:[];stateMap[entity]=stateMap[entity]||{};
-  for(const item of items){const local=String(item?.id||item?.code||item?.name||'');if(!local||stateMap[entity][local])continue;const payload=genericPayload(entity,item);if(!Object.keys(payload).length)continue;try{const r=await api(entity,'POST',payload);if(!r.data?.id)throw new Error('Servidor não confirmou ID do registro');stateMap[entity][local]=r.data.id}catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e);throw new Error('Falha ao persistir '+entity+' ('+local+'): '+window.__EDDU_NEON_LAST_ERROR)}}
+  const data=appData(),items=Array.isArray(data[localProp])?data[localProp]:[];stateMap[entity]=stateMap[entity]||{};
+  for(const item of items){const local=String(item?.id||item?.code||item?.name||'');if(!local||stateMap[entity][local])continue;const payload=genericPayload(entity,item);if(!Object.keys(payload).length)continue;try{const r=await api(entity,'POST',payload);const inserted=rowOf(r);if(!inserted?.id)throw new Error('Servidor não confirmou ID do registro');stateMap[entity][local]=inserted.id}catch(e){window.__EDDU_NEON_LAST_ERROR=String(e.message||e);throw new Error('Falha ao persistir '+entity+' ('+local+'): '+window.__EDDU_NEON_LAST_ERROR)}}
   if(!write(mapKey,stateMap))throw new Error(window.__EDDU_NEON_LAST_ERROR||'Falha ao gravar mapa de sincronização');
 }
 async function pushGenericEntities(){
