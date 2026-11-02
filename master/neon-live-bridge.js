@@ -277,9 +277,28 @@ async function sync(){
     if(typeof window.toast==='function')window.toast('Não foi possível confirmar a sincronização com o servidor. '+window.__EDDU_NEON_LAST_ERROR);
   }finally{window.__EDDU_NEON_SYNCING=false}
 }
+async function waitForSyncCompletion(){
+ if(!window.__EDDU_NEON_SYNCING)return;
+ await new Promise(resolve=>{
+  let done=false;
+  const finish=()=>{if(done)return;done=true;window.removeEventListener('eddu-neon-sync-status',finish);resolve();};
+  window.addEventListener('eddu-neon-sync-status',finish);
+  if(!window.__EDDU_NEON_SYNCING)finish();
+ });
+}
 function wrapMutation(name){
  const original=window[name];if(typeof original!=='function'||window['__EDDU_SYNC_WRAPPED_'+name])return;
- window[name]=async function(){const result=await original.apply(this,arguments);await sync();return result;};
+ window[name]=async function(){
+  const result=await original.apply(this,arguments);
+  if(result===false||result?.ok===false)return result;
+  await sync();
+  await waitForSyncCompletion();
+  if((name==='saveAgendaDayBlockM'||name==='saveAgendaBlockDayM')&&window.__EDDU_NEON_SYNC_STATUS==='confirmed'){
+   if(typeof window.toast==='function')window.toast('Bloqueio de agenda confirmado no Neon.');
+   if(typeof window.openSheet==='function')window.openSheet('agenda');
+  }
+  return result;
+ };
  window['__EDDU_SYNC_WRAPPED_'+name]=true;
 }
 wrapMutation('saveAgendaAddM');
