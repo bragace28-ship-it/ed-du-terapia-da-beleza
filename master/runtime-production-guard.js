@@ -101,6 +101,7 @@ views.clientAnamnesis=function(){
  return '<h2>Anamnese</h2>'+(filtered.length?filtered.map(a=>'<div class="card"><b>'+esc(clientLabel(a.client_id))+'</b><p>Objetivo: '+esc(a.objective||'Não informado')+'</p><p>Análise: '+esc(a.analysis||'Não informada')+'</p></div>').join(''):empty('Nenhuma anamnese registrada.','Os dados clínicos só aparecerão após gravação no Neon.'));
 };
 views.termClient=function(){return '<h2>Termos e documentos</h2>'+empty('Nenhum termo eletrônico sincronizado.','O armazenamento e a assinatura de termos ainda precisam de integração persistente no servidor.');};
+views.termSign=function(){return '<h2>Assinatura de termo</h2>'+empty('Assinatura eletrônica indisponível em produção.','A assinatura só será liberada quando o documento e a evidência de aceite forem persistidos no Neon.');};
 views.beforeAfterGallery=function(){return '<h2>Antes e depois</h2>'+empty('Nenhuma foto sincronizada.','A galeria não exibirá imagens de demonstração como se fossem registros de clientes.');};
 views.cardInvoices=function(){return '<h2>Faturas de cartão</h2>'+empty('Integração de faturas pendente.','O upload local de homologação foi desativado na produção para não indicar que um documento foi processado ou persistido.');};
 views.giftCardBulkTest=function(){return '<h2>Homologação de Gift Cards</h2>'+empty('Ferramenta de teste indisponível em produção.','Envios em massa permanecem restritos ao ambiente de homologação.');};
@@ -151,6 +152,9 @@ disabled('v46AnalyzeCardInvoice','Upload de fatura');
 disabled('v46SendGiftCardBulkTest','Envio em massa de Gift Cards');
 disabled('createTestReceivable','Recebível de teste');
 disabled('v46AddTestPayment','Pagamento de teste');
+disabled('v46SignTerm','Assinatura de termo');
+disabled('v46ConfirmTermSign','Assinatura de termo');
+disabled('sendResponsibilityTerm','Envio de termo');
 disabled('v8PrintReport','Relatório financeiro local');
 disabled('v46DownloadFinancialReport','Relatório financeiro local');
 try{if(window.state){window.state.command={client:'',service:'',amount:0,method:'',brand:'',installments:1,gateway:'',closed:false,grossAmount:0,netAmount:0,discount:0,coupon:'',cost:0};window.state.referrals=[];window.state.points=0;window.state.financial={grossSales:0,netSales:0,expenses:0,cpv:0};}}catch(_){}
