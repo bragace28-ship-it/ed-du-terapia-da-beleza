@@ -1,4 +1,5 @@
 import { neon } from '@neondatabase/serverless';
+import { recordGatewaySettlement } from '../../_shared/settle-payment.js';
 
 export async function onRequestPost({request,env}) {
   if(!env.NEON_DATABASE_URL) return Response.json({ok:false,error:'NEON_DATABASE_URL not configured'},{status:503});
@@ -13,14 +14,35 @@ export async function onRequestPost({request,env}) {
     const providerStatus=String(p.status||eventName);
     const paid=['RECEIVED','CONFIRMED'].includes(providerStatus);
     await sql`update payments set status=${providerStatus},paid_at=case when ${paid} then coalesce(paid_at,now()) else paid_at end,metadata=coalesce(metadata,'{}'::jsonb)||${JSON.stringify(event)}::jsonb,updated_at=now() where external_id=${String(p.id)}`;
-    if(paid) await sql`update commands set status='Fechada',updated_at=now() where id in (select command_id from payments where external_id=${String(p.id)}) and status<>'Fechada'`;
+    if(paid){const settled=await sql`select * from payments where external_id=${String(p.id)} limit 1`;if(settled[0])await recordGatewaySettlement(sql,{...settled[0],status:providerStatus,paid_at:settled[0].paid_at||new Date().toISOString()});}
+    if(paid){
+      const rows=await sql`select command_id from payments where external_id=${String(p.id)} and command_id is not null limit 1`;
+      const commandId=rows[0]?.command_id;
+      if(commandId){
+        const sums=await sql`select coalesce(sum(amount),0) total from payments where command_id=${commandId} and upper(status) in ('RECEIVED','CONFIRMED','PAID')`;
+        const commands=await sql`select id,total from commands where id=${commandId} limit 1`;
+        if(commands[0]&&Number(sums[0]?.total||0)+0.009>=Number(commands[0].total||0)){
+          await sql`update commands set status='closed',closed_at=coalesce(closed_at,now()),updated_at=now() where id=${commandId} and status<>'closed'`;
+        }
+      }
+    }
   }
   if(event.checkout?.id){
     const checkoutId=String(event.checkout.id);
     const status=eventName==='CHECKOUT_PAID'?'RECEIVED':eventName==='CHECKOUT_CANCELED'?'CANCELLED':eventName==='CHECKOUT_EXPIRED'?'EXPIRED':String(event.checkout.status||eventName);
     const paid=eventName==='CHECKOUT_PAID';
     await sql`update payments set status=${status},paid_at=case when ${paid} then coalesce(paid_at,now()) else paid_at end,metadata=coalesce(metadata,'{}'::jsonb)||${JSON.stringify({...event,_webhookEventId:eventId})}::jsonb,updated_at=now() where external_id=${checkoutId} or metadata->>'checkoutId'=${checkoutId}`;
-    if(paid) await sql`update commands set status='Fechada',updated_at=now() where id in (select command_id from payments where external_id=${checkoutId} or metadata->>'checkoutId'=${checkoutId})`;
+    if(paid){
+      const rows=await sql`select command_id from payments where (external_id=${checkoutId} or metadata->>'checkoutId'=${checkoutId}) and command_id is not null limit 1`;
+      const commandId=rows[0]?.command_id;
+      if(commandId){
+        const sums=await sql`select coalesce(sum(amount),0) total from payments where command_id=${commandId} and upper(status) in ('RECEIVED','CONFIRMED','PAID')`;
+        const commands=await sql`select id,total from commands where id=${commandId} limit 1`;
+        if(commands[0]&&Number(sums[0]?.total||0)+0.009>=Number(commands[0].total||0)){
+          await sql`update commands set status='closed',closed_at=coalesce(closed_at,now()),updated_at=now() where id=${commandId} and status<>'closed'`;
+        }
+      }
+    }
   }
   return Response.json({ok:true});
 }

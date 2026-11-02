@@ -6,10 +6,6 @@ on:
     branches: [main]
   workflow_dispatch:
 
-concurrency:
-  group: eddu-master-production
-  cancel-in-progress: true
-
 permissions:
   contents: read
 
@@ -25,14 +21,25 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Install dependencies
+        run: npm install
+
       - name: Validate canonical Master
         run: npm run master:check
 
       - name: Build production bundle
-        run: npm run build
+        run: npm run master:build
 
       - name: Canonical Master build QA
         run: node scripts/qa.mjs
+
+      - name: Validate Cloudflare function modules
+        run: |
+          find functions -name '*.js' -print0 | xargs -0 -n1 node --check
+          node -e "import('./functions/api/payments.js')"
+
+      - name: Test gateway settlement and finance ledger
+        run: node --test tests/payment-settlement.test.mjs
 
       - name: Runtime surface inventory
         shell: bash
@@ -70,7 +77,89 @@ jobs:
       - name: Release identity
         run: cat dist/version.json
 
+      - name: Deploy isolated Master V46 API and checkout homologation
+        if: github.event_name == 'pull_request' && github.head_ref == 'audit/master-v46-rebase-20261031'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+          ASAAS_API_KEY: ${{ secrets.ASAAS_API_KEY }}
+          ASAAS_WEBHOOK_TOKEN: ${{ secrets.ASAAS_WEBHOOK_TOKEN }}
+          PAGBANK_TOKEN: ${{ secrets.PAGBANK_TOKEN }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          PICPAY_CLIENT_ID: ${{ secrets.PICPAY_CLIENT_ID }}
+          PICPAY_CLIENT_SECRET: ${{ secrets.PICPAY_CLIENT_SECRET }}
+          PICPAY_WEBHOOK_TOKEN: ${{ secrets.PICPAY_WEBHOOK_TOKEN }}
+          PICPAY_API_BASE: ${{ secrets.PICPAY_API_BASE }}
+          NUPAY_MERCHANT_KEY: ${{ secrets.NUPAY_MERCHANT_KEY }}
+          NUPAY_MERCHANT_TOKEN: ${{ secrets.NUPAY_MERCHANT_TOKEN }}
+          NUPAY_WEBHOOK_TOKEN: ${{ secrets.NUPAY_WEBHOOK_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          project="ed-du-terapia-da-beleza-master-v46-qa"
+          branch="audit/master-v46-rebase-20261031"
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          test -n "$NEON_DATABASE_URL"
+          projects="$(curl --fail --silent --show-error -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects")"
+          if ! printf '%s' "$projects" | python3 -c 'import json,sys; x=json.load(sys.stdin); xs=x.get("result",[]); raise SystemExit(0 if any(p.get("name")==sys.argv[1] for p in xs) else 1)' "$project"; then
+            npx --yes wrangler@3.90.0 pages project create "$project" --production-branch="$branch"
+          fi
+          preview_db="${NEON_DATABASE_URL//ep-sweet-meadow-b43jne0i/ep-frosty-pond-b42j28j0}"
+          if [ "$preview_db" = "$NEON_DATABASE_URL" ]; then
+            echo "::error::Could not map the canonical Neon endpoint to the isolated homologation branch."
+            exit 1
+          fi
+          put_secret() {
+            local name="$1"
+            local value; value="$(printenv "$name" || true)"
+            if [ -n "$value" ]; then
+              printf "%s" "$value" | npx --yes wrangler@3.90.0 pages secret put "$name" --project-name="$project"
+              echo "configured isolated QA secret: $name"
+            else
+              echo "optional sandbox secret not configured: $name"
+            fi
+          }
+          printf "%s" "$preview_db" | npx --yes wrangler@3.90.0 pages secret put NEON_DATABASE_URL --project-name="$project"
+          printf "%s" "https://sandbox.api.pagseguro.com" | npx --yes wrangler@3.90.0 pages secret put PAGBANK_API_BASE --project-name="$project"
+          printf "%s" "https://api-sandbox.asaas.com/v3" | npx --yes wrangler@3.90.0 pages secret put ASAAS_BASE_URL --project-name="$project"
+          printf "%s" "https://sandbox-api.spinpay.com.br" | npx --yes wrangler@3.90.0 pages secret put NUPAY_API_BASE --project-name="$project"
+          for name in ASAAS_API_KEY ASAAS_WEBHOOK_TOKEN PAGBANK_TOKEN NUPAY_MERCHANT_KEY NUPAY_MERCHANT_TOKEN NUPAY_WEBHOOK_TOKEN; do put_secret "$name"; done
+          if [[ "${STRIPE_SECRET_KEY:-}" == sk_test_* ]]; then
+            put_secret STRIPE_SECRET_KEY
+            put_secret STRIPE_WEBHOOK_SECRET
+          else
+            echo "Stripe disabled in QA: no test-mode secret key supplied."
+          fi
+          if [[ "${PICPAY_API_BASE:-}" == *sandbox* ]]; then
+            put_secret PICPAY_API_BASE
+            put_secret PICPAY_CLIENT_ID
+            put_secret PICPAY_CLIENT_SECRET
+            put_secret PICPAY_WEBHOOK_TOKEN
+          else
+            echo "PicPay disabled in QA: sandbox API base not explicitly configured."
+          fi
+          npx --yes wrangler@3.90.0 pages deploy dist --project-name="$project" --branch="$branch" --commit-hash="$GITHUB_SHA" --commit-message="Isolated Master V46 homologation"
+          base="https://${project}.pages.dev"
+          for i in {1..12}; do
+            health="$(curl --silent --show-error --max-time 20 "$base/api/health" || true)"
+            if python3 -c 'import json,sys; x=json.loads(sys.argv[1]); raise SystemExit(0 if x.get("ok") is True and x.get("reachable") is True else 1)' "$health"; then
+              echo "Isolated Neon health check: PASS"
+              break
+            fi
+            if [ "$i" -eq 12 ]; then
+              echo "::error::Isolated Cloudflare /api/health did not become healthy."
+              echo "$health"
+              exit 1
+            fi
+            sleep 5
+          done
+          echo "ISOLATED_QA_URL=$base" >> "$GITHUB_OUTPUT"
+
       - name: Verify Cloudflare production credentials
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -80,6 +169,7 @@ jobs:
           test -n "$CLOUDFLARE_ACCOUNT_ID"
 
       - name: Inspect canonical Cloudflare production target
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -89,6 +179,7 @@ jobs:
           npx --yes wrangler@3.90.0 pages deployment list --project-name=ed-du-terapia-da-beleza
 
       - name: Set Cloudflare production branch to main
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -101,6 +192,7 @@ jobs:
           echo "$response" | python3 -c 'import json,sys; x=json.load(sys.stdin); assert x.get("success") is True, x'
 
       - name: Inventory Cloudflare account secret bindings (names only)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -114,6 +206,7 @@ jobs:
           done <<< "$projects"
 
       - name: Inspect Cloudflare production secret bindings
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -122,6 +215,7 @@ jobs:
           npx --yes wrangler@3.90.0 pages secret list --project-name=ed-du-terapia-da-beleza
 
       - name: Reuse configured GitHub runtime secrets in Cloudflare production
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -134,6 +228,8 @@ jobs:
           PICPAY_CLIENT_ID: ${{ secrets.PICPAY_CLIENT_ID }}
           PICPAY_CLIENT_SECRET: ${{ secrets.PICPAY_CLIENT_SECRET }}
           PICPAY_WEBHOOK_TOKEN: ${{ secrets.PICPAY_WEBHOOK_TOKEN }}
+          NUPAY_MERCHANT_KEY: ${{ secrets.NUPAY_MERCHANT_KEY }}
+          NUPAY_MERCHANT_TOKEN: ${{ secrets.NUPAY_MERCHANT_TOKEN }}
         run: |
           set -euo pipefail
           put_secret() {
@@ -146,11 +242,12 @@ jobs:
               echo "GitHub Actions secret not configured: $name"
             fi
           }
-          for name in NEON_DATABASE_URL ASAAS_API_KEY ASAAS_WEBHOOK_TOKEN PAGBANK_TOKEN STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET PICPAY_CLIENT_ID PICPAY_CLIENT_SECRET PICPAY_WEBHOOK_TOKEN; do
+          for name in NEON_DATABASE_URL ASAAS_API_KEY ASAAS_WEBHOOK_TOKEN PAGBANK_TOKEN STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET PICPAY_CLIENT_ID PICPAY_CLIENT_SECRET PICPAY_WEBHOOK_TOKEN NUPAY_MERCHANT_KEY NUPAY_MERCHANT_TOKEN; do
             put_secret "$name"
           done
 
       - name: Preserve Cloudflare production runtime secrets
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           set -euo pipefail
           echo "Cloudflare production secrets are managed in the Pages project."
@@ -158,6 +255,7 @@ jobs:
           echo "They are consumed by Pages Functions through context.env at runtime."
 
       - name: Deploy canonical Master to Cloudflare production
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -165,6 +263,7 @@ jobs:
           command: pages deploy dist --project-name=ed-du-terapia-da-beleza --commit-hash=${{ github.sha }} --commit-message="Canonical Master production"
 
       - name: Smoke test production runtime
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         shell: bash
         run: |
           set -euo pipefail
@@ -186,6 +285,7 @@ jobs:
           python3 -c 'import json,sys; x=json.loads(sys.argv[1]); assert x.get("ok") is True, x; assert x.get("ranking"), "No configured payment gateway is available in production"; print("Production payment ranking: PASS")' "$rank"
 
       - name: Delete legacy Cloudflare preview deployments
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -229,6 +329,7 @@ jobs:
           PY
 
       - name: Delete obsolete Cloudflare homologation project
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

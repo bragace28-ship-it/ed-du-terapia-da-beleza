@@ -1,8 +1,11 @@
 import {rm,mkdir,readFile,writeFile,readdir} from 'node:fs/promises';
+import {build as esbuild} from 'esbuild';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
+import {Script} from 'node:vm';
 
 const root=process.cwd();
+const production=process.env.MASTER_DEPLOY==='1'||process.env.CF_PAGES==='1'||process.env.NODE_ENV==='production';
 const dist=resolve(root,'dist');
 const masterSource=resolve(root,'master','index.html');
 const lock=JSON.parse(await readFile(resolve(root,'MASTER_APPROVED_LOCK.json'),'utf8'));
@@ -13,6 +16,16 @@ if(sourceBlob!==lock.master_index_git_blob_sha) throw new Error('MASTER APPROVED
 if(!html.includes('ED & DU')||!html.includes('Terapia da Beleza')) throw new Error('Required ED & DU branding missing.');
 const stripEmbeddedDataImages=s=>s.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/gi,'');
 const legacyFree=stripEmbeddedDataImages(html);
+const inlineScriptPattern=/<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+let inlineMatch,inlineIndex=0;
+while((inlineMatch=inlineScriptPattern.exec(html))!==null){
+  const attrs=inlineMatch[1]||'',code=inlineMatch[2]||'';
+  if(/\bsrc\s*=/.test(attrs)||/\btype\s*=\s*["']module["']/.test(attrs)||!code.trim())continue;
+  const type=(attrs.match(/\btype\s*=\s*["']([^"']+)["']/i)||[])[1]||'text/javascript';
+  if(!/^(text|application)\/javascript$/i.test(type))continue;
+  inlineIndex++;
+  new Script(code,{filename:'master/index.html:inline-'+inlineIndex});
+}
 if(/(?:V33|v33|fin33|eddu_v33)/i.test(legacyFree)) throw new Error('Legacy version reference found in Master source.');
 if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(legacyFree)) throw new Error('Legacy Supabase reference found in Master UI.');
 
@@ -22,6 +35,11 @@ if(process.argv.includes('--check')){
 }
 
 let output=html;
+if(production){
+  const head=output.match(/<head[^>]*>/i)?.[0];
+  if(!head) throw new Error('Production build requires a head element.');
+  output=output.replace(head,head+'<script>window.__EDDU_PRODUCTION_BUILD__=true;</script>');
+}
 const localTitle=new RegExp('<title>[^<]*Teste Local[^<]*</title>','i');
 if(!localTitle.test(output)) throw new Error('Expected local-test title marker not found; refusing ambiguous production build.');
 output=output.replace(localTitle,'<title>ED & DU | Terapia da Beleza — Master 46.0.0</title>');
@@ -30,30 +48,43 @@ const injectBeforeClosingBody=(document,markup)=>{
   if(index<0) throw new Error('MASTER build has no closing body tag.');
   return document.slice(0,index)+markup+document.slice(index);
 };
+output=injectBeforeClosingBody(output,'<script>if(typeof views!==\"undefined\"){window.views=views;}if(typeof state!==\"undefined\"){window.state=state;}</script>');
 const runtimeFiles=[
   'master/runtime-functional-hotfix.js',
+  'master/runtime-homologation.js',
   'master/runtime-hardening.js',
   'master/runtime-fixes.js',
   'master/runtime-navigation-hardening.js',
   'master/runtime-navigation-bridge.js',
   'master/runtime-render-guard.js',
-  'master/runtime-command-gateway.js',
   'master/runtime-real-checkout.js',
   'master/neon-live-bridge.js'
 ];
+if(production) runtimeFiles.push('master/runtime-production-guard.js');
+if(runtimeFiles.includes('master/runtime-command-gateway.js')||runtimeFiles.filter(x=>x==='master/runtime-real-checkout.js').length!==1) throw new Error('Checkout runtime conflict: exactly one unified API-backed gateway bridge is required.');
 for(const file of runtimeFiles){
-  const code=await readFile(resolve(root,file),'utf8');
+  let code=await readFile(resolve(root,file),'utf8');
+  if(production && file==='master/runtime-hardening.js') code=code.replace("['Mariana','Juliana','Camila','Renata','Paula','Fernanda'].concat(n)",'n');
+  new Script(code,{filename:file});
   if(/(?:V33|v33|fin33|eddu_v33)/i.test(stripEmbeddedDataImages(code))) throw new Error('Legacy version reference found in '+file);
   if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(code)) throw new Error('Legacy Supabase reference found in '+file);
   const bodyClose=output.lastIndexOf('</body>');
   if(bodyClose<0) throw new Error('MASTER HTML has no closing body tag.');
   output=output.slice(0,bodyClose)+'<script>'+code+'\n</script>\n'+output.slice(bodyClose);
 }
-const authClient=await readFile(resolve(root,'master','neon-auth-client.js'),'utf8');
-output=injectBeforeClosingBody(output,'<script type="module">'+authClient+'\n</script>');
+output=injectBeforeClosingBody(output,'<script type="module" src="/neon-auth-client.bundle.js"></script>');
 
 await rm(dist,{recursive:true,force:true});
 await mkdir(dist,{recursive:true});
+await esbuild({
+  entryPoints:[resolve(root,'master','neon-auth-client.js')],
+  bundle:true,
+  format:'esm',
+  platform:'browser',
+  target:['es2022'],
+  legalComments:'none',
+  outfile:resolve(dist,'neon-auth-client.bundle.js')
+});
 await writeFile(resolve(dist,'index.html'),output,'utf8');
 
 const built=await readFile(resolve(dist,'index.html'),'utf8');
@@ -69,9 +100,10 @@ await writeFile(resolve(dist,'version.json'),JSON.stringify({
   artifact:'MASTER',
   sourceGitBlobSha:sourceBlob,
   builtSha256:builtSha,
-  legacyRuntime:'DISABLED'
+  legacyRuntime:'DISABLED',
+  productionDataGuard:production
 },null,2));
 const distFiles=await readdir(dist);
-const allowed=new Set(['index.html','_redirects','_routes.json','version.json']);
-if(distFiles.length!==4||distFiles.some(x=>!allowed.has(x))) throw new Error('Unexpected dist files: '+distFiles.join(','));
+const allowed=new Set(['index.html','_redirects','_routes.json','version.json','neon-auth-client.bundle.js']);
+if(distFiles.length!==5||distFiles.some(x=>!allowed.has(x))) throw new Error('Unexpected dist files: '+distFiles.join(','));
 console.log('Built canonical Master only.');

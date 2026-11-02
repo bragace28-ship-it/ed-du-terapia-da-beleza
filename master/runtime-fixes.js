@@ -21,11 +21,94 @@
   views.cardInvoices=()=>{const list=read('eddu_v46_card_invoices',[]);return `<h2>Faturas de Cartão</h2><p class="sub">A fatura é registrada no APP para conferência. O teste não envia o arquivo a banco ou gateway.</p><div class="card"><input id="v46CardInvoiceFile" type="file" accept=".pdf,image/*"><button class="btn primary full" onclick="v46AnalyzeCardInvoice()">Analisar fatura</button></div><h3>Faturas registradas</h3>${list.length?list.map(x=>`<div class="option"><span><b>${escF(x.name)}</b><small>${Math.max(1,Math.ceil(x.size/1024))} KB · ${escF(x.status)}</small></span></div>`).join(''):'<div class="card"><b>Nenhuma fatura registrada.</b></div>'}<button class="btn full" onclick="openSheet('finance')">← Financeiro</button>`};
   const oldCreate=window.createManualCoupon;
   window.createManualCoupon=function(){const t=document.getElementById('couponType')?.value||'percent',v=document.getElementById('couponValue')?.value||'',s=document.getElementById('couponService')?.value||'',c=document.getElementById('couponClient')?.value.trim()||'',e=document.getElementById('couponExpiry')?.value||'';if(t==='percent'&&(!(Number(v)>0)||Number(v)>100))return toastF('Informe percentual entre 1 e 100');if(t==='fixed'&&!(Number(v)>0))return toastF('Informe um valor de desconto maior que zero');if(t==='service'&&!s)return toastF('Selecione o serviço');if(typeof oldCreate==='function'){oldCreate();setTimeout(()=>{const arr=read('eddu_v46_coupon_audit',[]);arr.unshift({type:t,value:v,service:s,client:c,expires:e,at:new Date().toISOString()});write('eddu_v46_coupon_audit',arr)},0)}else toastF('Gerador de cupom indisponível')};
-  window.v46BookingDay=window.v46BookingDay||new Date().toISOString().slice(0,10);window.v46BookingTime=window.v46BookingTime||'';
-  function bookingAvailability(day){const apps=Array.isArray(window.data?.appointments)?window.data.appointments:read('eddu_data',{appointments:[]}).appointments||[],blocks=Array.isArray(window.data?.blocks)?window.data.blocks:read('eddu_data',{blocks:[]}).blocks||[],busy=new Set(apps.filter(a=>a.date===day).map(a=>a.start));return ['09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00'].filter(t=>!busy.has(t)&&!blocks.filter(b=>b.date===day).some(b=>t<b.end&&t>=(b.start||'')))}
-  window.v46SelectBookingDay=d=>{window.v46BookingDay=d;window.v46BookingTime='';render('booking')};window.v46SelectBookingTime=t=>{window.v46BookingTime=t;render('booking')};
-  window.v46ConfirmBooking=function(){const day=window.v46BookingDay,time=window.v46BookingTime;if(!day||!time)return toastF('Escolha uma data e um horário');const arr=read('eddu_data',{});arr.appointments=Array.isArray(arr.appointments)?arr.appointments:[];arr.blocks=Array.isArray(arr.blocks)?arr.blocks:[];if(arr.appointments.some(a=>a.date===day&&a.start===time)||arr.blocks.some(b=>b.date===day&&time<b.end&&time>=b.start))return toastF('Este horário não está mais disponível');arr.appointments.push({id:'APT-'+Date.now(),date:day,start:time,end:String(Number(time.slice(0,2))+1).padStart(2,'0')+':'+time.slice(3),client:'Mariana',professional:'Profissional ED',service:'Limpeza de Pele',status:'Solicitado'});write('eddu_data',arr);toastF('✓ Solicitação de agendamento registrada');openSheet('appointments')};
-  views.booking=()=>{const d=new Date(window.v46BookingDay+'T12:00:00'),y=d.getFullYear(),mo=d.getMonth(),days=new Date(y,mo+1,0).getDate(),first=new Date(y,mo,1),start=(first.getDay()+6)%7,sel=window.v46BookingDay,avail=bookingAvailability(sel);let cal='';for(let i=0;i<start;i++)cal+='<button class="cal-day muted" disabled></button>';for(let n=1;n<=days;n++){const k=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(n).padStart(2,'0');cal+=`<button class="cal-day ${k===sel?'selected':''}" onclick="v46SelectBookingDay('${k}')"><span>${n}</span></button>`}return `<h2>Agendar atendimento</h2><p class="sub">Escolha serviço, data, horário e profissional. A disponibilidade considera os bloqueios da Agenda.</p><h3>1. Serviço</h3><div class="card"><b>Limpeza de Pele</b><p class="sub">R$ 120,00 · Profissional ED</p></div><h3>2. Data</h3><div class="calendar"><div class="cal-head"><button onclick="v46SelectBookingDay('${new Date(y,mo-1,1).toISOString().slice(0,10)}')">‹</button><div class="cal-title">${first.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</div><button onclick="v46SelectBookingDay('${new Date(y,mo+1,1).toISOString().slice(0,10)}')">›</button></div><div class="cal-week">${['SEG','TER','QUA','QUI','SEX','SÁB','DOM'].map(x=>`<span>${x}</span>`).join('')}</div><div class="cal-grid">${cal}</div></div><h3>3. Horário · ${d.toLocaleDateString('pt-BR')}</h3><div class="grid2">${avail.map(t=>`<button class="btn ${window.v46BookingTime===t?'primary':''}" onclick="v46SelectBookingTime('${t}')">${t}</button>`).join('')||'<div class="card">Nenhum horário disponível.</div>'}</div><button class="btn primary full" onclick="v46ConfirmBooking()">✓ Confirmar agendamento</button>`};
+  window.v46BookingDay=window.v46BookingDay||new Date().toISOString().slice(0,10);
+  window.v46BookingTime=window.v46BookingTime||'';
+  window.v46BookingClient=window.v46BookingClient||'';
+  window.v46BookingProfessional=window.v46BookingProfessional||'';
+  window.v46BookingService=window.v46BookingService||'';
+  const bookingRows=key=>(Array.isArray(window.data?.[key])?window.data[key]:[]).filter(x=>x&&x.id&&x.active!==false);
+  const bookingMinute=value=>{const p=String(value||'').slice(0,5).split(':').map(Number);return Number.isFinite(p[0])?p[0]*60+(p[1]||0):0};
+  const bookingClock=value=>String(Math.floor(value/60)).padStart(2,'0')+':'+String(value%60).padStart(2,'0');
+  const bookingAvailability=day=>{
+    const clients=bookingRows('clients'),professionals=bookingRows('professionals'),services=bookingRows('services');
+    const professional=professionals.find(x=>x.id===window.v46BookingProfessional);
+    const service=services.find(x=>x.id===window.v46BookingService);
+    if(!professional||!service||!clients.some(x=>x.id===window.v46BookingClient))return [];
+    const duration=Math.max(1,Number(service.duration_minutes)||60);
+    const apps=Array.isArray(window.data?.appointments)?window.data.appointments:[];
+    const blocks=Array.isArray(window.data?.blocks)?window.data.blocks:[];
+    return ['09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00'].filter(time=>{
+      const start=bookingMinute(time),end=start+duration;
+      if(end>1440)return false;
+      const conflict=apps.some(a=>{
+        if(a.date!==day||['cancelado','cancelled','canceled','no_show'].includes(String(a.statusCode||a.status||'').toLowerCase()))return false;
+        const prof=a.professionalId||a.professional_id;
+        if(prof&&prof!==professional.id)return false;
+        return bookingMinute(a.start)<end&&bookingMinute(a.end)>start;
+      });
+      const blocked=blocks.some(b=>{
+        if(b.date!==day)return false;
+        const prof=b.professionalId||b.professional_id;
+        if(prof&&prof!==professional.id)return false;
+        const blockStart=bookingMinute(b.start||'00:00');
+        const blockEnd=b.fullDay||b.wholeDay?1440:bookingMinute(b.end||'23:59');
+        return blockStart<end&&blockEnd>start;
+      });
+      return !conflict&&!blocked;
+    });
+  };
+  window.v46SelectBookingDay=d=>{window.v46BookingDay=d;window.v46BookingTime='';render('booking')};
+  window.v46SelectBookingTime=t=>{window.v46BookingTime=t;render('booking')};
+  window.v46SelectBookingClient=id=>{window.v46BookingClient=id;window.v46BookingTime='';render('booking')};
+  window.v46SelectBookingProfessional=id=>{window.v46BookingProfessional=id;window.v46BookingTime='';render('booking')};
+  window.v46SelectBookingService=id=>{window.v46BookingService=id;window.v46BookingTime='';render('booking')};
+  window.v46ConfirmBooking=async function(){
+    const clients=bookingRows('clients'),professionals=bookingRows('professionals'),services=bookingRows('services');
+    const client=clients.find(x=>x.id===window.v46BookingClient),professional=professionals.find(x=>x.id===window.v46BookingProfessional),service=services.find(x=>x.id===window.v46BookingService);
+    const day=window.v46BookingDay,time=window.v46BookingTime;
+    if(!client||!professional||!service)return toastF('Selecione um cliente, profissional e serviço cadastrados.');
+    if(!day||!time)return toastF('Escolha uma data e um horário disponível.');
+    const duration=Math.max(1,Number(service.duration_minutes)||60),start=bookingMinute(time),end=start+duration;
+    if(end>1440)return toastF('O atendimento ultrapassa o horário permitido.');
+    const values={aptClient:client.id,aptProfessional:professional.id,aptService:service.id,aptDate:day,aptStart:time,aptEnd:bookingClock(end),aptStatus:'Pendente'};
+    for(const [id,value] of Object.entries(values)){
+      let el=document.getElementById(id);
+      if(!el){el=document.createElement('input');el.type='hidden';el.id=id;document.body.appendChild(el);}
+      el.value=value;
+    }
+    let button=document.getElementById('saveAgendaReal');
+    if(!button){button=document.createElement('button');button.id='saveAgendaReal';button.type='button';button.style.display='none';document.body.appendChild(button);}
+    button.disabled=false;
+    if(typeof window.saveAgendaAddM!=='function')return toastF('A gravação segura da Agenda não está disponível.');
+    await window.saveAgendaAddM();
+  };
+  views.booking=()=>{
+    const clients=bookingRows('clients'),professionals=bookingRows('professionals'),services=bookingRows('services');
+    if(!clients.some(x=>x.id===window.v46BookingClient))window.v46BookingClient=clients[0]?.id||'';
+    if(!professionals.some(x=>x.id===window.v46BookingProfessional))window.v46BookingProfessional=professionals[0]?.id||'';
+    if(!services.some(x=>x.id===window.v46BookingService))window.v46BookingService=services[0]?.id||'';
+    const d=new Date(window.v46BookingDay+'T12:00:00'),y=d.getFullYear(),mo=d.getMonth(),days=new Date(y,mo+1,0).getDate(),first=new Date(y,mo,1),start=(first.getDay()+6)%7,sel=window.v46BookingDay;
+    const localDate=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+    let cal='';
+    for(let i=0;i<start;i++)cal+='<button class="cal-day muted" disabled></button>';
+    for(let n=1;n<=days;n++){const k=y+'-'+String(mo+1).padStart(2,'0')+'-'+String(n).padStart(2,'0');cal+=`<button class="cal-day ${k===sel?'selected':''}" onclick="v46SelectBookingDay('${k}')"><span>${n}</span></button>`;}
+    const selectedService=services.find(x=>x.id===window.v46BookingService);
+    const available=bookingAvailability(sel);
+    const optionList=(rows,value,placeholder)=>'<option value="">'+escF(placeholder)+'</option>'+rows.map(x=>'<option value="'+escF(x.id)+'" '+(x.id===value?'selected':'')+'>'+escF(x.name)+'</option>').join('');
+    const missing=[];
+    if(!clients.length)missing.push('clientes');
+    if(!professionals.length)missing.push('profissionais');
+    if(!services.length)missing.push('serviços');
+    return `<h2>Agendar atendimento</h2><p class="sub">Selecione registros reais. A solicitação só será confirmada após gravação no Neon.</p>
+      ${missing.length?'<p role="alert">Cadastre primeiro: '+escF(missing.join(', '))+'. Não há dados de demonstração nesta tela.</p>':''}
+      <div class="card"><label>Cliente</label><select onchange="v46SelectBookingClient(this.value)">${optionList(clients,window.v46BookingClient,'Selecione o cliente')}</select>
+      <label>Profissional</label><select onchange="v46SelectBookingProfessional(this.value)">${optionList(professionals,window.v46BookingProfessional,'Selecione o profissional')}</select>
+      <label>Serviço</label><select onchange="v46SelectBookingService(this.value)">${optionList(services,window.v46BookingService,'Selecione o serviço')}</select>
+      ${selectedService?'<p class="sub">'+escF(selectedService.name)+' · '+brlF(selectedService.price||selectedService.price_base||0)+' · '+(Number(selectedService.duration_minutes)||60)+' min</p>':''}</div>
+      <h3>Data</h3><div class="calendar"><div class="cal-head"><button onclick="v46SelectBookingDay('${localDate(new Date(y,mo-1,1))}')">‹</button><div class="cal-title">${first.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</div><button onclick="v46SelectBookingDay('${localDate(new Date(y,mo+1,1))}')">›</button></div><div class="cal-week">${['SEG','TER','QUA','QUI','SEX','SÁB','DOM'].map(x=>'<span>'+x+'</span>').join('')}</div><div class="cal-grid">${cal}</div></div>
+      <h3>Horários disponíveis · ${d.toLocaleDateString('pt-BR')}</h3><div class="grid2">${available.map(t=>'<button class="btn '+(window.v46BookingTime===t?'primary':'')+'" onclick="v46SelectBookingTime(\''+t+'\')">'+t+'</button>').join('')||'<div class="card">Nenhum horário disponível para os registros selecionados.</div>'}</div>
+      <button class="btn primary full" onclick="v46ConfirmBooking()" ${(!clients.length||!professionals.length||!services.length||!window.v46BookingTime)?'disabled':''}>✓ Confirmar agendamento</button>`;
+  };
   window.v46SignTerm=function(id){const terms=window.state?.terms||read('eddu_state',{terms:[]}).terms||[],t=terms.find(x=>x.id===id);if(!t)return toastF('Termo não encontrado');views.termSign=()=>`<h2>Termo de responsabilidade</h2><p class="sub">${escF(t.client)} · ${escF(t.id)}</p><div class="card"><p>Declaro que li e compreendi o Termo de Responsabilidade e Consentimento.</p><label style="display:flex;gap:10px;align-items:center"><input id="termAgree" type="checkbox"> Concordo com o conteúdo do documento</label><button class="btn primary full" onclick="v46ConfirmTermSign('${escF(t.id)}')">✍️ Assinar digitalmente</button></div>`;openSheet('termSign')};
   window.v46ConfirmTermSign=function(id){const terms=window.state?.terms||read('eddu_state',{terms:[]}).terms||[],t=terms.find(x=>x.id===id);if(!t)return;if(!document.getElementById('termAgree')?.checked)return toastF('Marque o aceite antes de assinar');t.status='Assinado';t.signedAt=new Date().toLocaleString('pt-BR');write('eddu_state',{...read('eddu_state',{}),terms});toastF('✓ Termo assinado e registrado');openSheet('termsManager')};
   const oldSend=window.sendResponsibilityTerm;window.sendResponsibilityTerm=function(){if(typeof oldSend==='function')oldSend();setTimeout(()=>{const terms=window.state?.terms||read('eddu_state',{terms:[]}).terms||[],t=terms[terms.length-1];if(!t)return;const link=location.href.split('#')[0]+'#term='+encodeURIComponent(t.id),msg=`Olá, ${t.client}! A ED & DU | Terapia da Beleza enviou seu Termo de Responsabilidade e Consentimento para assinatura digital.\n\nTermo: ${t.id}\n\nAcesse este link para revisar e assinar:\n${link}`;window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank','noopener')},50)};

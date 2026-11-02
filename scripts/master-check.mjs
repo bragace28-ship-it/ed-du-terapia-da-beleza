@@ -26,6 +26,39 @@ const required=['agendaAppointmentsM','saveAgendaAddM','saveAgendaEditM','saveAg
 for(const marker of required)
   if(!html.includes(marker)) throw new Error('MASTER missing required Agenda marker: '+marker);
 
+const agendaRuntime=await readFile(resolve(root,'master','runtime-homologation.js'),'utf8');
+if(!agendaRuntime.includes("Agendado:'confirmed'") || !agendaRuntime.includes("Pendente:'requested'"))
+  throw new Error('MASTER agenda status mapping does not match the Neon appointments constraint.');
+if(/insert\(\{[^}]*\bsource\s*:/.test(agendaRuntime))
+  throw new Error('MASTER appointment insert contains a field not present in the Neon appointments schema.');
+const appointmentMigration=await readFile(resolve(root,'db','007_master_v46_appointments_service_fk.sql'),'utf8');
+if(!/add column if not exists service_id uuid/i.test(appointmentMigration) || !/foreign key \(service_id\) references public\.services\(id\)/i.test(appointmentMigration))
+  throw new Error('MASTER appointment service relationship migration is incomplete.');
+const neonBridge=await readFile(resolve(root,'master','neon-live-bridge.js'),'utf8');
+for(const marker of ['async function pushNewAgendaBlocks','await pushNewAgendaBlocks()','data.blocks=d.map(dbAgendaBlockToUi)',"wrapMutation('saveAgendaBlockDayM')"])
+  if(!neonBridge.includes(marker)) throw new Error('MASTER agenda-block Neon sync is missing: '+marker);
+const runtimeFixes=await readFile(resolve(root,'master','runtime-fixes.js'),'utf8');
+const bookingStart=runtimeFixes.indexOf('window.v46BookingDay=');
+const bookingEnd=runtimeFixes.indexOf('window.v46SignTerm=',bookingStart);
+const bookingSource=bookingStart>=0&&bookingEnd>bookingStart?runtimeFixes.slice(bookingStart,bookingEnd):'';
+if(!bookingSource||/Mariana|Profissional ED|Limpeza de Pele|write\('eddu_data',arr\)/.test(bookingSource))
+  throw new Error('MASTER booking flow still contains demo records or local-only persistence.');
+const productionGuard=await readFile(resolve(root,'master','runtime-production-guard.js'),'utf8');
+const productionBlockStart=productionGuard.indexOf('window.saveAgendaBlockDayM=async function');
+const productionBlockEnd=productionGuard.indexOf('\n};',productionBlockStart);
+const productionBlock=productionBlockStart>=0&&productionBlockEnd>productionBlockStart?productionGuard.slice(productionBlockStart,productionBlockEnd):'';
+if(!productionBlock.includes('end.setDate(end.getDate()+1)')||productionBlock.includes("T23:59:59"))
+  throw new Error('Production full-day block must use a midnight-to-midnight interval.');
+if(!productionGuard.includes("disabled('v46AddTestPayment'"))
+  throw new Error('Production must disable the test-payment helper.');
+if(!productionGuard.includes("disabled('v46ConfirmTermSign'")||!productionGuard.includes('views.termSign=function'))
+  throw new Error('Production must not report local-only term signatures as persisted.');
+const blockDayStart=agendaRuntime.indexOf('window.saveAgendaBlockDayM=function');
+const blockDayEnd=agendaRuntime.indexOf('};',blockDayStart);
+const blockDaySource=blockDayStart>=0&&blockDayEnd>blockDayStart?agendaRuntime.slice(blockDayStart,blockDayEnd):'';
+if(!blockDaySource.includes('eddu_master_data_v1')||blockDaySource.includes("getItem('eddu_data')"))
+  throw new Error('MASTER full-day block must use the canonical Neon sync queue.');
+
 const runtimeFiles=[
   'master/runtime-functional-hotfix.js',
   'master/runtime-homologation.js',

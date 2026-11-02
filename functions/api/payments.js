@@ -1,7 +1,40 @@
 import { neon } from '@neondatabase/serverless';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { recordGatewaySettlement } from '../_shared/settle-payment.js';
 
 const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store'}});
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const JWKS_CACHE=new Map();
+function neonAuthJwksUrl(env){
+  if(env.NEON_AUTH_JWKS_URL)return new URL(env.NEON_AUTH_JWKS_URL);
+  const dbUrl=new URL(env.NEON_DATABASE_URL);
+  const labels=dbUrl.hostname.split('.');
+  const endpoint=String(labels.shift()||'').replace(/-pooler$/,'');
+  const database=dbUrl.pathname.split('/').filter(Boolean)[0]||'neondb';
+  if(!endpoint.startsWith('ep-')||!labels.length)throw new Error('Unable to derive Neon Auth JWKS URL');
+  return new URL('https://'+endpoint+'.neonauth.'+labels.join('.')+'/'+database+'/auth/.well-known/jwks.json');
+}
+function neonJwks(env){
+  const url=neonAuthJwksUrl(env),key=url.toString();
+  if(!JWKS_CACHE.has(key))JWKS_CACHE.set(key,createRemoteJWKSet(url));
+  return JWKS_CACHE.get(key);
+}
+async function requirePaymentAdmin(request,env){
+  if(!env.NEON_DATABASE_URL)return {response:json({ok:false,error:'NEON_DATABASE_URL não configurada'},503)};
+  const token=(request.headers.get('authorization')||'').match(/^Bearer\s+(.+)$/i)?.[1];
+  if(!token)return {response:json({ok:false,error:'Autenticação obrigatória para operações de pagamento.'},401)};
+  try{
+    const {payload}=await jwtVerify(token,neonJwks(env),{clockTolerance:5});
+    const userId=String(payload.sub||'');
+    if(!userId)return {response:json({ok:false,error:'Sessão inválida.'},401)};
+    const sql=neon(env.NEON_DATABASE_URL);
+    const rows=await sql`select role,status from public.app_users where auth_user_id=${userId} limit 1`;
+    if(!rows[0]||rows[0].role!=='admin'||rows[0].status!=='Ativo')return {response:json({ok:false,error:'Perfil sem permissão para operações de pagamento.'},403)};
+    return {userId};
+  }catch(error){
+    return {response:json({ok:false,error:'Token Neon inválido ou expirado.'},401)};
+  }
+}
 const clean=v=>String(v??'').trim();
 const digits=v=>clean(v).replace(/\D/g,'');
 const money=v=>Math.round(Number(v||0)*100)/100;
@@ -10,24 +43,32 @@ const rates={
   Stripe:{pix:null,one:{pct:.0399,fixed:.39},installments:{pct:.0399,fixed:.39}},
   Asaas:{pix:null,one:{pct:.0299,fixed:.49},installments:{pct:.0349,fixed:.49}},
   PicPay:{pix:null,one:{pct:.0519,fixed:0},installments:{pct:.0519,fixed:0}},
+  Nubank:{pix:null,one:{pct:.0399,fixed:0},installments:{pct:.0599,fixed:0}}
 };
 function estimate(amount,gateway,method,installments){
   const r=method==='pix'?rates[gateway]?.pix:installments>1?rates[gateway]?.installments:rates[gateway]?.one;
   if(r==null)return {fee_known:false,fee_percent:null,fee_amount:null,net_amount:null};
   const fee=money(amount*(r.pct||0)+(r.fixed||0));return {fee_known:true,fee_percent:r.pct*100,fee_amount:fee,net_amount:money(amount-fee)};
 }
+function supportsMethod(g,method){
+  if(method==='pix')return ['PagBank','Asaas','PicPay','Nubank'].includes(g);
+  if(method==='wallet')return g==='PicPay';
+  if(method==='card')return g!=='';
+  return false;
+}
 function enabled(env,g){
   if(g==='PagBank')return !!env.PAGBANK_TOKEN;
-  if(g==='Stripe')return !!env.STRIPE_SECRET_KEY;
-  if(g==='Asaas')return !!env.ASAAS_API_KEY;
-  if(g==='PicPay')return !!env.PICPAY_CLIENT_ID&&!!env.PICPAY_CLIENT_SECRET;
+  if(g==='Stripe')return !!env.STRIPE_SECRET_KEY&&!!env.STRIPE_WEBHOOK_SECRET;
+  if(g==='Asaas')return !!env.ASAAS_API_KEY&&!!env.ASAAS_WEBHOOK_TOKEN;
+  if(g==='PicPay')return !!env.PICPAY_CLIENT_ID&&!!env.PICPAY_CLIENT_SECRET&&!!(env.PICPAY_WEBHOOK_TOKEN||env.PICPAY_NOTIFICATION_TOKEN);
+  if(g==='Nubank')return !!env.NUPAY_MERCHANT_KEY&&!!env.NUPAY_MERCHANT_TOKEN&&!!env.NUPAY_WEBHOOK_TOKEN;
   return false;
 }
 async function createPagBank({env,origin,commandId,amount,method,installments,customer,reference}){
   const token=env.PAGBANK_TOKEN,base=String(env.PAGBANK_API_BASE||'https://sandbox.api.pagseguro.com').replace(/\/$/,'');
   if(!token||!base)throw new Error('PagBank não configurado no servidor.');
   const notificationUrl=origin+'/api/webhooks/pagbank';
-  const payload={reference_id:reference,expiration_date:new Date(Date.now()+60*60*1000).toISOString(),customer_modifiable:true,items:[{reference_id:commandId||reference,name:'ED & DU | Terapia da Beleza',quantity:1,unit_amount:Math.round(amount*100)}],payment_methods:[{type:method==='pix'?'PIX':'CREDIT_CARD'}],payment_methods_configs:method==='card'?[{type:'CREDIT_CARD',config_options:[{option:'INSTALLMENTS_LIMIT',value:String(Math.max(1,Math.min(12,installments||1)))}]}]:[],soft_descriptor:'EDDU BELEZA',redirect_url:origin+'/?payment=return&command='+encodeURIComponent(commandId),return_url:origin+'/?payment=return&command='+encodeURIComponent(commandId),notification_urls:[notificationUrl],payment_notification_urls:[notificationUrl]};
+  const payload={reference_id:reference,expiration_date:new Date(Date.now()+60*60*1000).toISOString(),customer_modifiable:true,items:[{reference_id:commandId||reference,name:'ED & DU | Terapia da Beleza',quantity:1,unit_amount:Math.round(amount*100)}],payment_methods:[{type:method==='pix'?'PIX':method==='wallet'?'WALLET':'CREDIT_CARD'}],payment_methods_configs:method==='card'?[{type:'CREDIT_CARD',config_options:[{option:'INSTALLMENTS_LIMIT',value:String(Math.max(1,Math.min(12,installments||1)))}]}]:[],soft_descriptor:'EDDU BELEZA',redirect_url:origin+'/?payment=return&command='+encodeURIComponent(commandId),return_url:origin+'/?payment=return&command='+encodeURIComponent(commandId),notification_urls:[notificationUrl],payment_notification_urls:[notificationUrl]};
   const r=await fetch(base+'/checkouts',{method:'POST',headers:{Authorization:'Bearer '+token,Accept:'application/json','Content-Type':'application/json','x-idempotency-key':reference},body:JSON.stringify(payload)});
   const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data?.message||'PagBank recusou o Checkout.');
   const url=data?.links?.find(x=>x.rel==='PAY')?.href||'';if(!url)throw new Error('PagBank não retornou o link de pagamento.');
@@ -65,33 +106,72 @@ async function createPicPay({env,commandId,amount,method,installments,customer,r
   const r=await fetch(base+endpoint,{method:'POST',headers:{Accept:'application/json','Content-Type':'application/json',Authorization:'Bearer '+tb.access_token},body:JSON.stringify(payload)});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data?.message||'PicPay recusou a cobrança.');
   const first=Array.isArray(data?.transactions)?data.transactions[0]:null;return {checkoutUrl:null,externalId:String(data?.id||first?.transactionId||merchantChargeId),providerData:data,qrCode:first?.pix?.qrCode||first?.wallet?.qrCode||null,qrCodeBase64:first?.pix?.qrCodeBase64||first?.wallet?.qrCodeBase64||null};
 }
+async function createNubank({env,origin,commandId,amount,customer,reference}){
+  const key=env.NUPAY_MERCHANT_KEY,token=env.NUPAY_MERCHANT_TOKEN;if(!key||!token)throw new Error('Nubank/NuPay não configurado no servidor.');
+  const base=String(env.NUPAY_API_BASE||'https://sandbox-api.spinpay.com.br').replace(/\/$/,'');
+  const returnUrl=origin+'/?payment=nupay_return&command='+encodeURIComponent(commandId);
+  const callbackUrl=origin+'/api/webhooks/nubank';
+  const payload={currency:'BRL',reference,amount,returnUrl,callbackUrl,merchant:{displayName:'ED & DU | Terapia da Beleza'}};
+  const doc=digits(customer.document);if(doc)payload.shopper={identification:{type:doc.length===14?'CNPJ':'CPF',value:doc}};
+  const r=await fetch(base+'/v1/checkouts/sessions',{method:'POST',headers:{'X-Merchant-Key':key,'X-Merchant-Token':token,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(payload)});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data?.message||'NuPay recusou a sessão.');
+  return {checkoutUrl:data?.redirectUrl||null,externalId:String(data?.id||''),providerData:data};
+}
 export async function onRequestGet({request,env}){
+  const access=await requirePaymentAdmin(request,env);if(access.response)return access.response;
   const u=new URL(request.url);
+  if(u.searchParams.get('mode')==='nupay-status'){
+    if(!env.NEON_DATABASE_URL)return json({ok:false,error:'NEON_DATABASE_URL não configurada'},503);
+    const sessionId=clean(u.searchParams.get('sessionId')),commandId=clean(u.searchParams.get('commandId'));
+    if(!sessionId)return json({ok:false,error:'sessionId required'},400);
+    const key=env.NUPAY_MERCHANT_KEY,token=env.NUPAY_MERCHANT_TOKEN;if(!key||!token)return json({ok:false,error:'Nubank/NuPay não configurado'},503);
+    const base=String(env.NUPAY_API_BASE||'https://sandbox-api.spinpay.com.br').replace(/\/$/,'');const sql=neon(env.NEON_DATABASE_URL);
+    const rows=await sql`select * from payments where gateway='Nubank' and (external_id=${sessionId} or metadata->>'reference'=${u.searchParams.get('reference')||''}) order by created_at desc limit 1`;const pay=rows[0];
+    if(!pay)return json({ok:false,error:'Pagamento NuPay não encontrado'},404);
+    if(commandId&&String(pay.command_id||'')!==commandId)return json({ok:false,error:'A comanda não corresponde ao pagamento NuPay'},409);
+    if(['PAID','RECEIVED','CONFIRMED'].includes(String(pay.status||'').toUpperCase())){await recordGatewaySettlement(sql,pay);return json({ok:true,status:'PAID',duplicate:true,payment_id:pay.id,command_id:pay.command_id});}
+    const sr=await fetch(base+'/v1/checkouts/sessions/'+encodeURIComponent(sessionId),{headers:{'X-Merchant-Key':key,'X-Merchant-Token':token,Accept:'application/json'}});const session=await sr.json().catch(()=>({}));if(!sr.ok)return json({ok:false,error:'Falha ao consultar sessão NuPay',status:sr.status},502);
+    if(session.status==='canceled'||session.status==='expired'){await sql`update payments set status='CANCELLED',metadata=${JSON.stringify({...pay.metadata,lastSession:session})}::jsonb,updated_at=now() where id=${pay.id}`;return json({ok:true,status:session.status,payment:pay});}
+    if(session.status!=='approved')return json({ok:true,status:session.status,payment:pay});
+    if(!session.approvalCode)return json({ok:true,status:'approved',awaiting_capture:true,payment:pay});
+    const reference=String(pay.metadata?.reference||u.searchParams.get('reference')||('EDDU-'+(pay.command_id||crypto.randomUUID()))).slice(0,64);
+    const capturePayload={merchantOrderReference:reference,referenceId:reference,transactionId:sessionId,merchantName:'ED & DU | Terapia da Beleza',storeName:'ED & DU',amount:{value:Number(pay.amount),currency:'BRL'},paymentMethod:{type:'nupay',authorizationType:'manually_authorized'},paymentFlow:{returnUrl:new URL(request.url).origin+'/?payment=success&command='+encodeURIComponent(pay.command_id||commandId),cancelUrl:new URL(request.url).origin+'/?payment=cancelled&command='+encodeURIComponent(pay.command_id||commandId)},shopper:{reference:pay.client_id||pay.command_id||commandId},items:[{referenceId:pay.command_id||commandId,name:'ED & DU | Comanda',quantity:1,unitPrice:{value:Number(pay.amount),currency:'BRL'}}],delayToAutoCancel:15,approvalCode:session.approvalCode,selectedPaymentOption:session.selectedPaymentOption};
+    const pr=await fetch(base+'/v1/checkouts/payments',{method:'POST',headers:{'X-Merchant-Key':key,'X-Merchant-Token':token,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(capturePayload)});const pd=await pr.json().catch(()=>({}));if(!pr.ok)return json({ok:false,error:pd?.message||'NuPay recusou a captura'},502);
+    if(pd?.status==='COMPLETED'){const meta={...(pay.metadata||{}),lastSession:session,payment:pd};await sql`update payments set status='PAID',paid_at=coalesce(paid_at,now()),metadata=${JSON.stringify(meta)}::jsonb,updated_at=now() where id=${pay.id} and status not in ('PAID','RECEIVED','CONFIRMED')`;await recordGatewaySettlement(sql,{...pay,status:'PAID',paid_at:pay.paid_at||new Date().toISOString()});if(pay.command_id){const sums=await sql`select coalesce(sum(amount),0) total from payments where command_id=${pay.command_id} and upper(status) in ('PAID','RECEIVED','CONFIRMED')`;const cmds=await sql`select * from commands where id=${pay.command_id} limit 1`;const total=Number(cmds[0]?.total??0);if(cmds[0]&&Number(sums[0]?.total||0)+0.009>=total)await sql`update commands set status='closed',closed_at=coalesce(closed_at,now()),updated_at=now() where id=${pay.command_id} and status<>'closed'`;}
+      return json({ok:true,status:'PAID',payment_id:pay.id,command_id:pay.command_id});}
+    return json({ok:true,status:pd?.status||'pending',payment_id:pay.id});
+  }
   if(u.searchParams.get('mode')!=='rank')return json({ok:false,error:'mode=rank required'},400);
   const amount=money(u.searchParams.get('amount')),method=clean(u.searchParams.get('method')).toLowerCase()==='pix'?'pix':'card',installments=Math.max(1,Math.min(12,Number(u.searchParams.get('installments'))||1));
   if(!(amount>0))return json({ok:false,error:'amount required'},400);
-  const all=method==='pix'?['PagBank']:['PagBank','Asaas','Stripe'];
-  const ranking=all.map(g=>({gateway:g,available:enabled(env,g),...estimate(amount,g,method,installments)})).filter(x=>x.available).sort((a,b)=>(b.net_amount??-Infinity)-(a.net_amount??-Infinity)).map((x,i)=>({...x,position:i+1}));
+  const all=['PagBank','Asaas','Stripe','PicPay','Nubank'];
+  const ranking=all.filter(g=>supportsMethod(g,method)).map(g=>({gateway:g,available:enabled(env,g),...estimate(amount,g,method,installments)})).filter(x=>x.available).sort((a,b)=>(b.net_amount??-Infinity)-(a.net_amount??-Infinity)).map((x,i)=>({...x,position:i+1}));
   return json({ok:true,method,installments,currency:'BRL',ranking,generated_at:new Date().toISOString()});
 }
 export async function onRequestPost({request,env}){
-  if(!env.NEON_DATABASE_URL)return json({ok:false,error:'NEON_DATABASE_URL não configurada'},503);
+  const access=await requirePaymentAdmin(request,env);if(access.response)return access.response;
   let body;try{body=await request.json()}catch{return json({ok:false,error:'Invalid JSON'},400);}
   const amount=money(body.amount);const rawMethod=clean(body.method||body.billingType).toLowerCase().replace('credit_card','card');const method=['pix','card','wallet'].includes(rawMethod)?rawMethod:'card';
-  const gateway=clean(body.gateway||'').toLowerCase();const map={pagbank:'PagBank',stripe:'Stripe',asaas:'Asaas'};const provider=map[gateway];
-  const installments=Math.max(1,Math.min(12,Number(body.installments||body.installmentCount)||1));const commandId=clean(body.commandId||body.command_id);const clientId=clean(body.clientId||body.client_id);const idem=clean(request.headers.get('Idempotency-Key')||('EDDU-'+commandId+'-'+provider+'-'+method+'-'+installments));if(!(amount>0)||!provider)return json({ok:false,error:'gateway e valor válidos são obrigatórios'},400);if(method==='pix'&&provider!=='PagBank')return json({ok:false,error:'No EDDU, pagamentos por PIX devem ser gerados diretamente pelo checkout PagBank.'},400);if(method==='wallet'&&provider!=='PicPay')return json({ok:false,error:'Carteira é suportada neste fluxo apenas pelo PicPay'},400);
-  const sql=neon(env.NEON_DATABASE_URL);const [existing]=await sql`select id,command_id,client_id,amount,method,gateway,installments,status,external_id,metadata from payments where idempotency_key=\${idem} limit 1`;if(existing)return json({ok:true,replayed:true,payment:existing,checkoutUrl:existing?.metadata?.checkoutUrl||null,qrCode:existing?.metadata?.qrCode||null});
+  const gateway=clean(body.gateway||'').toLowerCase();const map={pagbank:'PagBank',stripe:'Stripe',asaas:'Asaas',picpay:'PicPay',nubank:'Nubank',nupay:'Nubank'};const provider=map[gateway];
+  const installments=Math.max(1,Math.min(12,Number(body.installments||body.installmentCount)||1));const commandId=clean(body.commandId||body.command_id);let clientId=clean(body.clientId||body.client_id);const idem=clean(request.headers.get('Idempotency-Key')||('EDDU-'+commandId+'-'+provider+'-'+method+'-'+installments));if(!(amount>0)||!provider)return json({ok:false,error:'gateway e valor válidos são obrigatórios'},400);if(method==='wallet'&&provider!=='PicPay')return json({ok:false,error:'Carteira é suportada neste fluxo apenas pelo PicPay'},400);
+  if(!UUID.test(commandId))return json({ok:false,error:'A comanda precisa estar salva no Neon antes de gerar a cobrança.'},409);
+  const sql=neon(env.NEON_DATABASE_URL);
+  const [command]=await sql`select id,client_id,total,status from public.commands where id=${commandId} limit 1`;
+  if(!command)return json({ok:false,error:'Comanda não encontrada no Neon. Salve a comanda antes de cobrar.'},404);
+  if(['closed','cancelled','refunded'].includes(String(command.status||'').toLowerCase()))return json({ok:false,error:'Esta comanda já foi encerrada ou cancelada.'},409);
+  if(Math.abs(Number(command.total||0)-amount)>0.009)return json({ok:false,error:'O valor enviado não corresponde ao total gravado na comanda.'},409);
+  clientId=clientId||String(command.client_id||'');
+  const [existing]=await sql`select id,command_id,client_id,amount,method,gateway,installments,status,external_id,metadata from payments where idempotency_key=${idem} limit 1`;if(existing)return json({ok:true,replayed:true,payment:existing,checkoutUrl:existing?.metadata?.checkoutUrl||null,qrCode:existing?.metadata?.qrCode||null});
   const origin=new URL(request.url).origin;const reference=('EDDU-'+(commandId||crypto.randomUUID())).slice(0,64);const customer={name:clean(body.customerName||body.customer?.name||'Cliente ED & DU'),email:clean(body.customerEmail||body.customer?.email),phone:clean(body.customerPhone||body.customer?.phone),document:clean(body.customerDocument||body.customer?.document),temporary_card_token:clean(body.temporary_card_token)};
   let result;
   if(provider==='PagBank')result=await createPagBank({env,origin,commandId,amount,method,installments,customer,reference});
   else if(provider==='Stripe')result=await createStripe({env,origin,commandId,amount,installments,description:clean(body.description||'Comanda ED & DU'),reference});
   else if(provider==='Asaas')result=await createAsaas({env,origin,commandId,amount,method,installments,customer,reference});
   else if(provider==='PicPay')result=await createPicPay({env,commandId,amount,method,installments,customer,reference});
-  else return json({ok:false,error:'Este gateway não está integrado.'},400);
+  else result=await createNubank({env,origin,commandId,amount,customer,reference});
   const est=estimate(amount,provider,method,installments);
   const metadata={checkoutUrl:result.checkoutUrl||null,qrCode:result.qrCode||null,qrCodeBase64:result.qrCodeBase64||null,reference,providerData:result.providerData||null};
   const validCommand=UUID.test(commandId),validClient=UUID.test(clientId);
-  const [row]=await sql`insert into payments(command_id,client_id,amount,method,gateway,installments,status,external_id,idempotency_key,metadata) values(\${validCommand?commandId:null},\${validClient?clientId:null},\${amount},\${method==='pix'?'PIX':'CREDIT_CARD'},\${provider},\${installments},'CHECKOUT_PENDING',\${result.externalId||null},\${idem},\${JSON.stringify(metadata)}::jsonb) returning id,command_id,client_id,amount,method,gateway,installments,status,external_id,metadata`;
-  if(validCommand)await sql`update commands set status='Aguardando pagamento',updated_at=now() where id=\${commandId} and status<>'Fechada'`;
+  const [row]=await sql`insert into payments(command_id,client_id,amount,method,gateway,installments,status,external_id,idempotency_key,metadata) values(${validCommand?commandId:null},${validClient?clientId:null},${amount},${method==='pix'?'PIX':'CREDIT_CARD'},${provider},${installments},'CHECKOUT_PENDING',${result.externalId||null},${idem},${JSON.stringify(metadata)}::jsonb) returning id,command_id,client_id,amount,method,gateway,installments,status,external_id,metadata`;
+  if(validCommand)await sql`update commands set status='payment_pending',updated_at=now() where id=${commandId} and status<>'closed'`;
   return json({ok:true,payment:row,checkoutUrl:result.checkoutUrl||null,qrCode:result.qrCode||null,qrCodeBase64:result.qrCodeBase64||null,provider:provider},201);
 }

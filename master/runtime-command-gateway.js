@@ -57,7 +57,7 @@
         providers.map((p,i)=>'<button class="option gateway-choice" data-gateway="'+p.id+'" type="button" style="width:100%;text-align:left;margin:8px 0">'+
           '<span><b>'+(i+1)+'. '+p.label+'</b><small>'+p.detail+'</small></span><strong>›</strong></button>').join('')+
         '</div>'+
-        '<button class="btn full" onclick="openSheet(\\'command\\')">← Voltar à comanda</button>';
+        '<button class="btn full" onclick="openSheet(&quot;command&quot;)">← Voltar à comanda</button>';
     };
     open('gatewayRanking');
     setTimeout(function(){
@@ -88,7 +88,7 @@
         [1,2,3,4,5,6,7,8,9,10,11,12].map(n=>'<option value="'+n+'">'+n+'x</option>').join('')+
         '</select><div id="v51GatewayPreview" class="card"></div></div>'+
         '<button class="btn primary full" id="v51ConfirmPayment" type="button">✓ Confirmar cobrança</button>'+
-        '<button class="btn full" type="button" onclick="openSheet(\\'gatewayRanking\\')">← Trocar gateway</button>';
+        '<button class="btn full" type="button" onclick="openSheet(&quot;gatewayRanking&quot;)">← Trocar gateway</button>';
     };
     open('gatewayPayment');
     setTimeout(function(){
@@ -118,8 +118,8 @@
 
   function isCloseCommandElement(el){
     if(!el)return false;
-    const text=((el.innerText||el.textContent||'')+' '+(el.getAttribute('aria-label')||'')).toLowerCase().replace(/\\s+/g,' ');
-    return /(fechar|finalizar|encerrar)\\s*(comanda|atendimento)|fechar\\s*comanda|finalizar\\s*comanda/.test(text);
+    const text=((el.innerText||el.textContent||'')+' '+(el.getAttribute('aria-label')||'')).toLowerCase().replace(/\s+/g,' ');
+    return /(fechar|finalizar|encerrar)\s*(comanda|atendimento)|fechar\s*comanda|finalizar\s*comanda/.test(text);
   }
 
   document.addEventListener('click',function(e){
