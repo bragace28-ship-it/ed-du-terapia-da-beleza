@@ -152,17 +152,20 @@ async function pushNewAgendaBlocks(){
     let starts=block.starts_at||block.startsAt||'';
     let ends=block.ends_at||block.endsAt||'';
     const fullDay=block.fullDay===true||block.wholeDay===true||(block.start==='00:00'&&block.end==='23:59');
-    if(!starts){
-      if(!date)throw new Error('Bloqueio local '+local+' sem data válida.');
-      starts=new Date(date+'T'+(block.start||'00:00')+':00').toISOString();
-    }
-    if(!ends){
-      if(!date)throw new Error('Bloqueio local '+local+' sem data válida.');
-      if(fullDay){
-        const nextDay=new Date(date+'T00:00:00');
-        nextDay.setDate(nextDay.getDate()+1);
-        ends=nextDay.toISOString();
-      }else{
+    if(fullDay){
+      if(!date)throw new Error('Bloqueio de dia inteiro '+local+' sem data válida.');
+      const dayStart=new Date(date+'T00:00:00');
+      const nextDay=new Date(dayStart);
+      nextDay.setDate(nextDay.getDate()+1);
+      starts=dayStart.toISOString();
+      ends=nextDay.toISOString();
+    }else{
+      if(!starts){
+        if(!date)throw new Error('Bloqueio local '+local+' sem data válida.');
+        starts=new Date(date+'T'+(block.start||'00:00')+':00').toISOString();
+      }
+      if(!ends){
+        if(!date)throw new Error('Bloqueio local '+local+' sem data válida.');
         ends=new Date(date+'T'+(block.end||'23:59')+':00').toISOString();
       }
     }
