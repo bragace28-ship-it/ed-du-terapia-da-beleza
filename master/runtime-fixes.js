@@ -41,7 +41,7 @@
       const start=bookingMinute(time),end=start+duration;
       if(end>1440)return false;
       const conflict=apps.some(a=>{
-        if(a.date!==day||['cancelado','cancelled','canceled'].includes(String(a.status||'').toLowerCase()))return false;
+        if(a.date!==day||['cancelado','cancelled','canceled','no_show'].includes(String(a.statusCode||a.status||'').toLowerCase()))return false;
         const prof=a.professionalId||a.professional_id;
         if(prof&&prof!==professional.id)return false;
         return bookingMinute(a.start)<end&&bookingMinute(a.end)>start;
