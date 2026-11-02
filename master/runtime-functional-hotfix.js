@@ -88,7 +88,7 @@
     if(store.appointments?.some(a=>a.date===d))return (toastF('Existem agendamentos nesse dia. Cancele/remaneje antes de bloquear.'),false);
     store.blocks=store.blocks.filter(b=>!(b.date===d&&b.start==='00:00'&&b.end==='23:59'));
     store.blocks.push({id:'DAY-'+Date.now(),date:d,start:'00:00',end:'23:59',reason:r,wholeDay:true,fullDay:true});
-    if(!write('eddu_master_data_v1',store))return (toastF('Não foi possível preparar o bloqueio local.'),false);
+    try{localStorage.setItem('eddu_master_data_v1',JSON.stringify(store))}catch(e){return (toastF('Não foi possível preparar o bloqueio local: '+String(e?.message||e)),false)}
     return true;
   };
 
