@@ -14,6 +14,44 @@ function clientOf(c){const x=c?.client||c?.customer||c?.cliente||{};return typeo
 function open(route){return typeof window.openSheet==='function'?window.openSheet(route):typeof window.__masterOpenSheet==='function'?window.__masterOpenSheet(route):false}
 function persist(p){try{localStorage.setItem('eddu_gateway_checkout_pending',JSON.stringify(p))}catch(_){}}
 function providerLabel(g){return g==='Nubank'?'Nubank / NuPay':g}
+const idMapKey='eddu_neon_id_map_v1';
+function idMap(){try{return JSON.parse(localStorage.getItem(idMapKey)||'{}')}catch(_){return {}}}
+function saveIdMap(m){localStorage.setItem(idMapKey,JSON.stringify(m))}
+async function tableRows(table){const c=window.__EDDU_NEON_CLIENT;if(!c)throw new Error('Neon Auth indisponível.');const r=await c.from(table).select('*').limit(500);if(r.error)throw new Error(r.error.message||('Falha ao consultar '+table));return r.data||[]}
+async function findOrCreate(table,name,fields){
+ const label=String(name||'').trim();if(!label)throw new Error('Informe '+table+' antes de salvar.');
+ const rows=await tableRows(table),found=rows.find(x=>String(x.name||'').trim().toLowerCase()===label.toLowerCase());if(found)return found;
+ if(window.__EDDU_NEON_ENVIRONMENT!=='isolated-homologation')throw new Error('O cadastro '+label+' não existe no banco. Cadastre-o no módulo correspondente antes de continuar.');
+ const c=window.__EDDU_NEON_CLIENT,r=await c.from(table).insert({name:label,...fields}).select('*').limit(1);if(r.error)throw new Error(r.error.message||('Falha ao criar '+label));const row=Array.isArray(r.data)?r.data[0]:r.data;if(!row?.id)throw new Error('Neon não confirmou o cadastro de '+label);return row;
+}
+async function persistCommandV46(c){
+ const client=await findOrCreate('clients',c.client,{phone:c.phone||null,active:true});
+ const map=idMap();map.commands=map.commands||{};map.clients=map.clients||{};map.clients[c.client]=client.id;
+ const items=Array.isArray(c.items)&&c.items.length?c.items:[{service:c.service||'Serviço',qty:1,price:Number(c.grossAmount||0),hairLength:c.hairLength||''}];
+ const resolved=[];
+ for(const item of items){
+  const svcName=item.service||c.service||'Serviço';
+  const cat=(window.EDDU_SERVICES||[]).find(x=>String(x.name).toLowerCase()===String(svcName).toLowerCase())||{};
+  const svc=await findOrCreate('services',svcName,{description:'Cadastro criado em homologação Master V46',price:Number(item.price||cat.base||0),duration_minutes:60,price_base:Number(cat.base||item.price||0),price_long:Number(cat.long||item.price||0),service_cost:Number(cat.cost||0),active:true});
+  map.services=map.services||{};map.services[svcName]=svc.id;
+  resolved.push({item,svc});
+ }
+ const serverId=map.commands[c.id]||null;
+ const total=Number(c.netAmount??c.total??c.grossAmount??0),subtotal=Number(c.grossAmount??total),discount=Number(c.discount||0);
+ const payload={client_id:client.id,status:'open',discount,subtotal,total,total_cost:resolved.reduce((n,x)=>n+Number(x.svc.service_cost||0)*Math.max(1,Number(x.item.qty||1)),0),commission:0,profit:total-resolved.reduce((n,x)=>n+Number(x.svc.service_cost||0)*Math.max(1,Number(x.item.qty||1)),0)};
+ const db=window.__EDDU_NEON_CLIENT;
+ let result=serverId?await db.from('commands').update(payload).eq('id',serverId).select('*').limit(1):await db.from('commands').insert(payload).select('*').limit(1);
+ if(result.error)throw new Error(result.error.message||'Falha ao gravar comanda no Neon');
+ const row=Array.isArray(result.data)?result.data[0]:result.data;if(!row?.id)throw new Error('Neon não confirmou o ID da comanda');
+ map.commands[c.id]=row.id;saveIdMap(map);
+ const removed=await db.from('command_items').delete().eq('command_id',row.id);if(removed.error)throw new Error(removed.error.message||'Falha ao atualizar itens da comanda');
+ for(const x of resolved){
+  const qty=Math.max(1,Number(x.item.qty||1)),price=Number(x.item.price||0);
+  const inserted=await db.from('command_items').insert({command_id:row.id,item_type:'service',service_id:x.svc.id,description:String(x.item.service||c.service||'Serviço')+(x.item.hairLength?' · '+x.item.hairLength:''),quantity:qty,unit_price:price,total:qty*price,unit_cost:Number(x.svc.service_cost||0),commission_percent:0});
+  if(inserted.error)throw new Error(inserted.error.message||'Falha ao gravar item da comanda');
+ }
+ return {id:row.id,total:Number(row.total),client_id:client.id,status:row.status};
+}
 async function authHeaders(){
  const client=window.__EDDU_NEON_CLIENT;
  if(!client){if(typeof window.__EDDU_NEON_AUTH_REQUIRED==='function')window.__EDDU_NEON_AUTH_REQUIRED();throw new Error('Neon Auth indisponível.')}
@@ -66,5 +104,23 @@ function isClose(el){if(!el)return false;const t=((el.innerText||el.textContent|
 document.addEventListener('click',e=>{const el=e.target?.closest?.('button,a,[role="button"],[onclick]');if(!isClose(el)||el.closest('.gateway-choice')||el.id==='v52Checkout')return;e.preventDefault();e.stopImmediatePropagation();window.__edduOpenGatewayRanking(currentCommand())},true);
 window.closeCommandAndOpenGateway=c=>window.__edduOpenGatewayRanking(c||currentCommand());
 setTimeout(async()=>{try{const u=new URL(location.href);if(u.searchParams.get('payment')!=='nupay_return')return;const sessionId=u.searchParams.get('sessionId');const commandId=u.searchParams.get('command');if(!sessionId)return;const r=await fetch('/api/payments?mode=nupay-status&sessionId='+encodeURIComponent(sessionId)+'&commandId='+encodeURIComponent(commandId||''),{headers:await authHeaders()});const d=await r.json().catch(()=>({}));if(d.status==='PAID'){toast('✓ NuPay confirmou o pagamento.');open('payments')}else if(d.status==='canceled'||d.status==='expired'){toast('NuPay encerrou a sessão sem pagamento.')}else if(d.status==='pending'||d.status==='approved'){toast('NuPay ainda está aguardando a conclusão do pagamento.')}}catch(e){console.warn('NuPay return handling',e)}},250);
+const originalSaveCommandV46=window.saveCommandV30;
+if(typeof originalSaveCommandV46==='function'){
+ window.saveCommandV30=function(id){
+  const result=originalSaveCommandV46.apply(this,arguments);
+  const c=window.state?.commands?.find(x=>x.id===id)||window.state?.commands?.find(x=>x.id===window.state?.activeCommandId);
+  if(!c)return Promise.reject(new Error('Comanda local não encontrada.'));
+  return persistCommandV46(c).then(db=>{c.__neonId=db.id;toast('✓ Comanda gravada no Neon.');return db}).catch(e=>{toast('Falha ao gravar comanda: '+String(e?.message||e));throw e});
+ };
+}
+window.saveAndPaymentV30=async function(id){
+ const c=window.state?.commands?.find(x=>x.id===id)||window.state?.commands?.find(x=>x.id===window.state?.activeCommandId);
+ if(typeof window.saveCommandV30!=='function'||!c)throw new Error('Comanda não encontrada.');
+ const db=await window.saveCommandV30(id||c.id);
+ const command={id:db.id,total:db.total,client:{id:db.client_id,name:c.client,email:'',phone:c.phone||''},items:c.items||[]};
+ window.__edduPendingPayment={commandId:db.id,amount:db.total,command,client:command.client};
+ window.__edduOpenGatewayRanking(command);
+ return db;
+};
 window.EDDU_MASTER_V53_UNIFIED_GATEWAYS=true;
 })();
