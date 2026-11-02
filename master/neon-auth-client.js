@@ -23,11 +23,11 @@ const EDDU_NEON_DATA_API_URL='https://'+EDDU_NEON_ENDPOINT+'.apirest.c-6.us-east
     window.EDDU_NEON_GET_TOKEN=async()=>client.auth.getJWTToken();
 
     window.EDDU_NEON_SIGNIN=async(email,password)=>{
-      const result=await client.auth.signIn.email({email,password});
+      const result=await client.auth.signIn.email({email,password,callbackURL:location.origin+'/'});
       if(result?.error) throw new Error(result.error.message||'Falha no login');
       return result;
     };
-    window.EDDU_NEON_SIGNUP=async(email,password,name)=>{const result=await client.auth.signUp.email({email,password,name});if(result?.error)throw new Error(result.error.message||'Falha no cadastro');return result;};
+    window.EDDU_NEON_SIGNUP=async(email,password,name)=>{const result=await client.auth.signUp.email({email,password,name,callbackURL:location.origin+'/'});if(result?.error)throw new Error(result.error.message||'Falha no cadastro');return result;};
     window.EDDU_NEON_SIGNOUT=async()=>client.auth.signOut();
 
     window.__EDDU_NEON_AUTH_REQUIRED=()=>{
