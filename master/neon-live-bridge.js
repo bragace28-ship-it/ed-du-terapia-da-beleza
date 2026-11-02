@@ -152,7 +152,8 @@ async function pushNewAgendaBlocks(){
     let starts=block.starts_at||block.startsAt||'';
     let ends=block.ends_at||block.endsAt||'';
     const existingDuration=starts&&ends?new Date(ends).getTime()-new Date(starts).getTime():0;
-    const fullDay=block.fullDay===true||block.wholeDay===true||(String(block.start||'').slice(0,5)==='00:00'&&String(block.end||'').slice(0,5)==='23:59')||existingDuration>=86340000;
+    const blockStart=String(block.start||'00:00').slice(0,5),blockEnd=String(block.end||'23:59').slice(0,5);
+    const fullDay=block.fullDay===true||block.wholeDay===true||(blockStart==='00:00'&&blockEnd==='23:59')||existingDuration>=86340000;
     if(fullDay){
       if(!date)throw new Error('Bloqueio de dia inteiro '+local+' sem data válida.');
       const dayStart=new Date(date+'T00:00:00');
