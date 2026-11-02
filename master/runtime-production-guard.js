@@ -126,7 +126,7 @@ window.saveAgendaBlockDayM=async function(){
  if(!date){if(window.toast)window.toast('Informe a data.');return false;}
  const client=window.__EDDU_NEON_CLIENT;
  if(!client||window.__EDDU_NEON_READY!==true||!navigator.onLine){if(window.toast)window.toast('Neon indisponível. O bloqueio não foi salvo.');return false;}
- const start=new Date(date+'T00:00:00'),end=new Date(date+'T23:59:59');
+ const start=new Date(date+'T00:00:00'),end=new Date(date+'T00:00:00');end.setDate(end.getDate()+1);
  if(!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())){if(window.toast)window.toast('Data inválida.');return false;}
  try{
   const [appointmentsResult,blocksResult]=await Promise.all([
@@ -150,6 +150,7 @@ disabled('createManualCoupon','Criação de cupom');
 disabled('v46AnalyzeCardInvoice','Upload de fatura');
 disabled('v46SendGiftCardBulkTest','Envio em massa de Gift Cards');
 disabled('createTestReceivable','Recebível de teste');
+disabled('v46AddTestPayment','Pagamento de teste');
 disabled('v8PrintReport','Relatório financeiro local');
 disabled('v46DownloadFinancialReport','Relatório financeiro local');
 try{if(window.state){window.state.command={client:'',service:'',amount:0,method:'',brand:'',installments:1,gateway:'',closed:false,grossAmount:0,netAmount:0,discount:0,coupon:'',cost:0};window.state.referrals=[];window.state.points=0;window.state.financial={grossSales:0,netSales:0,expenses:0,cpv:0};}}catch(_){}
