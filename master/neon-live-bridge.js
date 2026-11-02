@@ -80,6 +80,15 @@ function dbAppointmentToUi(row,data){
  const name=(table,id)=>((data[table]||[]).find(x=>x.id===id)?.name||'');
  return {id:local,serverId:row.id,date:date(start),start:clock(start),end:clock(end),client:name('clients',row.client_id),professional:name('professionals',row.professional_id),service:name('services',row.service_id),status:String(row.status||'requested')==='confirmed'?'Confirmado':'Pendente',notes:row.notes||''};
 }
+function dbAgendaBlockToUi(row){
+ const local=Object.keys(stateMap.agenda_blocks||{}).find(k=>stateMap.agenda_blocks[k]===row.id)||row.id;
+ const start=new Date(row.starts_at),end=new Date(row.ends_at);
+ const clock=d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+ const date=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+ const startDate=date(start),endDate=date(end),startClock=clock(start);
+ const fullDay=startClock==='00:00'&&((endDate!==startDate)||clock(end)==='23:59');
+ return {id:local,serverId:row.id,date:startDate,start:startClock,end:fullDay?'23:59':clock(end),reason:row.reason||'',fullDay,wholeDay:fullDay};
+}
 async function load(entity){
   try{
     const r=await api(entity);
@@ -96,7 +105,7 @@ async function load(entity){
     if(entity==='clients'||entity==='professionals'||entity==='services'||entity==='products')data[entity]=d;
     if(entity==='commands')data.commands=d;
     if(entity==='financial_transactions')data.financialTransactions=d;
-    if(entity==='agenda_blocks')data.blocks=d;
+    if(entity==='agenda_blocks')data.blocks=d.map(dbAgendaBlockToUi);
     saveAppData(data);
     if(!write('eddu_neon_'+entity,d))throw new Error(window.__EDDU_NEON_LAST_ERROR||'Falha ao atualizar cache local');
     return {ok:true,entity,count:d.length};
@@ -133,6 +142,48 @@ async function pushNewProducts(){
   const data=appData();
   await pushMapped('products',Array.isArray(data.products)?data.products:[],normalizeProduct);
 }
+async function pushNewAgendaBlocks(){
+  const data=appData(),items=Array.isArray(data.blocks)?data.blocks:[];
+  stateMap.agenda_blocks=stateMap.agenda_blocks||{};
+  for(const block of items){
+    const local=String(block?.id||((block?.date||'')+'|'+(block?.start||'00:00')+'|'+(block?.reason||'')));
+    if(!local||stateMap.agenda_blocks[local])continue;
+    const date=String(block.date||'').trim();
+    let starts=block.starts_at||block.startsAt||'';
+    let ends=block.ends_at||block.endsAt||'';
+    const fullDay=block.fullDay===true||block.wholeDay===true||(block.start==='00:00'&&block.end==='23:59');
+    if(!starts){
+      if(!date)throw new Error('Bloqueio local '+local+' sem data válida.');
+      starts=new Date(date+'T'+(block.start||'00:00')+':00').toISOString();
+    }
+    if(!ends){
+      if(!date)throw new Error('Bloqueio local '+local+' sem data válida.');
+      if(fullDay){
+        const nextDay=new Date(date+'T00:00:00');
+        nextDay.setDate(nextDay.getDate()+1);
+        ends=nextDay.toISOString();
+      }else{
+        ends=new Date(date+'T'+(block.end||'23:59')+':00').toISOString();
+      }
+    }
+    if(!Number.isFinite(new Date(starts).getTime())||!Number.isFinite(new Date(ends).getTime())||new Date(ends)<=new Date(starts))
+      throw new Error('Bloqueio local '+local+' possui intervalo inválido.');
+    const professionalValue=block.professional_id||block.professionalId||block.professional||null;
+    const professional_id=professionalValue?await resolveRecordId('professionals',professionalValue):null;
+    const payload={professional_id,starts_at:starts,ends_at:ends,reason:String(block.reason||'Bloqueio de agenda')};
+    try{
+      const r=await api('agenda_blocks','POST',payload);
+      const inserted=rowOf(r);
+      if(!inserted?.id)throw new Error('Servidor não confirmou ID do bloqueio.');
+      stateMap.agenda_blocks[local]=inserted.id;
+    }catch(e){
+      window.__EDDU_NEON_LAST_ERROR=String(e.message||e);
+      throw new Error('Falha ao persistir agenda_blocks ('+local+'): '+window.__EDDU_NEON_LAST_ERROR);
+    }
+  }
+  if(!write(mapKey,stateMap))throw new Error(window.__EDDU_NEON_LAST_ERROR||'Falha ao gravar mapa de bloqueios');
+}
+
 async function pushNewAppointments(){
   const data=appData();
   const apps=Array.isArray(data.appointments)?data.appointments:[];
@@ -201,6 +252,7 @@ async function sync(){
     await pushNewServices();
     await pushNewProducts();
     await pushNewAppointments();
+    await pushNewAgendaBlocks();
     await pushGenericEntities();
     await load('clients');
     await load('professionals');
@@ -233,6 +285,7 @@ function wrapMutation(name){
 wrapMutation('saveAgendaAddM');
 wrapMutation('saveAgendaEditM');
 wrapMutation('saveAgendaDayBlockM');
+wrapMutation('saveAgendaBlockDayM');
 wrapMutation('saveAgendaBlockM');
 const originalPersist=window.persist;
 if(typeof originalPersist==='function'&&!window.__EDDU_NEON_PERSIST_WRAPPED){
