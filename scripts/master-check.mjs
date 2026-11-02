@@ -31,6 +31,9 @@ if(!agendaRuntime.includes("Agendado:'confirmed'") || !agendaRuntime.includes("P
   throw new Error('MASTER agenda status mapping does not match the Neon appointments constraint.');
 if(/insert\(\{[^}]*\bsource\s*:/.test(agendaRuntime))
   throw new Error('MASTER appointment insert contains a field not present in the Neon appointments schema.');
+const appointmentMigration=await readFile(resolve(root,'db','007_master_v46_appointments_service_fk.sql'),'utf8');
+if(!/add column if not exists service_id uuid/i.test(appointmentMigration) || !/foreign key \(service_id\) references public\.services\(id\)/i.test(appointmentMigration))
+  throw new Error('MASTER appointment service relationship migration is incomplete.');
 
 const runtimeFiles=[
   'master/runtime-functional-hotfix.js',
