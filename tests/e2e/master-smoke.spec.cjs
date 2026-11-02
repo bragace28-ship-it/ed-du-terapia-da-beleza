@@ -77,6 +77,7 @@ test('Agenda appointment save sends a schema-valid Neon payload (mocked Data API
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1800);
+  await page.waitForFunction(() => window.__EDDU_NEON_SYNCING !== true, null, { timeout: 10000 }).catch(() => {});
 
   const result = await page.evaluate(async () => {
     const ids = {
@@ -169,6 +170,7 @@ test('Full-day agenda blocks are persisted and reloaded from Neon (mocked Data A
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1800);
+  await page.waitForFunction(() => window.__EDDU_NEON_SYNCING !== true, null, { timeout: 10000 }).catch(() => {});
 
   const result = await page.evaluate(async () => {
     const tables = { clients: [], professionals: [], services: [], products: [], appointments: [], agenda_blocks: [], commands: [], financial_transactions: [] };
