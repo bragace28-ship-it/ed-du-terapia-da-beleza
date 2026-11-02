@@ -72,6 +72,14 @@ async function normalizeAppointment(x){
   const ends=x.ends_at||x.endsAt||new Date((x.date||'')+'T'+(x.end||'01:00')).toISOString();
   return {client_id:await resolveRecordId('clients',clientValue),professional_id:await resolveRecordId('professionals',professionalValue),service_id:await resolveRecordId('services',serviceValue),starts_at:starts,ends_at:ends,status:String(x.status||'confirmed').toLowerCase().replace('confirmado','confirmed').replace('pendente','requested'),notes:x.notes||null};
 }
+function dbAppointmentToUi(row,data){
+ const local=Object.keys(stateMap.appointments||{}).find(k=>stateMap.appointments[k]===row.id)||row.id;
+ const start=new Date(row.starts_at),end=new Date(row.ends_at);
+ const clock=d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+ const date=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+ const name=(table,id)=>((data[table]||[]).find(x=>x.id===id)?.name||'');
+ return {id:local,serverId:row.id,date:date(start),start:clock(start),end:clock(end),client:name('clients',row.client_id),professional:name('professionals',row.professional_id),service:name('services',row.service_id),status:String(row.status||'requested')==='confirmed'?'Confirmado':'Pendente',notes:row.notes||''};
+}
 async function load(entity){
   try{
     const r=await api(entity);
@@ -84,7 +92,7 @@ async function load(entity){
     if(entity==='professionals')data.professionals=d;
     if(entity==='services')data.services=d;
     if(entity==='products')data.products=d;
-    if(entity==='appointments')data.appointments=d;
+    if(entity==='appointments')data.appointments=d.map(row=>dbAppointmentToUi(row,data));
     if(entity==='clients'||entity==='professionals'||entity==='services'||entity==='products')data[entity]=d;
     if(entity==='commands')data.commands=d;
     if(entity==='financial_transactions')data.financialTransactions=d;
