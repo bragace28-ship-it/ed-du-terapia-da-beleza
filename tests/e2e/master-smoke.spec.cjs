@@ -248,3 +248,37 @@ test('Full-day agenda blocks are persisted and reloaded from Neon (mocked Data A
   }
   expect(result.localBlocks).toHaveLength(2);
 });
+
+
+test('Booking screen uses real Neon records instead of seeded demo values', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1800);
+  await page.waitForFunction(() => window.__EDDU_NEON_SYNCING !== true, null, { timeout: 10000 }).catch(() => {});
+
+  const result = await page.evaluate(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const day = [tomorrow.getFullYear(), String(tomorrow.getMonth() + 1).padStart(2, '0'), String(tomorrow.getDate()).padStart(2, '0')].join('-');
+    const client = { id: '77777777-7777-4777-8777-777777777777', name: 'Cliente QA Real', active: true };
+    const professional = { id: '88888888-8888-4888-8888-888888888888', name: 'Profissional QA Real', active: true };
+    const service = { id: '99999999-9999-4999-8999-999999999999', name: 'Serviço QA Real', active: true, duration_minutes: 60, price: 135 };
+    window.data = { clients: [client], professionals: [professional], services: [service], appointments: [], blocks: [] };
+    window.v46BookingDay = day;
+    window.v46BookingClient = client.id;
+    window.v46BookingProfessional = professional.id;
+    window.v46BookingService = service.id;
+    window.v46BookingTime = '10:00';
+    const html = window.views?.booking?.();
+    return { html: String(html || ''), hasConfirmHandler: typeof window.v46ConfirmBooking === 'function' };
+  });
+
+  expect(result.hasConfirmHandler).toBe(true);
+  expect(result.html).toContain('Cliente QA Real');
+  expect(result.html).toContain('Profissional QA Real');
+  expect(result.html).toContain('Serviço QA Real');
+  expect(result.html).toContain('10:00');
+  expect(result.html).not.toContain('Mariana');
+  expect(result.html).not.toContain('Limpeza de Pele');
+  expect(result.html).not.toContain('Profissional ED');
+});
