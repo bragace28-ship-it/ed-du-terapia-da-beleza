@@ -43,6 +43,14 @@ const bookingEnd=runtimeFixes.indexOf('window.v46SignTerm=',bookingStart);
 const bookingSource=bookingStart>=0&&bookingEnd>bookingStart?runtimeFixes.slice(bookingStart,bookingEnd):'';
 if(!bookingSource||/Mariana|Profissional ED|Limpeza de Pele|write\('eddu_data',arr\)/.test(bookingSource))
   throw new Error('MASTER booking flow still contains demo records or local-only persistence.');
+const productionGuard=await readFile(resolve(root,'master','runtime-production-guard.js'),'utf8');
+const productionBlockStart=productionGuard.indexOf('window.saveAgendaBlockDayM=async function');
+const productionBlockEnd=productionGuard.indexOf('\n};',productionBlockStart);
+const productionBlock=productionBlockStart>=0&&productionBlockEnd>productionBlockStart?productionGuard.slice(productionBlockStart,productionBlockEnd):'';
+if(!productionBlock.includes('end.setDate(end.getDate()+1)')||productionBlock.includes("T23:59:59"))
+  throw new Error('Production full-day block must use a midnight-to-midnight interval.');
+if(!productionGuard.includes("disabled('v46AddTestPayment'"))
+  throw new Error('Production must disable the test-payment helper.');
 const blockDayStart=agendaRuntime.indexOf('window.saveAgendaBlockDayM=function');
 const blockDayEnd=agendaRuntime.indexOf('};',blockDayStart);
 const blockDaySource=blockDayStart>=0&&blockDayEnd>blockDayStart?agendaRuntime.slice(blockDayStart,blockDayEnd):'';
