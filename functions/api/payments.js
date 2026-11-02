@@ -21,7 +21,7 @@ function neonJwks(env){
 }
 async function requirePaymentAdmin(request,env){
   if(!env.NEON_DATABASE_URL)return {response:json({ok:false,error:'NEON_DATABASE_URL não configurada'},503)};
-  const token=(request.headers.get('authorization')||'').match(/^Bearer\\s+(.+)$/i)?.[1];
+  const token=(request.headers.get('authorization')||'').match(/^Bearer\s+(.+)$/i)?.[1];
   if(!token)return {response:json({ok:false,error:'Autenticação obrigatória para operações de pagamento.'},401)};
   try{
     const {payload}=await jwtVerify(token,neonJwks(env),{clockTolerance:5});
