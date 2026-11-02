@@ -114,7 +114,7 @@ jobs:
           fi
           put_secret() {
             local name="$1"
-            local value="${!name:-}"
+            local value; value="$(printenv "$name" || true)"
             if [ -n "$value" ]; then
               printf "%s" "$value" | npx --yes wrangler@3.90.0 pages secret put "$name" --project-name="$project"
               echo "configured isolated QA secret: $name"
