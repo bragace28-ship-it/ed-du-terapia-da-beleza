@@ -23,4 +23,86 @@ const validationFiles=[
   'master/neon-live-bridge.js',
   'master/runtime-neon-persistence.js',
   'functions/api/payments.js',
-  'function¶»§q«^u¹Ìémt±±½Ìémt±‰±½­Ìémt±…½Õ¹ÑÌémt±ÅÕ½Ñ•Ìémt±¹½Ñ¥™¥…Ñ¥½¹Ìémt±ÕÍ•ÉÌémt±É•™•ÉÉ…±Ìémt±¥™Ñ…É‘Ìémt±Í•ÉÙ¥•Ìémuô¤ìœì)¥˜¡½ÕÑÁÕĞ¹ÍÁ±¥Ğ¡±½…±…Ñ…5…É­•È¤¹±•¹Ñ „ôôÈ¤Ñ¡É½Ü¹•ÜÉÉ½È áÁ•Ñ••á…Ñ±ä½¹”5…ÍÑ•È±½…°‘…Ñ„‰½½ÑÍÑÉ…À¸œ¤ì)½ÕÑÁÕĞõ½ÕÑÁÕĞ¹É•Á±…”¡±½…±…Ñ…5…É­•È°‰±•ĞÑ•ÍÑMÑ…Ñ”õ±½…¡-d±íô¤°‘…Ñ„ô¡İ¥¹‘½Ü¹}}U}5MQI}1=1}Qõİ¥¹‘½Ü¹‘…Ñ„õíÁ…åµ•¹ÑÌémt±½µµ…¹‘Ìémt±É••¥Ù…‰±•Ìémt±Á…å…‰±•Ìémt±½µµ¥ÍÍ¥½¹Ìémt±±½Ìémt±‰±½­Ìémt±…½Õ¹ÑÌémt±ÅÕ½Ñ•Ìémt±¹½Ñ¥™¥…Ñ¥½¹Ìémt±ÕÍ•ÉÌémt±É•™•ÉÉ…±Ìémt±¥™Ñ…É‘Ìémt±Í•ÉÙ¥•Ìémt±…ÁÁ½¥¹Ñµ•¹ÑÌémt±±¥•¹ÑÌémt±ÁÉ½™•ÍÍ¥½¹…±Ìémt±ÁÉ½‘ÕÑÌémt±™¥¹…¹¥…±QÉ…¹Í…Ñ¥½¹Ìémuô¤ìˆ¤ì)½¹ÍĞ‘•µ½ÁÁ½¥¹Ñµ•¹ÑM••ô½¥˜p …‘…Ñ…p¹…ÁÁ½¥¹Ñµ•¹ÑÍp¹±•¹Ñ¡p¤qíqÌ©½¹ÍĞÑ½‘…ä€ô¹•Ü…Ñ•p¡p¤íqÌ©½¹ÍĞ‘¬€ôÑ½‘…åp¹Ñ½%M=MÑÉ¥¹p¡p¥p¹Í±¥•p À°ÄÁp¤íqÌ©‘…Ñ…p¹…ÁÁ½¥¹Ñµ•¹ÑÍp¹ÁÕÍ¡p¡mqÍqMt¨ıp¤íqÌ©Á•ÉÍ¥ÍÑp¡p¤íqÌ©qô¼ì)¥˜ …‘•µ½ÁÁ½¥¹Ñµ•¹ÑM••¹Ñ•ÍĞ¡½ÕÑÁÕĞ¤¤Ñ¡É½Ü¹•ÜÉÉ½È 5…ÍÑ•È‘•µ¼…ÁÁ½¥¹Ñµ•¹ĞÍ••¹½Ğ™½Õ¹ìÉ•™ÕÍ¥¹œ±½…°™¥áÑÕÉ”ÁÉ½‘ÕÑ¥½¸¸œ¤ì)½ÕÑÁÕĞõ½ÕÑÁÕĞ¹É•Á±…”¡‘•µ½ÁÁ½¥¹Ñµ•¹ÑM••°œœ¤ì)¥˜¡½ÕÑÁÕĞ¹¥¹±Õ‘•Ì APµ5<´Äœ¥ññ½ÕÑÁÕĞ¹¥¹±Õ‘•Ì APµ5<´Èœ¤¤Ñ¡É½Ü¹•ÜÉÉ½È •µ¼…ÁÁ½¥¹Ñµ•¹ÑÌÉ•µ…¥¸¥¸ÁÉ½‘ÕÑ¥½¸…ÉÑ¥™…Ğ¸œ¤ì)½¹ÍĞ¥¹©•Ñ	•™½É•±½Í¥¹	½‘äô¡‘½Õµ•¹Ğ±µ…É­ÕÀ¤ôùì(€½¹ÍĞ¥¹‘•àõ‘½Õµ•¹Ğ¹Ñ½1½İ•É…Í” ¤¹±…ÍÑ%¹‘•á=˜ œğ½‰½‘äøœ¤ì(€¥˜¡¥¹‘•àğÀ¤Ñ¡É½Ü¹•ÜÉÉ½È 5MQH‰Õ¥±¡…Ì¹¼±½Í¥¹œ‰½‘äÑ…œ¸œ¤ì(€É•ÑÕÉ¸‘½Õµ•¹Ğ¹Í±¥” À±¥¹‘•à¤­µ…É­ÕÀ­‘½Õµ•¹Ğ¹Í±¥”¡¥¹‘•à¤ì)ôì)½¹ÍĞÉÕ¹Ñ¥µ•¥±•Ìõl(€€µ…ÍÑ•È½¹•½¸µ±¥Ù”µ‰É¥‘”¹©Ìœ°(€€µ…ÍÑ•È½ÉÕ¹Ñ¥µ”µ¹•½¸µÁ•ÉÍ¥ÍÑ•¹”¹©Ìœ°(€€µ…ÍÑ•È½ÉÕ¹Ñ¥µ”µÉ•…°µ¡•­¾ÚîÆ­yÖ–ÇB–æÆ–æR67&—B7–çFƒ¢52‚r¶6†V6¶VE67&—G2²r’r“°¦6öç7B'V–ÇD'—FW3Ô'VffW"æg&öÒ†'V–ÇBÂwWFc‚r“°¦6öç7B'V–ÇE6†Ö7&VFT†6‚‚w6†#Sbr’çWFFR†'V–ÇD'—FW2’æF–vW7B‚v†W‚r“°¦–b†'V–ÇD'—FW2æÆVæwFƒÃ3’F‡&÷ræWrW'&÷"‚tÔ5DU"'V–ÆB÷WGWB—2VæW‡V7FVFÇ’6ÖÆÂâr“°¦v—Bw&—FTf–ÆR‡&W6öÇfR†F—7BÂu÷&VF—&V7G2r’Ârò¢ö–æFW‚æ‡FÖÂ#Æâr“°¦v—Bw&—FTf–ÆR‡&W6öÇfR†F—7BÂu÷&÷WFW2æ§6öâr’Ä¥4ôâç7G&–æv–g’‡·fW'6–öã£Æ–æ6ÇVFS¥²rö’ò¢uÒÆW†6ÇVFS¥µ×Ò’“°¦v—Bw&—FTf–ÆR‡&W6öÇfR†F—7BÂwfW'6–öâæ§6öâr’Ä¥4ôâç7G&–æv–g’‡°¢fW'6–öã¦Æö6²æ6æöæ–6Å÷&VÆV6RÀ¢æÖS¢tTBbERÂFW&–F&VÆW¦rÀ¢'VçF–ÖTWF†÷&—G“¢tÔ5DU%ôôäÅ’rÀ¢'F–f7C¢tÔ5DU"rÀ¢6÷W&6Tv—D&Æö%6†§6÷W&6T&Æö"À¢'V–ÇE6†#Sc¦'V–ÇE6†À¢ÆVv7•'VçF–ÖS¢tD•4$ÄTBp§ÒÆçVÆÂÃ"’“°¦6öç7BF—7Df–ÆW3Öv—B&VFF—"†F—7B“°¦6öç7BÆÆ÷vVCÖæWr6WB…²v–æFW‚æ‡FÖÂrÂu÷&VF—&V7G2rÂu÷&÷WFW2æ§6öârÂwfW'6–öâæ§6öâuÒ“°¦–b†F—7Df–ÆW2æÆVæwF‚ÓÓGÇÆF—7Df–ÆW2ç6öÖR‡ƒÓâÆÆ÷vVBæ†2‡‚’’’F‡&÷ræWrW'&÷"‚uVæW‡V7FVBF—7Bf–ÆW3¢r¶F—7Df–ÆW2æ¦ö–â‚rÂr’“°¦6öç6öÆRæÆör‚t'V–ÇB6æöæ–6ÂÖ7FW"öæÇ’âr“°
+  'functions/api/_lib/payment-settlement.js',
+  'functions/api/webhooks/asaas.js',
+  'functions/api/webhooks/pagbank.js',
+  'functions/api/webhooks/picpay.js',
+  'functions/api/webhooks/stripe.js'
+];
+for(const file of validationFiles){
+  const source=await readFile(resolve(root,file),'utf8');
+  if(!source.trim()) throw new Error('Required production module is empty: '+file);
+  const check=spawnSync(process.execPath,['--check',resolve(root,file)],{encoding:'utf8'});
+  if(check.status!==0) throw new Error('JavaScript syntax validation failed for '+file+': '+(check.stderr||check.stdout||'unknown syntax error'));
+}
+if(!html.toLowerCase().includes('</body>')) throw new Error('MASTER HTML injection point unavailable.');
+
+if(process.argv.includes('--check')){
+  console.log('MASTER APPROVED LOCK: PASS');
+  process.exit(0);
+}
+
+let output=html;
+const localTitle=new RegExp('<title>[^<]*Teste Local[^<]*</title>','i');
+if(!localTitle.test(output)) throw new Error('Expected local-test title marker not found; refusing ambiguous production build.');
+output=output.replace(localTitle,'<title>ED & DU | Terapia da Beleza â€” Master 46.0.0</title>');
+const viewRegistryMarker='const views={';
+if(output.split(viewRegistryMarker).length!==2) throw new Error('Expected exactly one canonical Master views registry.');
+output=output.replace(viewRegistryMarker,'const views=window.views={');
+const localDataMarker='let testState=load(KEY,{}), data=load(DATA,{payments:[],commands:[],receivables:[],payables:[],commissions:[],logs:[],blocks:[],accounts:[],quotes:[],notifications:[],users:[],referrals:[],giftCards:[],services:[]});';
+if(output.split(localDataMarker).length!==2) throw new Error('Expected exactly one Master local data bootstrap.');
+output=output.replace(localDataMarker,"let testState=load(KEY,{}), data=(window.__EDDU_MASTER_LOCAL_DATA=window.data={payments:[],commands:[],receivables:[],payables:[],commissions:[],logs:[],blocks:[],accounts:[],quotes:[],notifications:[],users:[],referrals:[],giftCards:[],services:[],appointments:[],clients:[],professionals:[],products:[],financialTransactions:[]});");
+const demoAppointmentSeed=/if \(!data\.appointments\.length\) \{\s*const today = ne...[truncated]  if(index<0) throw new Error('MASTER build has no closing body tag.');
+  return document.slice(0,index)+markup+document.slice(index);
+};
+const runtimeFiles=[
+  'master/neon-live-bridge.js',
+  'master/runtime-neon-persistence.js',
+  'master/runtime-real-checkout.js',
+  'master/runtime-navigation-hardening.js'
+];
+const runtimeBlocks=[];
+for(const file of runtimeFiles){
+  const code=await readFile(resolve(root,file),'utf8');
+  if(/(?:V33|v33|fin33|eddu_v33)/i.test(stripEmbeddedDataImages(code))) throw new Error('Legacy version reference found in '+file);
+  if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(code)) throw new Error('Legacy Supabase reference found in '+file);
+  runtimeBlocks.push('<script>\n'+code+'\n</script>');
+}
+output=injectBeforeClosingBody(output,runtimeBlocks.join('\n'));
+const authClient=await readFile(resolve(root,'master','neon-auth-client.js'),'utf8');
+output=injectBeforeClosingBody(output,'<script type="module">'+authClient+'\n</script>');
+
+await rm(dist,{recursive:true,force:true});
+await mkdir(dist,{recursive:true});
+await writeFile(resolve(dist,'index.html'),output,'utf8');
+
+const built=await readFile(resolve(dist,'index.html'),'utf8');
+const inlineScripts=[...built.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)];
+let checkedScripts=0;
+for(const match of inlineScripts){
+  const code=match[1];
+  if(!code.trim()) continue;
+  const isModule=/^<script\s+type=["']module/i.test(match[0]);
+  const check=spawnSync(process.execPath,isModule?['--check','--input-type=module']:['--check'],{input:code,encoding:'utf8'});
+  if(check.status!==0) throw new Error('Built inline script syntax failed (#'+(checkedScripts+1)+'): '+(check.stderr||check.stdout||'unknown syntax error'));
+  checkedScripts++;
+}
+console.log('Built inline script syntax: PASS ('+checkedScripts+')');
+const builtBytes=Buffer.from(built,'utf8');
+const builtSha=createHash('sha256').update(builtBytes).digest('hex');
+if(builtBytes.length<3000000) throw new Error('MASTER build output is unexpectedly small.');
+await writeFile(resolve(dist,'_redirects'),'/* /index.html 200\n');
+await writeFile(resolve(dist,'_routes.json'),JSON.stringify({version:1,include:['/api/*'],exclude:[]}));
+await writeFile(resolve(dist,'version.json'),JSON.stringify({
+  version:lock.canonical_release,
+  name:'ED & DU | Terapia da Beleza',
+  runtimeAuthority:'MASTER_ONLY',
+  artifact:'MASTER',
+  sourceGitBlobSha:sourceBlob,
+  builtSha256:builtSha,
+  legacyRuntime:'DISABLED'
+},null,2));
+const distFiles=await readdir(dist);
+const allowed=new Set(['index.html','_redirects','_routes.json','version.json']);
+if(distFiles.length!==4||distFiles.some(x=>!allowed.has(x))) throw new Error('Unexpected dist files: '+distFiles.join(','));
+console.log('Built canonical Master only.');
