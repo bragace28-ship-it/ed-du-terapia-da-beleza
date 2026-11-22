@@ -26,13 +26,34 @@ function canCharge(u){
  const p=u.permissions;if(Array.isArray(p))return p.includes('*')||p.includes('commands')||p.includes('finance')||p.includes('commands.create')||p.includes('finance.create');
  return !!(p&&typeof p==='object'&&(p['*']===true||p.commands===true||p.finance===true||p['commands.create']===true||p['finance.create']===true));
 }
-function enabled(env,g){return g==='PagBank'?!!env.PAGBANK_TOKEN:g==='Stripe'?!!env.STRIPE_SECRET_KEY:g==='Asaas'?!!env.ASAAS_API_KEY:g==='PicPay'?!!env.PICPAY_CLIENT_ID&&!!env.PICPAY_CLIENT_SECRET:false;}
+/* Rates recovered from the approved V46 hardening commit (2026-09-30).
+   Only explicitly verified installment points are used; missing points remain unknown.
+   No fixed fee was recorded in that approved table. */
+const VERIFIED_GATEWAY_RATES={
+ PagBank:{pix:0.99,credit:{1:2.99,12:8.49,24:14.49}},
+ Asaas:{pix:0.89,credit:{1:2.99,12:6.29,24:9.89}},
+ Stripe:{credit:{1:2.99,12:6.99}},
+ PicPay:{}
+};
+function enabled(env,g){
+ if(g==='PagBank')return !!env.PAGBANK_TOKEN;
+ if(g==='Stripe')return !!env.STRIPE_SECRET_KEY;
+ if(g==='Asaas')return !!env.ASAAS_API_KEY;
+ return false; // PicPay remained hidden in the last validated production flow pending card tokenization.
+}
 function estimate(amount,gateway,method,installments,env){
- const prefix={PagBank:'PAGBANK',Asaas:'ASAAS',Stripe:'STRIPE',PicPay:'PICPAY'}[gateway];
- const kind=method==='pix'?'PIX':method==='debit_card'?'DEBIT':installments>1?'CREDIT_INSTALLMENT':'CREDIT';
- const pct=Number(env[prefix+'_FEE_'+kind+'_PERCENT']),fixed=Number(env[prefix+'_FEE_'+kind+'_FIXED']||0);
- if(!Number.isFinite(pct)||pct<0||!Number.isFinite(fixed)||fixed<0)return {fee_known:false,fee_percent:null,fee_amount:null,net_amount:null,fee_source:'not_configured'};
- const fee=money(amount*pct/100+fixed);return {fee_known:true,fee_percent:pct,fee_amount:fee,net_amount:money(amount-fee),fee_source:'cloudflare_environment'};
+ const prefix={PagBank:'PAGBANK',Asaas:'ASAAS',Stripe:'STRIPE'}[gateway];
+ if(!prefix)return {fee_known:false,fee_percent:null,fee_amount:null,net_amount:null,fee_source:'not_verified'};
+ const kind=method==='pix'?'PIX':method==='debit_card'?'DEBIT':installments===1?'CREDIT':'CREDIT_INSTALLMENT';
+ const configured=env[prefix+'_FEE_'+kind+'_PERCENT'];
+ const fixedConfigured=env[prefix+'_FEE_'+kind+'_FIXED'];
+ const table=VERIFIED_GATEWAY_RATES[gateway]||{};
+ const verified=method==='pix'?table.pix:method==='debit_card'?null:table.credit?.[installments];
+ const pct=configured!==undefined&&String(configured).trim()!==''?Number(configured):verified;
+ const fixed=fixedConfigured!==undefined&&String(fixedConfigured).trim()!==''?Number(fixedConfigured):0;
+ if(pct==null||!Number.isFinite(pct)||pct<0||!Number.isFinite(fixed)||fixed<0)return {fee_known:false,fee_percent:null,fee_amount:null,net_amount:null,fee_source:'not_verified_for_method_or_installment'};
+ const fee=money(amount*pct/100+fixed);
+ return {fee_known:true,fee_percent:pct,fee_amount:fee,net_amount:money(amount-fee),fixed_fee_amount:fixed,fee_source:configured!==undefined&&String(configured).trim()!==''?'cloudflare_environment':'historically_verified_rate'};
 }
 async function createPagBank({env,origin,commandId,amount,method,installments,customer,reference}){
   const token=env.PAGBANK_TOKEN,base=String(env.PAGBANK_API_BASE||'https://sandbox.api.pagseguro.com').replace(/\/$/,'');
@@ -84,7 +105,7 @@ export async function onRequestGet({request,env}){
  const sql=neon(env.NEON_DATABASE_URL),user=await applicationUser(sql,auth);if(!user||!canCharge(user))return json({ok:false,error:'FORBIDDEN'},403);
  const amount=money(u.searchParams.get('amount')),method=clean(u.searchParams.get('method')||'pix').toLowerCase(),installments=Math.max(1,Math.min(12,Number(u.searchParams.get('installments'))||1));
  if(!(amount>0)||!['pix','debit_card','card'].includes(method))return json({ok:false,error:'amount/method inválido'},400);
- const candidates=method==='debit_card'?['PagBank']:method==='pix'?['PagBank','Asaas','PicPay']:installments>1?['PagBank','Asaas','PicPay']:['PagBank','Asaas','Stripe','PicPay'];
+ const candidates=method==='debit_card'?[]:method==='pix'?['PagBank','Asaas']:installments>1?['PagBank','Asaas']:['PagBank','Asaas','Stripe'];
  const ranking=candidates.map(g=>({gateway:g,available:enabled(env,g),...estimate(amount,g,method,installments,env)})).filter(x=>x.available).sort((a,b)=>a.fee_known!==b.fee_known?(a.fee_known?-1:1):(a.net_amount??0)-(b.net_amount??0)).map((x,i)=>({...x,position:i+1}));
  return json({ok:true,method,installments,currency:'BRL',ranking,generated_at:new Date().toISOString()});
 }
@@ -98,9 +119,11 @@ export async function onRequestPost({request,env}){
  const method=clean(body.method||'pix').toLowerCase(),installments=Math.max(1,Math.min(12,Number(body.installments)||1));
  const commandId=clean(body.commandId||body.command_id),idem=clean(request.headers.get('Idempotency-Key')||'EDDU-'+commandId+'-'+gatewayName+'-'+method+'-'+installments);
  if(!(amount>0)||!provider||!['pix','debit_card','card','wallet'].includes(method)||!commandId||idem.length>200)return json({ok:false,error:'Dados de cobrança inválidos'},400);
- if(method==='debit_card'&&provider!=='PagBank')return json({ok:false,error:'Débito está disponível somente no PagBank.'},400);
- if(method==='wallet'&&provider!=='PicPay')return json({ok:false,error:'Carteira disponível somente no PicPay.'},400);
- if(method==='pix'&&!['PagBank','Asaas','PicPay'].includes(provider))return json({ok:false,error:'Gateway sem PIX habilitado.'},400);
+ if(method==='debit_card')return json({ok:false,error:'Débito online não possui tarifa homologada nem rota de checkout validada.'},400);
+ if(provider==='PicPay')return json({ok:false,error:'PicPay permanece desabilitado até a conclusão da tokenização e homologação do checkout.'},409);
+ if(method==='card'&&![1,12].includes(installments))return json({ok:false,error:'O Smart Gateway só libera parcelamentos com taxa homologada: 1x ou 12x.'},400);
+ if(method==='wallet')return json({ok:false,error:'PicPay permanece desabilitado até a conclusão da tokenização e homologação do checkout.'},400);
+ if(method==='pix'&&!['PagBank','Asaas'].includes(provider))return json({ok:false,error:'Gateway sem PIX habilitado.'},400);
  const [existing]=await sql`SELECT * FROM public.payments WHERE idempotency_key=${idem} LIMIT 1`;
  if(existing)return json({ok:true,replayed:true,payment:existing,checkoutUrl:existing.metadata?.checkoutUrl||null,qrCode:existing.metadata?.qrCode||null});
  if(!UUID.test(commandId))return json({ok:false,error:'COMMAND_ID_INVALID'},400);
