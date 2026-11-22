@@ -1,80 +1,93 @@
-/* ED & DU MASTER — Neon Auth + Data API client
-   Public configuration only. No database secret is shipped to the browser.
-*/
-const EDDU_NEON_AUTH_URL='https://ep-sweet-meadow-b43jne0i.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
-const EDDU_NEON_DATA_API_URL='https://ep-sweet-meadow-b43jne0i.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1';
+/* ED & DU MASTER 46.0.0 — Neon Auth. No local-only access path. */
+(function () {
+  'use strict';
+  const AUTH_URL = 'https://ep-sweet-meadow-b43jne0i.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
+  const DATA_API_URL = 'https://ep-sweet-meadow-b43jne0i.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1';
 
-(async()=>{
-  try{
-    const mod=await import('https://esm.sh/@neondatabase/neon-js@0.1.0?bundle');
-    const client=mod.createClient({
-      auth:{url:EDDU_NEON_AUTH_URL},
-      dataApi:{url:EDDU_NEON_DATA_API_URL}
-    });
-    window.__EDDU_NEON_CLIENT=client;
-    window.__EDDU_NEON_AUTH_URL=EDDU_NEON_AUTH_URL;
-    window.__EDDU_NEON_DATA_API_URL=EDDU_NEON_DATA_API_URL;
-    window.__EDDU_NEON_READY=true;
+  const dispatch = (name, detail) => window.dispatchEvent(new CustomEvent(name, { detail }));
+  const waitForBody = () => document.body ? Promise.resolve() : new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }));
 
-    window.EDDU_NEON_GET_SESSION=async()=>client.auth.getSession();
-
-    window.EDDU_NEON_SIGNIN=async(email,password)=>{
-      const result=await client.auth.signIn.email({email,password});
-      if(result?.error) throw new Error(result.error.message||'Falha no login');
-      return result;
-    };
-    window.EDDU_NEON_SIGNUP=async(email,password,name)=>{const result=await client.auth.signUp.email({email,password,name});if(result?.error)throw new Error(result.error.message||'Falha no cadastro');return result;};
-    window.EDDU_NEON_SIGNOUT=async()=>client.auth.signOut();
-
-    window.__EDDU_NEON_AUTH_REQUIRED=()=>{
-      if(document.getElementById('eddu-neon-auth-overlay')) return;
-      const style=document.createElement('style');
-      style.id='eddu-neon-auth-style';
-      style.textContent='#eddu-neon-auth-overlay{position:fixed;inset:0;z-index:200000;background:rgba(0,0,0,.48);display:flex;align-items:center;justify-content:center;padding:18px}#eddu-neon-auth-card{width:min(430px,100%);background:#fff;border-radius:22px;padding:24px;box-shadow:0 20px 70px rgba(0,0,0,.25);font-family:inherit}#eddu-neon-auth-card h2{margin:0 0 8px}#eddu-neon-auth-card p{margin:0 0 18px;color:#666}.eddu-neon-auth-field{display:grid;gap:6px;margin:10px 0}.eddu-neon-auth-field input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #ddd;border-radius:10px}.eddu-neon-auth-actions{display:grid;gap:10px;margin-top:16px}.eddu-neon-auth-actions button{padding:12px;border:0;border-radius:10px;cursor:pointer;font-weight:700}.eddu-neon-auth-primary{background:#6d3a86;color:#fff}.eddu-neon-auth-secondary{background:#f2edf5;color:#4b2a5d}.eddu-neon-auth-error{min-height:20px;color:#b42318;font-size:13px}';
-      document.head.appendChild(style);
-      const wrap=document.createElement('div');wrap.id='eddu-neon-auth-overlay';
-      wrap.innerHTML='<div id="eddu-neon-auth-card"><h2>Acesso aos dados Master</h2><p>Use uma conta do Neon Auth para sincronizar os testes com o banco.</p><div class="eddu-neon-auth-field"><label>Nome (somente no cadastro)</label><input id="eddu-neon-auth-name" type="text" autocomplete="name" placeholder="Nome"></div><div class="eddu-neon-auth-field"><label>E-mail</label><input id="eddu-neon-auth-email" type="email" autocomplete="username" placeholder="seu e-mail"></div><div class="eddu-neon-auth-field"><label>Senha</label><input id="eddu-neon-auth-password" type="password" autocomplete="current-password" placeholder="sua senha"></div><div id="eddu-neon-auth-error" class="eddu-neon-auth-error"></div><div class="eddu-neon-auth-actions"><button class="eddu-neon-auth-primary" id="eddu-neon-auth-login">Entrar e sincronizar</button><button class="eddu-neon-auth-secondary" id="eddu-neon-auth-signup">Criar conta de homologação</button><button class="eddu-neon-auth-secondary" id="eddu-neon-auth-cancel">Continuar somente local</button></div></div>';
-      document.body.appendChild(wrap);
-      wrap.querySelector('#eddu-neon-auth-cancel').onclick=()=>wrap.remove();
-      wrap.querySelector('#eddu-neon-auth-signup').onclick=async()=>{
-        const name=wrap.querySelector('#eddu-neon-auth-name').value.trim()||'ED DU Homologação';
-        const email=wrap.querySelector('#eddu-neon-auth-email').value.trim();
-        const password=wrap.querySelector('#eddu-neon-auth-password').value;
-        const err=wrap.querySelector('#eddu-neon-auth-error');err.textContent='';
-        if(!email||!password){err.textContent='Informe e-mail e senha para criar a conta.';return}
-        if(password.length<8){err.textContent='Use uma senha com pelo menos 8 caracteres.';return}
-        const btn=wrap.querySelector('#eddu-neon-auth-signup');btn.disabled=true;btn.textContent='Criando...';
-        try{await window.EDDU_NEON_SIGNUP(email,password,name);await window.EDDU_NEON_SIGNIN(email,password);wrap.remove();if(typeof window.EDDU_NEON_SYNC==='function')window.EDDU_NEON_SYNC();}
-        catch(e){err.textContent=String(e?.message||e);btn.disabled=false;btn.textContent='Criar conta de homologação'}
+  async function start() {
+    try {
+      const mod = await import('https://esm.sh/@neondatabase/neon-js@0.1.0?bundle');
+      const client = mod.createClient({ auth: { url: AUTH_URL }, dataApi: { url: DATA_API_URL } });
+      window.__EDDU_NEON_CLIENT = client;
+      window.__EDDU_NEON_AUTH_URL = AUTH_URL;
+      window.__EDDU_NEON_DATA_API_URL = DATA_API_URL;
+      window.__EDDU_NEON_READY = true;
+      window.EDDU_NEON_GET_SESSION = () => client.auth.getSession();
+      window.EDDU_NEON_SIGNIN = async (email, password) => {
+        const result = await client.auth.signIn.email({ email: String(email).trim(), password });
+        if (result?.error) throw new Error(result.error.message || 'Falha na autenticação.');
+        return result;
       };
-      wrap.querySelector('#eddu-neon-auth-login').onclick=async()=>{
-        const email=wrap.querySelector('#eddu-neon-auth-email').value.trim();
-        const password=wrap.querySelector('#eddu-neon-auth-password').value;
-        const err=wrap.querySelector('#eddu-neon-auth-error');
-        err.textContent='';
-        if(!email||!password){err.textContent='Informe e-mail e senha.';return}
-        const btn=wrap.querySelector('#eddu-neon-auth-login');btn.disabled=true;btn.textContent='Entrando...';
-        try{
-          await window.EDDU_NEON_SIGNIN(email,password);
-          wrap.remove();
-          if(typeof window.EDDU_NEON_SYNC==='function') window.EDDU_NEON_SYNC();
-        }catch(e){err.textContent=String(e?.message||e);btn.disabled=false;btn.textContent='Entrar e sincronizar'}
+      window.EDDU_NEON_SIGNOUT = async () => {
+        const result = await client.auth.signOut();
+        if (result?.error) throw new Error(result.error.message || 'Falha ao sair.');
+        window.__EDDU_NEON_SESSION = false;
+        dispatch('eddu-neon-session-changed', { authenticated: false });
+        return result;
       };
-    };
 
-    try{
-      const s=await client.auth.getSession();
-      window.__EDDU_NEON_SESSION=!!s?.data?.session;
-    }catch(_){window.__EDDU_NEON_SESSION=false}
-    window.dispatchEvent(new CustomEvent('eddu-neon-ready'));
-  }catch(e){
-    window.__EDDU_NEON_LAST_ERROR=String(e?.message||e);
-    window.__EDDU_NEON_READY=false;
+      async function sessionState() {
+        const result = await client.auth.getSession();
+        if (result?.error) throw new Error(result.error.message || 'Não foi possível validar a sessão.');
+        const session = result?.data?.session || null;
+        window.__EDDU_NEON_SESSION = !!session;
+        window.__EDDU_NEON_SESSION_DATA = session;
+        dispatch('eddu-neon-session-changed', { authenticated: !!session });
+        return session;
+      }
+
+      window.EDDU_NEON_REFRESH_SESSION = sessionState;
+      const session = await sessionState();
+      dispatch('eddu-neon-ready', { authenticated: !!session });
+      if (!session) {
+        await waitForBody();
+        showLogin();
+      }
+    } catch (error) {
+      window.__EDDU_NEON_READY = false;
+      window.__EDDU_NEON_LAST_ERROR = String(error?.message || error);
+      dispatch('eddu-neon-ready', { authenticated: false, error: window.__EDDU_NEON_LAST_ERROR });
+      console.error('[EDDU] Neon Auth initialization failed:', error);
+    }
   }
+
+  function showLogin() {
+    if (document.getElementById('eddu-neon-auth-overlay')) return;
+    const style = document.createElement('style');
+    style.id = 'eddu-neon-auth-style';
+    style.textContent = '#eddu-neon-auth-overlay{position:fixed;inset:0;z-index:2147483000;background:rgba(20,15,24,.68);display:flex;align-items:center;justify-content:center;padding:18px}#eddu-neon-auth-card{width:min(420px,100%);background:#fff;color:#242027;border-radius:20px;padding:26px;box-shadow:0 20px 70px rgba(0,0,0,.3);font-family:inherit}#eddu-neon-auth-card h2{margin:0 0 8px}#eddu-neon-auth-card p{margin:0 0 18px;color:#6d6870}.eddu-auth-field{display:grid;gap:6px;margin:12px 0}.eddu-auth-field input{box-sizing:border-box;width:100%;padding:12px;border:1px solid #d9d4dc;border-radius:10px}.eddu-auth-actions{display:grid;gap:10px;margin-top:18px}.eddu-auth-actions button{padding:13px;border:0;border-radius:10px;background:#6d3a86;color:white;font-weight:700;cursor:pointer}.eddu-auth-actions button:disabled{opacity:.6;cursor:wait}.eddu-auth-error{min-height:20px;color:#b42318;font-size:13px}';
+    document.head.appendChild(style);
+    const overlay = document.createElement('div');
+    overlay.id = 'eddu-neon-auth-overlay';
+    overlay.innerHTML = '<section id="eddu-neon-auth-card" role="dialog" aria-modal="true" aria-labelledby="eddu-neon-auth-title"><h2 id="eddu-neon-auth-title">Entrar no ED & DU</h2><p>Entre com sua conta para acessar os dados sincronizados.</p><form id="eddu-neon-auth-form"><div class="eddu-auth-field"><label for="eddu-neon-email">E-mail</label><input id="eddu-neon-email" type="email" autocomplete="username" required></div><div class="eddu-auth-field"><label for="eddu-neon-password">Senha</label><input id="eddu-neon-password" type="password" autocomplete="current-password" required></div><div id="eddu-neon-auth-error" class="eddu-auth-error" role="alert"></div><div class="eddu-auth-actions"><button id="eddu-neon-login" type="submit">Entrar e sincronizar</button></div></form></section>';
+    document.body.appendChild(overlay);
+    overlay.querySelector('#eddu-neon-auth-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      const button = overlay.querySelector('#eddu-neon-login');
+      const errorNode = overlay.querySelector('#eddu-neon-auth-error');
+      const email = overlay.querySelector('#eddu-neon-email').value.trim();
+      const password = overlay.querySelector('#eddu-neon-password').value;
+      button.disabled = true;
+      button.textContent = 'Validando acesso…';
+      errorNode.textContent = '';
+      try {
+        await window.EDDU_NEON_SIGNIN(email, password);
+        const session = await window.EDDU_NEON_REFRESH_SESSION();
+        if (!session) throw new Error('A autenticação não retornou uma sessão válida.');
+        overlay.remove();
+        dispatch('eddu-neon-authenticated', { authenticated: true });
+        if (typeof window.EDDU_NEON_SYNC === 'function') await window.EDDU_NEON_SYNC();
+      } catch (error) {
+        errorNode.textContent = String(error?.message || error);
+        button.disabled = false;
+        button.textContent = 'Entrar e sincronizar';
+      }
+    });
+  }
+
+  window.__EDDU_NEON_AUTH_REQUIRED = showLogin;
+  start();
 })();
-if(location.hash==='#e2e-agenda'){
-  queueMicrotask(()=>{
-    try{window.switchRole?.('professional');window.openSheet?.('agenda');}
-    catch(err){document.documentElement.dataset.edduE2EError=String(err?.message||err)}
-  });
-}
