@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { settlePayment } from '../_lib/payment-settlement.js';
 
 const json=(x,s=200)=>Response.json(x,{status:s,headers:{'Cache-Control':'no-store'}});
 const enc=new TextEncoder();
@@ -71,23 +71,6 @@ export async function onRequestPost({request,env}){
   const status=String(charge?.status||p?.status||'').toUpperCase();
   const paid=status==='PAID';
 
-  const sql=neon(env.NEON_DATABASE_URL);
-  const rows=externalId
-    ? await sql`select * from payments where gateway='PagBank' and (external_id=${externalId} or external_id=${checkoutId} or metadata->>'reference'=${reference}) order by created_at desc limit 1`
-    : await sql`select * from payments where gateway='PagBank' and metadata->>'reference'=${reference} order by created_at desc limit 1`;
-  const pay=rows[0];
-  if(!pay)return json({ok:true,matched:false});
-
-  const meta={...(pay.metadata||{}),lastWebhook:p,webhookStatus:status,webhookReceivedAt:new Date().toISOString()};
-  await sql`update payments set status=${paid?'PAID':status||'PENDING'},paid_at=case when ${paid} then coalesce(paid_at,now()) else paid_at end,metadata=${JSON.stringify(meta)}::jsonb,updated_at=now() where id=${pay.id}`;
-
-  if(paid&&pay.command_id){
-    const sums=await sql`select coalesce(sum(amount),0) total from payments where command_id=${pay.command_id} and status in ('PAID','RECEIVED','CONFIRMED')`;
-    const cmd=await sql`select id,total,status from commands where id=${pay.command_id} limit 1`;
-    const commandTotal=Number(cmd[0]?.total||0);
-    if(cmd[0]&&Number(sums[0]?.total||0)+.009>=commandTotal){
-      await sql`update commands set status='Fechada',updated_at=now() where id=${pay.command_id} and status<>'Fechada'`;
-    }
-  }
-  return json({ok:true,paid,payment_id:pay.id});
+  const result=await settlePayment({env,provider:'PagBank',eventId:String(p?.id||reference||externalId)+'-'+status,eventType:status,payload:p,externalIds:[externalId,checkoutId].filter(Boolean),reference,paid,status:paid?'PAID':status||'PENDING'});
+  return json({ok:true,paid,...result});
 }

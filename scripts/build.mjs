@@ -1,6 +1,7 @@
 import {rm,mkdir,readFile,writeFile,readdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
+import {spawnSync} from 'node:child_process';
 
 const root=process.cwd();
 const dist=resolve(root,'dist');
@@ -15,6 +16,26 @@ const stripEmbeddedDataImages=s=>s.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+
 const legacyFree=stripEmbeddedDataImages(html);
 if(/(?:V33|v33|fin33|eddu_v33)/i.test(legacyFree)) throw new Error('Legacy version reference found in Master source.');
 if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(legacyFree)) throw new Error('Legacy Supabase reference found in Master UI.');
+
+const validationFiles=[
+  'master/runtime-command-gateway.js',
+  'master/runtime-real-checkout.js',
+  'master/runtime-fixes.js',
+  'master/runtime-functional-hotfix.js',
+  'functions/api/payments.js',
+  'functions/api/_lib/payment-settlement.js',
+  'functions/api/webhooks/asaas.js',
+  'functions/api/webhooks/pagbank.js',
+  'functions/api/webhooks/picpay.js',
+  'functions/api/webhooks/stripe.js'
+];
+for(const file of validationFiles){
+  const source=await readFile(resolve(root,file),'utf8');
+  if(!source.trim()) throw new Error('Required production module is empty: '+file);
+  const check=spawnSync(process.execPath,['--check',resolve(root,file)],{encoding:'utf8'});
+  if(check.status!==0) throw new Error('JavaScript syntax validation failed for '+file+': '+(check.stderr||check.stdout||'unknown syntax error'));
+}
+if(!html.toLowerCase().includes('</body>')) throw new Error('MASTER HTML injection point unavailable.');
 
 if(process.argv.includes('--check')){
   console.log('MASTER APPROVED LOCK: PASS');
