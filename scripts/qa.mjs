@@ -25,7 +25,7 @@ console.log('ED&DU Master static QA: PASS');
 console.log('Canonical artifact:', release.artifact);
 console.log('Runtime authority:', release.runtimeAuthority);
 
-if (!html.includes('Authorization: \'Bearer \' + authToken))
+if (!html.includes("Authorization: 'Bearer ' + authToken"))
   throw new Error('Neon API bridge is missing authenticated Bearer forwarding.');
 if (!html.includes('EDDU_NEON_PERSIST_SNAPSHOT') || !html.includes('NEON_ONLY_INVALID_JSON'))
   throw new Error('Neon write-through persistence guard is missing from production artifact.');
