@@ -49,13 +49,19 @@ output=output.replace(localTitle,'<title>ED & DU | Terapia da Beleza — Master 
 const viewRegistryMarker='const views={';
 if(output.split(viewRegistryMarker).length!==2) throw new Error('Expected exactly one canonical Master views registry.');
 output=output.replace(viewRegistryMarker,'const views=window.views={');
+const stateRegistryMarker='const state={';
+if(output.split(stateRegistryMarker).length!==2) throw new Error('Expected exactly one canonical Master state registry.');
+output=output.replace(stateRegistryMarker,'const state=window.state={');
 const localDataMarker='let testState=load(KEY,{}), data=load(DATA,{payments:[],commands:[],receivables:[],payables:[],commissions:[],logs:[],blocks:[],accounts:[],quotes:[],notifications:[],users:[],referrals:[],giftCards:[],services:[]});';
 if(output.split(localDataMarker).length!==2) throw new Error('Expected exactly one Master local data bootstrap.');
 output=output.replace(localDataMarker,"let testState=load(KEY,{}), data=(window.__EDDU_MASTER_LOCAL_DATA=window.data={payments:[],commands:[],receivables:[],payables:[],commissions:[],logs:[],blocks:[],accounts:[],quotes:[],notifications:[],users:[],referrals:[],giftCards:[],services:[],appointments:[],clients:[],professionals:[],products:[],financialTransactions:[]});");
 const demoAppointmentSeed=/if\s*\(!data\.appointments\.length\)\s*\{[\s\S]*?persist\(\);\s*\}/;
 if(!demoAppointmentSeed.test(output)) throw new Error('Master demo appointment seed not found; refusing local fixture production.');
 output=output.replace(demoAppointmentSeed,'');
-if(output.includes('APT-DEMO-1')||output.includes('APT-DEMO-2')) throw new Error('Demo appointments remain in production artifact.');
+const demoCommandSeed=/state\.commands=Array\.isArray\(state\.commands\)\?state\.commands:\[\];\s*if\(!state\.commands\.length\)\s*\{\s*state\.commands=\[[\s\S]*?\];\s*\}\s*state\.activeCommandId=state\.activeCommandId\|\|'CMD-001';/;
+if(!demoCommandSeed.test(output)) throw new Error('Master demo command seed not found; refusing local fixture production.');
+output=output.replace(demoCommandSeed,'state.commands=[]; state.activeCommandId=state.activeCommandId||null;');
+if(output.includes('APT-DEMO-1')||output.includes('APT-DEMO-2')||output.includes('CMD-001')||output.includes('CMD-002')||output.includes('CMD-003')) throw new Error('Demo appointment or command fixtures remain in production artifact.');
 const injectBeforeClosingBody=(document,markup)=>{
   const index=document.toLowerCase().lastIndexOf('</body>');
   if(index<0) throw new Error('MASTER build has no closing body tag.');
