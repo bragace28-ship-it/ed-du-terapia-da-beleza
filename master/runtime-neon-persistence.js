@@ -76,6 +76,20 @@
       row.client_id = row.client_id || row.clientId;
       row.private_formula = row.private_formula || row.privateFormula;
       row.private_notes = row.private_notes || row.privateNotes;
+    } else if (entity === 'coupons') {
+      row.code = row.code || row.couponCode;
+      row.service_id = row.service_id || row.serviceId;
+      row.expires_at = row.expires_at || row.expiresAt;
+      row.starts_at = row.starts_at || row.startsAt;
+      row.active = row.active ?? !['used','expired','inactive'].includes(String(row.status || '').toLowerCase());
+      row.metadata = row.metadata || { client:row.client || null, source:row.source || 'legacy-ui' };
+    } else if (entity === 'card_invoices') {
+      row.card_name = row.card_name || row.name || 'Fatura recebida';
+      row.metadata = row.metadata || { filename:row.name || null, mime:row.mime || null, size:row.size || null, status:row.status || null };
+    } else if (entity === 'terms') {
+      row.client_id = row.client_id || row.clientId;
+      row.signed_at = row.signed_at || row.signedAt;
+      row.payload = row.payload || { status:row.status || null };
     }
     return row;
   }
@@ -118,7 +132,11 @@
 
   const nativeSetItem = Storage.prototype.setItem;
   const nativeRemoveItem = Storage.prototype.removeItem;
-  const guardedKeys = new Set(['eddu_data','eddu_finance']);
+  const guardedKeys = new Set([
+    'eddu_data','eddu_finance','eddu_state',
+    'eddu_v46_manual_coupons','eddu_master_coupons_v46',
+    'eddu_v46_card_invoices','eddu_master_card_invoices_v46'
+  ]);
   Storage.prototype.setItem = function (key, value) {
     if (guardedKeys.has(String(key))) {
       let parsed;
@@ -129,6 +147,12 @@
         if (Array.isArray(parsed.payables)) window.data.payables = parsed.payables;
         if (Array.isArray(parsed.receivables)) window.data.receivables = parsed.receivables;
       }
+      if (key === 'eddu_state') {
+        if (Array.isArray(parsed.coupons)) window.data.coupons = parsed.coupons;
+        if (Array.isArray(parsed.terms)) window.data.terms = parsed.terms;
+      }
+      if (key.includes('coupons')) window.data.coupons = Array.isArray(parsed) ? parsed : [];
+      if (key.includes('card_invoices')) window.data.cardInvoices = Array.isArray(parsed) ? parsed : [];
       persist();
       return;
     }
