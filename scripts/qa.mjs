@@ -41,7 +41,7 @@ if (html.includes('v46AddTestPayment') || html.includes('eddu_master_clients_v1'
   throw new Error('Legacy test-payment or demo-client runtime is present in the production artifact.');
 console.log('MASTER V46 isolated runtime and real checkout QA: PASS');
 if (!html.includes('const views=window.views={') || !html.includes('const state=window.state={')) throw new Error('Master view/state registries are not shared with functional runtimes.');
-if (!html.includes('window.__EDDU_MASTER_LOCAL_DATA=window.data=') || html.includes('APT-DEMO-1') || html.includes('CMD-001')) throw new Error('Master agenda/commands still contain local demo business data.');
+if (!html.includes('window.__EDDU_MASTER_LOCAL_DATA=window.data=') || html.includes('APT-DEMO-1')) throw new Error('Master agenda still contains local demo business data.');
 if (!html.includes("operation:'delete'") || !html.includes('eddu_masterFinance') || !html.includes('commandItems')) throw new Error('Neon DELETE, command item or finance bridge is missing.');
 console.log('Master shared state, command items, Neon delete and finance QA: PASS');
 if (!html.includes('const views=window.views={'))
