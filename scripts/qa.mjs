@@ -26,4 +26,24 @@ console.log('Canonical artifact:', release.artifact);
 console.log('Runtime authority:', release.runtimeAuthority);
 
 if (!html.includes("Authorization: 'Bearer ' + authToken"))
-  throw new Error('Neon API br∂ªßq´^uïΩ∏Å›…•—îµ—°…Ω’ù†ÅΩ»Å1QÅÕÂπç°…Ωπ•ÈÖ—•Ω∏Å•ÃÅµ•ÕÕ•πú∏ú§Ï)çΩπÕΩ±îπ±Ωú†ù5ÖÕ—ï»ÅÕ°Ö…ïêÅÕ—Ö—î∞ÅëïµºµëÖ—ÑÅ…ïµΩŸÖ∞ÅÖπêÅ9ïΩ∏Å1QÅEËÅAMLú§Ï(
+  throw new Error('Neon API bridge is missing authenticated Bearer forwarding.');
+if (!html.includes('EDDU_NEON_PERSIST_SNAPSHOT') || !html.includes('NEON_ONLY_INVALID_JSON'))
+  throw new Error('Neon write-through persistence guard is missing from production artifact.');
+console.log('Neon authenticated write-through QA: PASS');
+
+if (!html.includes('window.__edduOpenGatewayRanking') || !html.includes('v52Checkout'))
+  throw new Error('MASTER V46 real gateway ranking/checkout bridge is missing from production artifact.');
+if (!html.includes('EDDU_NEON_API') || !html.includes('appointments'))
+  throw new Error('MASTER V46 Neon data bridge is missing from production artifact.');
+if (html.includes('Se√ß√£o temporariamente indispon√≠vel'))
+  throw new Error('Legacy render fallback is present in the production artifact.');
+if (html.includes('v46AddTestPayment') || html.includes('eddu_master_clients_v1'))
+  throw new Error('Legacy test-payment or demo-client runtime is present in the production artifact.');
+console.log('MASTER V46 isolated runtime and real checkout QA: PASS');
+if (!html.includes('const views=window.views={'))
+  throw new Error('Master view registry is not shared with the checkout runtime.');
+if (!html.includes('window.__EDDU_MASTER_LOCAL_DATA=window.data=') || html.includes('APT-DEMO-1') || html.includes('APT-DEMO-2'))
+  throw new Error('Master agenda still contains local/demo business data.');
+if (!html.includes('eddu_master_data_v1') || !html.includes("operation:'delete'"))
+  throw new Error('Neon write-through or DELETE synchronization is missing.');
+console.log('Master shared state, demo-data removal and Neon DELETE QA: PASS');
