@@ -12,7 +12,7 @@
     if(PAYMENT_PATH.test(path)||DATA_PATH.test(path)) init={...(init||{}),credentials:'include'};
     return nativeFetch(input,init);
   };
-  const LEGACY=/Pagamento\s+em\s+modo\s+de\s+teste\s*,?\s*sem\s+cobrança\s+real/gi;
+  const LEGACY=new RegExp('Pagamento\\\\s+em\\\\s+modo\\\\s+de\\\\s+teste\\\\s*,?\\\\s*sem\\\\s+cobrança\\\\s+real','gi');
   const LEGACY_ALT=/Nenhuma cobrança real é criada nesta tela\.?/gi;
   function cleanText(root){
     if(!root)return;
