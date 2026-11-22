@@ -26,6 +26,11 @@
     if (/^\d{4}-\d{2}-\d{2}T/.test(value)) return value;
     return value.slice(0,10) + 'T' + String(time || '00:00').slice(0,5) + ':00';
   };
+  function dataClientId(name) {
+    if (!name || !Array.isArray(window.data?.clients)) return null;
+    const match = window.data.clients.find(client => String(client.name || client.nome || '').trim().toLowerCase() === String(name).trim().toLowerCase());
+    return match?.id || null;
+  }
   function normalize(entity, source) {
     const row = { ...(source || {}) };
     delete row.id;
@@ -90,6 +95,15 @@
       row.client_id = row.client_id || row.clientId;
       row.signed_at = row.signed_at || row.signedAt;
       row.payload = row.payload || { status:row.status || null };
+    } else if (entity === 'anamneses') {
+      row.client_id = row.client_id || row.clientId || dataClientId(row.client);
+      row.private_formula = row.private_formula || row.privateFormula;
+      row.private_notes = row.private_notes || row.privateNotes;
+    } else if (entity === 'before_after_gallery') {
+      row.client_id = row.client_id || row.clientId || dataClientId(row.client);
+      row.before_ref = row.before_ref || row.beforeRef || row.before || null;
+      row.after_ref = row.after_ref || row.afterRef || row.after || null;
+      row.collage_ref = row.collage_ref || row.collageRef || row.collage || null;
     }
     return row;
   }
@@ -135,7 +149,8 @@
   const guardedKeys = new Set([
     'eddu_data','eddu_finance','eddu_state',
     'eddu_v46_manual_coupons','eddu_master_coupons_v46',
-    'eddu_v46_card_invoices','eddu_master_card_invoices_v46'
+    'eddu_v46_card_invoices','eddu_master_card_invoices_v46',
+    'eddu_last_anamnesis','eddu_before_after_gallery','eddu_catalogo_servicos_v16'
   ]);
   Storage.prototype.setItem = function (key, value) {
     if (guardedKeys.has(String(key))) {
@@ -153,6 +168,12 @@
       }
       if (key.includes('coupons')) window.data.coupons = Array.isArray(parsed) ? parsed : [];
       if (key.includes('card_invoices')) window.data.cardInvoices = Array.isArray(parsed) ? parsed : [];
+      if (key === 'eddu_last_anamnesis') {
+        const current = Array.isArray(window.data.anamneses) ? window.data.anamneses : [];
+        window.data.anamneses = [parsed, ...current.filter(item => item.id !== parsed.id)];
+      }
+      if (key === 'eddu_before_after_gallery') window.data.beforeAfterGallery = Array.isArray(parsed) ? parsed : [];
+      if (key === 'eddu_catalogo_servicos_v16') window.data.services = Array.isArray(parsed) ? parsed : [];
       persist();
       return;
     }
