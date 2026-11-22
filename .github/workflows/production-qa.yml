@@ -181,9 +181,11 @@ jobs:
             fi
             sleep 5
           done
-          rank="$(curl --silent --show-error --max-time 20 "$base/api/payments?mode=rank&amount=100&method=pix&installments=1")"
-          echo "payment_rank=$rank"
-          python3 -c 'import json,sys; x=json.loads(sys.argv[1]); assert x.get("ok") is True, x; assert x.get("ranking"), "No configured payment gateway is available in production"; print("Production payment ranking: PASS")' "$rank"
+          rank_status="$(curl --silent --show-error --max-time 20 -o /tmp/payment-rank.json -w '%{http_code}' "$base/api/payments?mode=rank&amount=100&method=pix&installments=1")"
+          rank="$(cat /tmp/payment-rank.json)"
+          echo "payment_rank_http=$rank_status body=$rank"
+          test "$rank_status" = "401"
+          python3 -c 'import json,sys; x=json.loads(sys.argv[1]); assert x.get("error") == "UNAUTHORIZED", x; print("Production payment ranking authentication gate: PASS")' "$rank"
 
       - name: Delete legacy Cloudflare preview deployments
         env:

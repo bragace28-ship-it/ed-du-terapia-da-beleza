@@ -56,7 +56,7 @@ function estimate(amount,gateway,method,installments,env){
  return {fee_known:true,fee_percent:pct,fee_amount:fee,net_amount:money(amount-fee),fixed_fee_amount:fixed,fee_source:configured!==undefined&&String(configured).trim()!==''?'cloudflare_environment':'historically_verified_rate'};
 }
 async function createPagBank({env,origin,commandId,amount,method,installments,customer,reference}){
-  const token=env.PAGBANK_TOKEN,base=String(env.PAGBANK_API_BASE||'https://sandbox.api.pagseguro.com').replace(/\/$/,'');
+  const token=env.PAGBANK_TOKEN,base=String(env.PAGBANK_API_BASE||'https://api.pagseguro.com').replace(/\/$/,'');
   if(!token||!base)throw new Error('PagBank não configurado no servidor.');
   const notificationUrl=origin+'/api/webhooks/pagbank';
   const payload={reference_id:reference,expiration_date:new Date(Date.now()+60*60*1000).toISOString(),customer_modifiable:true,items:[{reference_id:commandId||reference,name:'ED & DU | Terapia da Beleza',quantity:1,unit_amount:Math.round(amount*100)}],payment_methods:[{type:method==='pix'?'PIX':method==='debit_card'?'DEBIT_CARD':'CREDIT_CARD'}],payment_methods_configs:method==='card'?[{type:'CREDIT_CARD',config_options:[{option:'INSTALLMENTS_LIMIT',value:String(Math.max(1,Math.min(12,installments||1)))}]}]:[],soft_descriptor:'EDDU BELEZA',redirect_url:origin+'/?payment=return&command='+encodeURIComponent(commandId),return_url:origin+'/?payment=return&command='+encodeURIComponent(commandId),notification_urls:[notificationUrl],payment_notification_urls:[notificationUrl]};
@@ -74,7 +74,7 @@ async function createStripe({env,origin,commandId,amount,installments,descriptio
 }
 async function createAsaas({env,origin,commandId,amount,method,installments,customer,reference}){
   const key=env.ASAAS_API_KEY;if(!key)throw new Error('Asaas não configurado no servidor.');
-  const base=String(env.ASAAS_BASE_URL||'https://api-sandbox.asaas.com/v3').replace(/\/$/,'');
+  const base=String(env.ASAAS_BASE_URL||'https://api.asaas.com/v3').replace(/\/$/,'');
   const payload={billingTypes:[method==='pix'?'PIX':method==='wallet'?'WALLET':'CREDIT_CARD'],chargeTypes:[method==='card'&&installments>1?'INSTALLMENT':'DETACHED'],minutesToExpire:60,externalReference:reference,callback:{successUrl:origin+'/?payment=success&command='+encodeURIComponent(commandId),cancelUrl:origin+'/?payment=cancelled&command='+encodeURIComponent(commandId),expiredUrl:origin+'/?payment=expired&command='+encodeURIComponent(commandId)},items:[{externalReference:commandId||reference,name:'ED & DU | Terapia da Beleza',description:'Comanda '+commandId,quantity:1,value:amount}]};
   if(method==='card'&&installments>1)payload.installment={maxInstallmentCount:installments};
   if(customer.name||customer.email||customer.phone||customer.document)payload.customerData={...(customer.name?{name:customer.name}:{}),...(customer.email?{email:customer.email}:{}),...(customer.phone?{phone:customer.phone}:{}),...(customer.document?{cpfCnpj:digits(customer.document)}:{})};
