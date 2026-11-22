@@ -68,12 +68,15 @@
     const url = new URL('/api/data/' + encodeURIComponent(entity), location.origin);
     if (query?.id) url.searchParams.set('id', query.id);
     if (query?.limit) url.searchParams.set('limit', String(query.limit));
+    const authToken = session?.session?.token || session?.token || session?.accessToken || session?.session?.accessToken;
+    if (!authToken) throw new Error('NEON_SESSION_TOKEN_UNAVAILABLE');
     const response = await fetch(url.toString(), {
       method: method || 'GET',
       credentials: 'same-origin',
       cache: 'no-store',
       headers: {
         Accept: 'application/json',
+        Authorization: 'Bearer ' + authToken,
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {})
       },
       ...(body !== undefined ? { body: JSON.stringify(body) } : {})

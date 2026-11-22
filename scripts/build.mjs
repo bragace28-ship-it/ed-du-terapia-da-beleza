@@ -60,7 +60,8 @@ const runtimeFiles=[
   'master/runtime-render-guard.js',
   'master/runtime-command-gateway.js',
   'master/runtime-real-checkout.js',
-  'master/neon-live-bridge.js'
+  'master/neon-live-bridge.js',
+  'master/runtime-neon-persistence.js'
 ];
 for(const file of runtimeFiles){
   const code=await readFile(resolve(root,file),'utf8');

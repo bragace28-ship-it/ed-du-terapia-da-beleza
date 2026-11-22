@@ -9,6 +9,7 @@ const required=[
   'master/FEATURE_MATRIX_86.json',
   'master/neon-auth-client.js',
   'master/neon-live-bridge.js',
+  'master/runtime-neon-persistence.js',
   'master/runtime-command-gateway.js',
   'master/runtime-real-checkout.js',
   'functions/api/health.js',
