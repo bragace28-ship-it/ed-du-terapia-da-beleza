@@ -94,6 +94,22 @@
     state()[key] = Array.isArray(rows) ? rows : [];
     window.dispatchEvent(new CustomEvent('eddu-neon-data-loaded', { detail: { entity, key, rows: state()[key] } }));
   }
+  function hydrateCommands() {
+    if (!window.state) return;
+    const commands = Array.isArray(state().commands) ? state().commands : [];
+    const items = Array.isArray(state().commandItems) ? state().commandItems : [];
+    const clients = Array.isArray(state().clients) ? state().clients : [];
+    for (const command of commands) {
+      command.items = items.filter(item => item.command_id === command.id).map(item => ({ ...item, service:item.description, qty:Number(item.quantity || 1), price:Number(item.unit_price || 0) }));
+      command.grossAmount = Number(command.grossAmount ?? command.subtotal ?? command.total ?? 0);
+      command.netAmount = Number(command.netAmount ?? command.total ?? 0);
+      command.discount = Number(command.discount || 0);
+      if (!command.client && command.client_id) command.client = clients.find(client => client.id === command.client_id)?.name || '';
+      if (!command.service && command.items.length) command.service = command.items[0].description;
+    }
+    window.state.commands = commands;
+    if (!commands.some(command => command.id === window.state.activeCommandId)) window.state.activeCommandId = commands[0]?.id || null;
+  }
   async function load(entity, options) {
     const result = await api(entity, 'GET', undefined, options);
     applyRows(entity, result.data || []);
@@ -105,6 +121,7 @@
     if (row) {
       const key = DATA_KEYS[entity];
       if (key) state()[key] = [row, ...(Array.isArray(state()[key]) ? state()[key].filter(item => item.id !== row.id) : [])];
+      if (entity === 'commands') hydrateCommands();
       window.dispatchEvent(new CustomEvent('eddu-neon-data-changed', { detail: { operation: 'insert', entity, row } }));
     }
     return row;
@@ -115,6 +132,7 @@
     const row = result.data;
     const key = DATA_KEYS[entity];
     if (row && key) state()[key] = (state()[key] || []).map(item => item.id === id ? row : item);
+    if (entity === 'commands') hydrateCommands();
     window.dispatchEvent(new CustomEvent('eddu-neon-data-changed', { detail: { operation: 'update', entity, row } }));
     return row;
   }
@@ -123,6 +141,7 @@
     const result = await api(entity, 'DELETE', undefined, { id });
     const key = DATA_KEYS[entity];
     if (key) state()[key] = (state()[key] || []).filter(item => item.id !== id);
+    if (entity === 'commands') hydrateCommands();
     window.dispatchEvent(new CustomEvent('eddu-neon-data-changed', { detail: { operation: 'delete', entity, id } }));
     return result;
   }
@@ -140,6 +159,7 @@
       const entities = Object.keys(TABLES);
       const results = await Promise.allSettled(entities.map(entity => load(entity, { limit: 500 })));
       const failed = results.map((result, index) => result.status === 'rejected' ? { entity: entities[index], error: String(result.reason?.message || result.reason) } : null).filter(Boolean);
+      hydrateCommands();
       window.__EDDU_NEON_CONNECTED = failed.length === 0;
       window.__EDDU_NEON_SYNC_ERRORS = failed;
       if (failed.length) console.error('[EDDU] Neon synchronization errors:', failed);
