@@ -3,7 +3,7 @@
   'use strict';
   const TABLES = {
     clients:'clients', professionals:'professionals', services:'services', products:'products',
-    appointments:'appointments', commands:'commands', command_items:'command_items',
+    appointments:'appointments', commands:'commands', commandItems:'command_items',
     financialTransactions:'financial_transactions', blocks:'agenda_blocks', payments:'payments',
     payables:'payables', receivables:'receivables', commissions:'commissions', coupons:'coupons',
     giftCards:'gift_cards', referrals:'referrals', cardInvoices:'card_invoices',
@@ -162,19 +162,19 @@
         }
       }
       if (entity === 'commands') {
-        if (!Array.isArray(data.command_items)) data.command_items = [];
+        if (!Array.isArray(data.commandItems)) data.commandItems = [];
         for (const command of rows) {
           if (!Array.isArray(command.items)) continue;
           const items = command.items;
           for (let index=0; index<items.length; index++) {
             const item=items[index] || {};
-            let row=item.id ? data.command_items.find(x=>x.id===item.id) : null;
-            if(!row) row=data.command_items.find(x=>x.command_id===command.id && !x.id && x.__sourceIndex===index);
-            if(!row){row={command_id:command.id};data.command_items.push(row);}
+            let row=item.id ? data.commandItems.find(x=>x.id===item.id) : null;
+            if(!row) row=data.commandItems.find(x=>x.command_id===command.id && !x.id && x.__sourceIndex===index);
+            if(!row){row={command_id:command.id};data.commandItems.push(row);}
             const quantity=Number(item.quantity ?? item.qty ?? 1), unitPrice=Number(item.unit_price ?? item.price ?? 0);
             Object.assign(row,{command_id:command.id,item_type:item.item_type||'service',service_id:item.service_id||item.serviceId||null,product_id:item.product_id||item.productId||null,description:item.description||item.service||command.service||'Item da comanda',quantity,unit_price:unitPrice,total:Number(item.total ?? quantity*unitPrice),professional_id:item.professional_id||item.professionalId||command.professional_id||null,unit_cost:Number(item.unit_cost??item.cost??0),commission_percent:Number(item.commission_percent??item.commissionPercent??0),__sourceIndex:index});
           }
-          data.command_items=data.command_items.filter(row=>row.command_id!==command.id || (row.id ? items.some(item=>item.id===row.id) : items.some((item,index)=>!item.id && row.__sourceIndex===index)));
+          data.commandItems=data.commandItems.filter(row=>row.command_id!==command.id || (row.id ? items.some(item=>item.id===row.id) : items.some((item,index)=>!item.id && row.__sourceIndex===index)));
         }
       }
       persistedIds[entity] = new Set(rows.map(row => String(row?.id || '')).filter(id => UUID.test(id)));
