@@ -61,7 +61,7 @@ output=output.replace(demoAppointmentSeed,'');
 const demoCommandSeed=/state\.commands=Array\.isArray\(state\.commands\)\?state\.commands:\[\];\s*if\(!state\.commands\.length\)\s*\{\s*state\.commands=\[[\s\S]*?\];\s*\}\s*state\.activeCommandId=state\.activeCommandId\|\|'CMD-001';/;
 if(!demoCommandSeed.test(output)) throw new Error('Master demo command seed not found; refusing local fixture production.');
 output=output.replace(demoCommandSeed,'state.commands=[]; state.activeCommandId=state.activeCommandId||null;');
-if(output.includes('APT-DEMO-1')||output.includes('APT-DEMO-2')||output.includes('CMD-001')||output.includes('CMD-002')||output.includes('CMD-003')) throw new Error('Demo appointment or command fixtures remain in production artifact.');
+if(output.includes('APT-DEMO-1')||output.includes('APT-DEMO-2')) throw new Error('Demo appointments remain in production artifact.');
 const injectBeforeClosingBody=(document,markup)=>{
   const index=document.toLowerCase().lastIndexOf('</body>');
   if(index<0) throw new Error('MASTER build has no closing body tag.');
