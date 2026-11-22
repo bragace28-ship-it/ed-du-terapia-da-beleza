@@ -78,7 +78,7 @@
       row.command_id = row.command_id || row.commandId;
       row.due_at = row.due_at || row.due_date || row.dueDate;
     } else if (entity === 'anamneses') {
-      row.client_id = row.client_id || row.clientId;
+      row.client_id = row.client_id || row.clientId || dataClientId(row.client);
       row.private_formula = row.private_formula || row.privateFormula;
       row.private_notes = row.private_notes || row.privateNotes;
     } else if (entity === 'coupons') {
@@ -95,10 +95,6 @@
       row.client_id = row.client_id || row.clientId;
       row.signed_at = row.signed_at || row.signedAt;
       row.payload = row.payload || { status:row.status || null };
-    } else if (entity === 'anamneses') {
-      row.client_id = row.client_id || row.clientId || dataClientId(row.client);
-      row.private_formula = row.private_formula || row.privateFormula;
-      row.private_notes = row.private_notes || row.privateNotes;
     } else if (entity === 'before_after_gallery') {
       row.client_id = row.client_id || row.clientId || dataClientId(row.client);
       row.before_ref = row.before_ref || row.beforeRef || row.before || null;
