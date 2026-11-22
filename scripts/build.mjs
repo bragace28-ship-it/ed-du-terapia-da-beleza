@@ -52,7 +52,13 @@ output=output.replace(viewRegistryMarker,'const views=window.views={');
 const localDataMarker='let testState=load(KEY,{}), data=load(DATA,{payments:[],commands:[],receivables:[],payables:[],commissions:[],logs:[],blocks:[],accounts:[],quotes:[],notifications:[],users:[],referrals:[],giftCards:[],services:[]});';
 if(output.split(localDataMarker).length!==2) throw new Error('Expected exactly one Master local data bootstrap.');
 output=output.replace(localDataMarker,"let testState=load(KEY,{}), data=(window.__EDDU_MASTER_LOCAL_DATA=window.data={payments:[],commands:[],receivables:[],payables:[],commissions:[],logs:[],blocks:[],accounts:[],quotes:[],notifications:[],users:[],referrals:[],giftCards:[],services:[],appointments:[],clients:[],professionals:[],products:[],financialTransactions:[]});");
-const demoAppointmentSeed=/if \(!data\.appointments\.length\) \{\s*const today = ne...[truncated]  if(index<0) throw new Error('MASTER build has no closing body tag.');
+const demoAppointmentSeed=/if\s*\(!data\.appointments\.length\)\s*\{[\s\S]*?persist\(\);\s*\}/;
+if(!demoAppointmentSeed.test(output)) throw new Error('Master demo appointment seed not found; refusing local fixture production.');
+output=output.replace(demoAppointmentSeed,'');
+if(output.includes('APT-DEMO-1')||output.includes('APT-DEMO-2')) throw new Error('Demo appointments remain in production artifact.');
+const injectBeforeClosingBody=(document,markup)=>{
+  const index=document.toLowerCase().lastIndexOf('</body>');
+  if(index<0) throw new Error('MASTER build has no closing body tag.');
   return document.slice(0,index)+markup+document.slice(index);
 };
 const runtimeFiles=[
