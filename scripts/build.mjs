@@ -20,6 +20,7 @@ if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(legacyFree)) throw new Error('Le
 const validationFiles=[
   'master/runtime-navigation-hardening.js',
   'master/runtime-real-checkout.js',
+  'master/runtime-production-guard.js',
   'master/neon-live-bridge.js',
   'master/runtime-neon-persistence.js',
   'functions/api/payments.js',
@@ -55,6 +56,9 @@ output=output.replace(stateRegistryMarker,'const state=window.state={');
 const localDataMarker='let testState=load(KEY,{}), data=load(DATA,{payments:[],commands:[],receivables:[],payables:[],commissions:[],logs:[],blocks:[],accounts:[],quotes:[],notifications:[],users:[],referrals:[],giftCards:[],services:[]});';
 if(output.split(localDataMarker).length!==2) throw new Error('Expected exactly one Master local data bootstrap.');
 output=output.replace(localDataMarker,"let testState=load(KEY,{}), data=(window.__EDDU_MASTER_LOCAL_DATA=window.data={payments:[],commands:[],receivables:[],payables:[],commissions:[],logs:[],blocks:[],accounts:[],quotes:[],notifications:[],users:[],referrals:[],giftCards:[],services:[],appointments:[],clients:[],professionals:[],products:[],financialTransactions:[]});");
+output=output.replace(/Pagamento\\s+em\\s+modo\\s+de\\s+teste\\s*,?\\s*sem\\s+cobrança\\s+real/gi,'Cobrança processada pelo gateway selecionado.');
+output=output.replace(/Nenhuma cobrança real é criada nesta tela\\.?/gi,'As cobranças são criadas no gateway real selecionado.');
+
 const demoAppointmentSeed=/if\s*\(!data\.appointments\.length\)\s*\{[\s\S]*?persist\(\);\s*\}/;
 if(!demoAppointmentSeed.test(output)) throw new Error('Master demo appointment seed not found; refusing local fixture production.');
 output=output.replace(demoAppointmentSeed,'');
@@ -71,6 +75,7 @@ const runtimeFiles=[
   'master/neon-live-bridge.js',
   'master/runtime-neon-persistence.js',
   'master/runtime-real-checkout.js',
+  'master/runtime-production-guard.js',
   'master/runtime-navigation-hardening.js'
 ];
 const runtimeBlocks=[];
@@ -89,6 +94,9 @@ await mkdir(dist,{recursive:true});
 await writeFile(resolve(dist,'index.html'),output,'utf8');
 
 const built=await readFile(resolve(dist,'index.html'),'utf8');
+if(/Pagamento\\s+em\\s+modo\\s+de\\s+teste\\s*,?\\s*sem\\s+cobrança\\s+real/i.test(built)) throw new Error('Legacy test-payment screen remains in production artifact.');
+if(!built.includes('EDDU_LIVE_PAYMENT_GUARD')) throw new Error('Production payment guard missing from built artifact.');
+
 const inlineScripts=[...built.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)];
 let checkedScripts=0;
 for(const match of inlineScripts){
