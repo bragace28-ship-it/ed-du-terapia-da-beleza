@@ -143,7 +143,12 @@
         if (entity === 'financial_transactions' && (!payload.type || !payload.direction || payload.amount == null || !payload.description)) continue;
         const saved = UUID.test(String(source.id || ''))
           ? await window.EDDU_NEON_API.update(entity, source.id, payload)
-          : await window.EDDU_NEON_API.insert(entity, payload)...[truncated]      persistedIds[entity] = new Set(rows.map(row => String(row?.id || '')).filter(id => UUID.test(id)));
+          : await window.EDDU_NEON_API.insert(entity, payload);
+        if (!saved?.id) throw new Error('NEON_WRITE_DID_NOT_RETURN_ID:' + entity);
+        source.id = saved.id;
+        report.push({ entity, id:saved.id, operation:'upsert' });
+      }
+      persistedIds[entity] = new Set(rows.map(row => String(row?.id || '')).filter(id => UUID.test(id)));
     }
     window.__EDDU_NEON_LAST_PERSIST = { at:new Date().toISOString(), writes:report.length, rows:report };
     window.dispatchEvent(new CustomEvent('eddu-neon-persist-complete', { detail:window.__EDDU_NEON_LAST_PERSIST }));
