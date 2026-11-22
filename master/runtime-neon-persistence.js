@@ -59,15 +59,24 @@
       row.starts_at = row.starts_at || row.startsAt || iso(row.date, row.start);
       row.ends_at = row.ends_at || row.endsAt || iso(row.date, row.end || '23:59');
     } else if (entity === 'commands') {
-      row.client_id = row.client_id || row.clientId;
+      row.client_id = row.client_id || row.clientId || dataClientId(row.client);
       row.professional_id = row.professional_id || row.professionalId;
       row.appointment_id = row.appointment_id || row.appointmentId;
+      row.subtotal = row.subtotal ?? row.grossAmount ?? row.total;
+      row.total = row.total ?? row.netAmount ?? row.amount ?? row.subtotal ?? 0;
+      row.discount = row.discount ?? row.discountAmount ?? 0;
     } else if (entity === 'command_items') {
       row.command_id = row.command_id || row.commandId;
       row.service_id = row.service_id || row.serviceId;
       row.product_id = row.product_id || row.productId;
       row.professional_id = row.professional_id || row.professionalId;
-      row.unit_price = row.unit_price ?? row.price;
+      row.item_type = row.item_type || 'service';
+      row.description = row.description || row.service || row.name || 'Item da comanda';
+      row.quantity = row.quantity ?? row.qty ?? 1;
+      row.unit_price = row.unit_price ?? row.price ?? 0;
+      row.total = row.total ?? Number(row.quantity) * Number(row.unit_price);
+      row.commission_percent = row.commission_percent ?? row.commissionPercent ?? 0;
+      delete row.__sourceIndex;
     } else if (entity === 'financial_transactions') {
       row.client_id = row.client_id || row.clientId;
       row.command_id = row.command_id || row.commandId;
@@ -147,9 +156,30 @@
         if (!saved?.id) throw new Error('NEON_WRITE_DID_NOT_RETURN_ID:' + entity);
         source.id = saved.id;
         report.push({ entity, id:saved.id, operation:'upsert' });
+        if (entity === 'command_items' && Number.isInteger(source.__sourceIndex)) {
+          const command = (data.commands || []).find(item => item.id === source.command_id);
+          if (command?.items?.[source.__sourceIndex]) command.items[source.__sourceIndex].id = saved.id;
+        }
+      }
+      if (entity === 'commands') {
+        if (!Array.isArray(data.command_items)) data.command_items = [];
+        for (const command of rows) {
+          if (!Array.isArray(command.items)) continue;
+          const items = command.items;
+          for (let index=0; index<items.length; index++) {
+            const item=items[index] || {};
+            let row=item.id ? data.command_items.find(x=>x.id===item.id) : null;
+            if(!row) row=data.command_items.find(x=>x.command_id===command.id && !x.id && x.__sourceIndex===index);
+            if(!row){row={command_id:command.id};data.command_items.push(row);}
+            const quantity=Number(item.quantity ?? item.qty ?? 1), unitPrice=Number(item.unit_price ?? item.price ?? 0);
+            Object.assign(row,{command_id:command.id,item_type:item.item_type||'service',service_id:item.service_id||item.serviceId||null,product_id:item.product_id||item.productId||null,description:item.description||item.service||command.service||'Item da comanda',quantity,unit_price:unitPrice,total:Number(item.total ?? quantity*unitPrice),professional_id:item.professional_id||item.professionalId||command.professional_id||null,unit_cost:Number(item.unit_cost??item.cost??0),commission_percent:Number(item.commission_percent??item.commissionPercent??0),__sourceIndex:index});
+          }
+          data.command_items=data.command_items.filter(row=>row.command_id!==command.id || (row.id ? items.some(item=>item.id===row.id) : items.some((item,index)=>!item.id && row.__sourceIndex===index)));
+        }
       }
       persistedIds[entity] = new Set(rows.map(row => String(row?.id || '')).filter(id => UUID.test(id)));
     }
+    if (window.state && Array.isArray(data.commands)) window.state.commands = data.commands;
     window.__EDDU_NEON_LAST_PERSIST = { at:new Date().toISOString(), writes:report.length, rows:report };
     window.dispatchEvent(new CustomEvent('eddu-neon-persist-complete', { detail:window.__EDDU_NEON_LAST_PERSIST }));
     return window.__EDDU_NEON_LAST_PERSIST;
