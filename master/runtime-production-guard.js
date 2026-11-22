@@ -1,8 +1,8 @@
 /* ED & DU production payment guard — credentials and live checkout only. */
 (function(){
   'use strict';
-  const PAYMENT_PATH=/^\\/api\\/payments(?:\\?|$)/;
-  const DATA_PATH=/^\\/api\\/data\\//;
+  const PAYMENT_PATH=/^\/api\/payments(?:\?|$)/;
+  const DATA_PATH=/^\/api\/data\//;
   const nativeFetch=window.fetch.bind(window);
   window.fetch=function(input,init){
     let url='';
@@ -12,8 +12,8 @@
     if(PAYMENT_PATH.test(path)||DATA_PATH.test(path)) init={...(init||{}),credentials:'include'};
     return nativeFetch(input,init);
   };
-  const LEGACY=/Pagamento\\s+em\\s+modo\\s+de\\s+teste\\s*,?\\s*sem\\s+cobrança\\s+real/gi;
-  const LEGACY_ALT=/Nenhuma cobrança real é criada nesta tela\\.?/gi;
+  const LEGACY=/Pagamento\s+em\s+modo\s+de\s+teste\s*,?\s*sem\s+cobrança\s+real/gi;
+  const LEGACY_ALT=/Nenhuma cobrança real é criada nesta tela\.?/gi;
   function cleanText(root){
     if(!root)return;
     const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
