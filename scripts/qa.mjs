@@ -30,3 +30,13 @@ if (!html.includes("Authorization: 'Bearer ' + authToken"))
 if (!html.includes('EDDU_NEON_PERSIST_SNAPSHOT') || !html.includes('NEON_ONLY_INVALID_JSON'))
   throw new Error('Neon write-through persistence guard is missing from production artifact.');
 console.log('Neon authenticated write-through QA: PASS');
+
+if (!html.includes('window.__edduOpenGatewayRanking') || !html.includes('v52Checkout'))
+  throw new Error('MASTER V46 real gateway ranking/checkout bridge is missing from production artifact.');
+if (!html.includes('EDDU_NEON_API') || !html.includes('appointments'))
+  throw new Error('MASTER V46 Neon data bridge is missing from production artifact.');
+if (html.includes('Seção temporariamente indisponível'))
+  throw new Error('Legacy render fallback is present in the production artifact.');
+if (html.includes('Mariana') || html.includes('Juliana') || html.includes('Camila'))
+  throw new Error('Fictitious legacy client fixtures are present in the production artifact.');
+console.log('MASTER V46 isolated runtime and real checkout QA: PASS');

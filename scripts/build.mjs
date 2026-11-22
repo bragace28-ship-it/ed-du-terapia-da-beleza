@@ -18,10 +18,10 @@ if(/(?:V33|v33|fin33|eddu_v33)/i.test(legacyFree)) throw new Error('Legacy versi
 if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(legacyFree)) throw new Error('Legacy Supabase reference found in Master UI.');
 
 const validationFiles=[
-  'master/runtime-command-gateway.js',
+  'master/runtime-navigation-hardening.js',
   'master/runtime-real-checkout.js',
-  'master/runtime-fixes.js',
-  'master/runtime-functional-hotfix.js',
+  'master/neon-live-bridge.js',
+  'master/runtime-neon-persistence.js',
   'functions/api/payments.js',
   'functions/api/_lib/payment-settlement.js',
   'functions/api/webhooks/asaas.js',
@@ -52,25 +52,19 @@ const injectBeforeClosingBody=(document,markup)=>{
   return document.slice(0,index)+markup+document.slice(index);
 };
 const runtimeFiles=[
-  'master/runtime-functional-hotfix.js',
-  'master/runtime-hardening.js',
-  'master/runtime-fixes.js',
-  'master/runtime-navigation-hardening.js',
-  'master/runtime-navigation-bridge.js',
-  'master/runtime-render-guard.js',
-  'master/runtime-command-gateway.js',
-  'master/runtime-real-checkout.js',
   'master/neon-live-bridge.js',
-  'master/runtime-neon-persistence.js'
+  'master/runtime-neon-persistence.js',
+  'master/runtime-real-checkout.js',
+  'master/runtime-navigation-hardening.js'
 ];
+const runtimeBlocks=[];
 for(const file of runtimeFiles){
   const code=await readFile(resolve(root,file),'utf8');
   if(/(?:V33|v33|fin33|eddu_v33)/i.test(stripEmbeddedDataImages(code))) throw new Error('Legacy version reference found in '+file);
   if(/@supabase|VITE_SUPABASE|supabase\.co/i.test(code)) throw new Error('Legacy Supabase reference found in '+file);
-  const bodyClose=output.lastIndexOf('</body>');
-  if(bodyClose<0) throw new Error('MASTER HTML has no closing body tag.');
-  output=output.slice(0,bodyClose)+'<script>'+code+'\n</script>\n'+output.slice(bodyClose);
+  runtimeBlocks.push('<script>\\n'+code+'\\n</script>');
 }
+output=injectBeforeClosingBody(output,runtimeBlocks.join('\\n'));
 const authClient=await readFile(resolve(root,'master','neon-auth-client.js'),'utf8');
 output=injectBeforeClosingBody(output,'<script type="module">'+authClient+'\n</script>');
 
