@@ -150,11 +150,13 @@
         if (entity === 'appointments' && (!payload.starts_at || !payload.ends_at)) continue;
         if (entity === 'agenda_blocks' && (!payload.starts_at || !payload.ends_at)) continue;
         if (entity === 'financial_transactions' && (!payload.type || !payload.direction || payload.amount == null || !payload.description)) continue;
+        const previousId = source.id;
         const saved = UUID.test(String(source.id || ''))
           ? await window.EDDU_NEON_API.update(entity, source.id, payload)
           : await window.EDDU_NEON_API.insert(entity, payload);
         if (!saved?.id) throw new Error('NEON_WRITE_DID_NOT_RETURN_ID:' + entity);
         source.id = saved.id;
+        if (entity === 'commands' && window.state?.activeCommandId === previousId) window.state.activeCommandId = saved.id;
         report.push({ entity, id:saved.id, operation:'upsert' });
         if (entity === 'command_items' && Number.isInteger(source.__sourceIndex)) {
           const command = (data.commands || []).find(item => item.id === source.command_id);
@@ -179,7 +181,12 @@
       }
       persistedIds[entity] = new Set(rows.map(row => String(row?.id || '')).filter(id => UUID.test(id)));
     }
-    if (window.state && Array.isArray(data.commands)) window.state.commands = data.commands;
+    if (window.state && Array.isArray(data.commands)) {
+      for (const command of data.commands) {
+        command.items = (Array.isArray(data.commandItems) ? data.commandItems : []).filter(item => item.command_id === command.id).map(item => ({ ...item, service:item.description, qty:Number(item.quantity || 1), price:Number(item.unit_price || 0) }));
+      }
+      window.state.commands = data.commands;
+    }
     window.__EDDU_NEON_LAST_PERSIST = { at:new Date().toISOString(), writes:report.length, rows:report };
     window.dispatchEvent(new CustomEvent('eddu-neon-persist-complete', { detail:window.__EDDU_NEON_LAST_PERSIST }));
     return window.__EDDU_NEON_LAST_PERSIST;
