@@ -21,29 +21,170 @@
     try { if (typeof window.toast === 'function') window.toast('Neon: ' + message); } catch (_) {}
   };
   const iso = (date, time) => {
-¶»§q«^u½™•ÍÍ¥½¹…±}¥€ôÉ½Ü¹ÁÉ½™•ÍÍ¥½¹…±}¥ñðÉ½Ü¹ÁÉ½™•ÍÍ¥½¹…±%ì(€€€€€É½Ü¹ÍÑ…ÉÑÍ}…Ð€ôÉ½Ü¹ÍÑ…ÉÑÍ}…ÐñðÉ½Ü¹ÍÑ…ÉÑÍÐñð¥Í¼¡É½Ü¹‘…Ñ”°É½Ü¹ÍÑ…ÉÐ¤ì(€€€€€É½Ü¹•¹‘Í}…Ð€ôÉ½Ü¹•¹‘Í}…ÐñðÉ½Ü¹•¹‘ÍÐñð¥Í¼¡É½Ü¹‘…Ñ”°É½Ü¹•¹¤ì(€€€ô•±Í”¥˜€¡•¹Ñ¥Ñä€ôôô€…•¹‘…}‰±½­Ìœ¤ì(€€€€€É½Ü¹ÁÉ½™•ÍÍ¥½¹…±}¥€ôÉ½Ü¹ÁÉ½™•ÍÍ¥½¹…±}¥ñðÉ½Ü¹ÁÉ½™•ÍÍ¥½¹…±%ì(€€€€€É½Ü¹ÍÑ…ÉÑÍ}…Ð€ôÉ½Ü¹ÍÑ…ÉÑÍ}…ÐñðÉ½Ü¹ÍÑ…ÉÑÍÐñð¥Í¼¡É½Ü¹‘…Ñ”°É½Ü¹ÍÑ…ÉÐ¤ì(€€€€€É½Ü¹•¹‘Í}…Ð€ôÉ½Ü¹•¹‘Í}…ÐñðÉ½Ü¹•¹‘ÍÐñð¥Í¼¡É½Ü¹‘…Ñ”°É½Ü¹•¹ñð€œÈÌèÔäœ¤ì(€€€ô•±Í”¥˜€¡•¹Ñ¥Ñä€ôôô€½µµ…¹‘Ìœ¤ì(€€€€€É½Ü¹±¥•¹Ñ}¥€ôÉ½Ü¹±¥•¹Ñ}¥ñðÉ½Ü¹±¥•¹Ñ%ì(€€€€€É½Ü¹ÁÉ½™•ÍÍ¥½¹…±}¥€ôÉ½Ü¹ÁÉ½™•ÍÍ¥½¹…±}¥ñðÉ½Ü¹ÁÉ½™•ÍÍ¥½¹…±%ì(€€€€€É½Ü¹…ÁÁ½¥¹Ñµ•¹Ñ}¥€ôÉ½Ü¹…ÁÁ½¥¹Ñµ•¹Ñ}¥ñðÉ½Ü¹…ÁÁ½¥¹Ñµ•¹Ñ%ì(€€€ô•±Í”¥˜€¡•¹Ñ¥Ñä€ôôô€½µµ…¹‘}¥Ñ•µÌœ¤ì(€€€€€É½Ü¹½µµ…¹‘}¥€ôÉ½Ü¹½µµ…¹‘}¥ñðÉ½Ü¹½µµ…¹‘%ì(€€€€€É½Ü¹Í•ÉÙ¥•}¥€ôÉ½Ü¹Í•ÉÙ¥•}¥ñðÉ½Ü¹Í•ÉÙ¥•%ì(€€€€€É½Ü¹ÁÉ½‘ÕÑ}¥€ôÉ½Ü¹ÁÉ½‘ÕÑ}¥ñðÉ½Ü¹ÁÉ½‘ÕÑ%ì(€€€€€É½Ü¹ÁÉ½™•ÍÍ¥½¹…±}¥€ôÉ½Ü¹ÁÉ½™•ÍÍ¥½¹…±}¥ñðÉ½Ü¹ÁÉ½™•ÍÍ¥½¹…±%ì(€€€€€É½Ü¹Õ¹¥Ñ}ÁÉ¥”€ôÉ½Ü¹Õ¹¥Ñ}ÁÉ¥”€üüÉ½Ü¹ÁÉ¥”ì(€€€ô•±Í”¥˜€¡•¹Ñ¥Ñä€ôôô€™¥¹…¹¥…±}ÑÉ…¹Í…Ñ¥½¹Ìœ¤ì(€€€€€É½Ü¹±¥•¹Ñ}¥€ôÉ½Ü¹±¥•¹Ñ}¥ñðÉ½Ü¹±¥•¹Ñ%ì(€€€€€É½Ü¹½µµ…¹‘}¥€ôÉ½Ü¹½µµ…¹‘}¥ñðÉ½Ü¹½µµ…¹‘%ì(€€€€€É½Ü¹‘¥É•Ñ¥½¸€ôÉ½Ü¹‘¥É•Ñ¥½¸ñð€¡É½Ü¹ÑåÁ”€ôôô€•áÁ•¹Í”œ€ü€½ÕÐœ€èÉ½Ü¹ÑåÁ”€ôôô€¥¹½µ”œ€ü€¥¸œ€èÕ¹‘•™¥¹•¤ì(€€€€€É½Ü¹‘•ÍÉ¥ÁÑ¥½¸€ôÉ½Ü¹‘•ÍÉ¥ÁÑ¥½¸ñðÉ½Ü¹¹…µ”ì(€€€ô•±Í”¥˜€¡•¹Ñ¥Ñä€ôôô€Á…åµ•¹ÑÌœñð•¹Ñ¥Ñä€ôôô€Á…å…‰±•Ìœñð•¹Ñ¥Ñä€ôôô€É••¥Ù…‰±•Ìœ¤ì(€€€€€É½Ü¹±¦ÚîÆ­yÒv–æ7F—fRuÒæ–æ6ÇVFW2…7G&–ær‡&÷rç7FGW2ÇÂrr’çFôÆ÷vW$66R‚’“°¢&÷ræÖWFFFÒ&÷ræÖWFFFÇÂ²6Æ–VçC§&÷ræ6Æ–VçBÇÂçVÆÂÂ6÷W&6S§&÷rç6÷W&6RÇÂvÆVv7’×V’rÓ°¢ÒVÇ6R–b†VçF—G’ÓÓÒv6&Eö–çfö–6W2r’°¢&÷ræ6&EöæÖRÒ&÷ræ6&EöæÖRÇÂ&÷rææÖRÇÂtfGW&&V6V&–Fs°¢&÷ræÖWFFFÒ&÷ræÖWFFFÇÂ²f–ÆVæÖS§&÷rææÖRÇÂçVÆÂÂÖ–ÖS§&÷ræÖ–ÖRÇÂçVÆÂÂ6—¦S§&÷rç6—¦RÇÂçVÆÂÂ7FGW3§&÷rç7FGW2ÇÂçVÆÂÓ°¢ÒVÇ6R–b†VçF—G’ÓÓÒwFW&×2r’°¢&÷ræ6Æ–VçEö–BÒ&÷ræ6Æ–VçEö–BÇÂ&÷ræ6Æ–VçD–C°¢&÷rç6–væVEöBÒ&÷rç6–væVEöBÇÂ&÷rç6–væVDC°¢&÷rç–ÆöBÒ&÷rç–ÆöBÇÂ²7FGW3§&÷rç7FGW2ÇÂçVÆÂÓ°¢ÒVÇ6R–b†VçF—G’ÓÓÒv&Vf÷&UögFW%övÆÆW'’r’°¢&÷ræ6Æ–VçEö–BÒ&÷ræ6Æ–VçEö–BÇÂ&÷ræ6Æ–VçD–BÇÂFF6Æ–VçD–B‡&÷ræ6Æ–VçB“°¢&÷ræ&Vf÷&U÷&VbÒ&÷ræ&Vf÷&U÷&VbÇÂ&÷ræ&Vf÷&U&VbÇÂ&÷ræ&Vf÷&RÇÂçVÆÃ°¢&÷rægFW%÷&VbÒ&÷rægFW%÷&VbÇÂ&÷rægFW%&VbÇÂ&÷rægFW"ÇÂçVÆÃ°¢&÷ræ6öÆÆvU÷&VbÒ&÷ræ6öÆÆvU÷&VbÇÂ&÷ræ6öÆÆvU&VbÇÂ&÷ræ6öÆÆvRÇÂçVÆÃ°¢Ð¢&WGW&â&÷s°¢Ð¢ÆWBW'6—7FVD–G2ÒçVÆÃ°¢gVæ7F–öâ6GW&UW'6—7FVD–G2‚’°¢6öç7BFFÒv–æF÷ræFFbbG—Vöbv–æF÷ræFFÓÓÒvö&¦V7Bròv–æF÷ræFF¢·Ó°¢W'6—7FVD–G2Ò·Ó°¢f÷"†6öç7B¶¶W’ÂVçF—G•Òöbö&¦V7BæVçG&–W2…D$ÄU2’’W'6—7FVD–G5¶VçF—G•ÒÒæWr6WB‚„'&’æ—4'&’†FF¶¶W•Ò’òFF¶¶W•Ò¢µÒ’æÖ‡&÷rÓâ7G&–ær‡&÷sòæ–BÇÂrr’’æf–ÇFW"†–BÓâUT”BçFW7B†–B’’“°¢Ð¢v–æF÷ræFDWfVçDÆ—7FVæW"‚vVFGRÖæVöâ×7–æ2Ö6ö×ÆWFRrÂWfVçBÓâ²–b†WfVçBæFWF–Ãòæ6öææV7FVB’6GW&UW'6—7FVD›kºwµçKÛÝ\˜ÙKšY^[ØY
-Bˆˆ]ØZ]Ú[™ÝË‘QWÓ‘SÓ—ÐTKš[œÙ\
-[]K^[ØY
-NÂˆYˆ
-\Ø]™YËšY
-H›ÝÈ™]È\œ›ÜŠ	Ó‘SÓ—ÕÔ’UWÑQÓ“ÕÔ‘UT“—ÒQ‰È
-È[]JNÂˆÛÝ\˜ÙKšYHØ]™YšYÂˆ™\Üœ\Ú
-È[]KYœØ]™YšYÜ\˜][ÛŽ‰Ý\Ù\	ÈJNÂˆBˆ\œÚ\ÝYYÖÙ[]WHH™]ÈÙ]
-›ÝÜË›X\
-›ÝÈOˆÝš[™Ê›ÝÏËšY	ÉÊJK™š[\ŠYOˆURQ\Ý
-Y
-JJNÂˆBˆÚ[™ÝË—×ÑQWÓ‘SÓ—ÓTÕÔT”ÒTÕHÈ]›™]È]J
-KÒTÓÔÝš[™Ê
-KÜš]\Îœ™\Ü›[™Ý›ÝÜÎœ™\ÜNÂˆÚ[™ÝË™\Ü]Ú]™[
-™]ÈÝ\ÝÛQ]™[
-	ÙYK[™[Û‹\\œÚ\ÝXÛÛ\]IËÈ]Z[Ú[™ÝË—×ÑQWÓ‘SÓ—ÓTÕÔT”ÒTÕJJNÂˆ™]\›ˆÚ[™ÝË—×ÑQWÓ‘SÓ—ÓTÕÔT”ÒTÕÂˆBˆ[˜Ý[Ûˆ\œÚ\Ý
+    if (!date) return null;
+    const value = String(date);
+    if (/^\d{4}-\d{2}-\d{2}T/.test(value)) return value;
+    return value.slice(0,10) + 'T' + String(time || '00:00').slice(0,5) + ':00';
+  };
+  function dataClientId(name) {
+    if (!name || !Array.isArray(window.data?.clients)) return null;
+    const match = window.data.clients.find(client => String(client.name || client.nome || '').trim().toLowerCase() === String(name).trim().toLowerCase());
+    return match?.id || null;
+  }
+  function normalize(entity, source) {
+    const row = { ...(source || {}) };
+    delete row.id;
+    if (entity === 'clients') {
+      row.name = row.name || row.nome || row.client;
+      row.birth_date = row.birth_date || row.birthDate;
+    } else if (entity === 'professionals') {
+      row.name = row.name || row.nome;
+    } else if (entity === 'services') {
+      row.name = row.name || row.nome;
+      row.price = row.price ?? row.base ?? row.price_base ?? row.priceBase;
+      row.price_base = row.price_base ?? row.base ?? row.price;
+      row.price_long = row.price_long ?? row.long ?? row.priceLong;
+      row.service_cost = row.service_cost ?? row.cost ?? row.serviceCost;
+    } else if (entity === 'products') {
+      row.name = row.name || row.nome;
+      row.sale_price = row.sale_price ?? row.price ?? row.salePrice;
+      row.cost_price = row.cost_price ?? row.cost ?? row.costPrice;
+    } else if (entity === 'appointments') {
+      row.client_id = row.client_id || row.clientId;
+      row.professional_id = row.professional_id || row.professionalId;
+      row.starts_at = row.starts_at || row.startsAt || iso(row.date, row.start);
+      row.ends_at = row.ends_at || row.endsAt || iso(row.date, row.end);
+    } else if (entity === 'agenda_blocks') {
+      row.professional_id = row.professional_id || row.professionalId;
+      row.starts_at = row.starts_at || row.startsAt || iso(row.date, row.start);
+      row.ends_at = row.ends_at || row.endsAt || iso(row.date, row.end || '23:59');
+    } else if (entity === 'commands') {
+      row.client_id = row.client_id || row.clientId;
+      row.professional_id = row.professional_id || row.professionalId;
+      row.appointment_id = row.appointment_id || row.appointmentId;
+    } else if (entity === 'command_items') {
+      row.command_id = row.command_id || row.commandId;
+      row.service_id = row.service_id || row.serviceId;
+      row.product_id = row.product_id || row.productId;
+      row.professional_id = row.professional_id || row.professionalId;
+      row.unit_price = row.unit_price ?? row.price;
+    } else if (entity === 'financial_transactions') {
+      row.client_id = row.client_id || row.clientId;
+      row.command_id = row.command_id || row.commandId;
+      row.direction = row.direction || (row.type === 'expense' ? 'out' : row.type === 'income' ? 'in' : undefined);
+      row.description = row.description || row.name;
+    } else if (entity === 'payments' || entity === 'payables' || entity === 'receivables') {
+      row.client_id = row.client_id || row.clientId;
+      row.command_id = row.command_id || row.commandId;
+      row.due_at = row.due_at || row.due_date || row.dueDate || row.due;
+      if (entity === 'payables') {
+        row.description = row.description || row.desc || row.name;
+        row.supplier = row.supplier || row.origin || null;
+        row.category = row.category || row.cat || null;
+        row.metadata = row.metadata || { document:row.doc || null, note:row.note || null };
+      }
+      if (entity === 'receivables') {
+        row.description = row.description || row.service || row.command || 'RecebÃ­vel';
+        row.total_amount = row.total_amount ?? row.total ?? row.amount;
+        row.paid_amount = row.paid_amount ?? row.paid ?? 0;
+        row.metadata = row.metadata || { client:row.client || null, command:row.command || null };
+        if (row.command_id && !UUID.test(String(row.command_id))) delete row.command_id;
+      }
+    } else if (entity === 'anamneses') {
+      row.client_id = row.client_id || row.clientId || dataClientId(row.client);
+      row.private_formula = row.private_formula || row.privateFormula;
+      row.private_notes = row.private_notes || row.privateNotes;
+    } else if (entity === 'coupons') {
+      row.code = row.code || row.couponCode;
+      row.service_id = row.service_id || row.serviceId;
+      row.expires_at = row.expires_at || row.expiresAt;
+      row.starts_at = row.starts_at || row.startsAt;
+      row.active = row.active ?? !['used','expired','inactive'].includes(String(row.status || '').toLowerCase());
+      row.metadata = row.metadata || { client:row.client || null, source:row.source || 'legacy-ui' };
+    } else if (entity === 'card_invoices') {
+      row.card_name = row.card_name || row.name || 'Fatura recebida';
+      row.metadata = row.metadata || { filename:row.name || null, mime:row.mime || null, size:row.size || null, status:row.status || null };
+    } else if (entity === 'terms') {
+      row.client_id = row.client_id || row.clientId;
+      row.signed_at = row.signed_at || row.signedAt;
+      row.payload = row.payload || { status:row.status || null };
+    } else if (entity === 'before_after_gallery') {
+      row.client_id = row.client_id || row.clientId || dataClientId(row.client);
+      row.before_ref = row.before_ref || row.beforeRef || row.before || null;
+      row.after_ref = row.after_ref || row.afterRef || row.after || null;
+      row.collage_ref = row.collage_ref || row.collageRef || row.collage || null;
+    }
+    return row;
+  }
+  let persistedIds = null;
+  function capturePersistedIds() {
+    const data = window.data && typeof window.data === 'object' ? window.data : {};
+    persistedIds = {};
+    for (const [key, entity] of Object.entries(TABLES)) persistedIds[entity] = new Set((Array.isArray(data[key]) ? data[key] : []).map(row => String(row?.id || '')).filter(id => UUID.test(id)));
+  }
+  window.addEventListener('eddu-neon-sync-complete', event => { if (event.detail?.connected) capturePersistedIds(); });
+  async function persistSnapshot() {
+    if (!window.EDDU_NEON_API) throw new Error('NEON_API_NOT_READY');
+    if (window.__EDDU_NEON_READY !== true) throw new Error('NEON_NOT_READY');
+    if (window.__EDDU_NEON_CONNECTED !== true) throw new Error('NEON_SYNC_NOT_READY');
+    const data = window.data && typeof window.data === 'object' ? window.data : {};
+    if (!persistedIds) capturePersistedIds();
+    const report = [];
+    for (const [key, entity] of Object.entries(TABLES)) {
+      const rows = Array.isArray(data[key]) ? data[key] : [];
+      const currentIds = new Set(rows.map(row => String(row?.id || '')).filter(id => UUID.test(id)));
+      for (const oldId of persistedIds[entity] || []) if (!currentIds.has(oldId)) { await window.EDDU_NEON_API.delete(entity, oldId); report.push({ entity, id:oldId, operation:'delete' }); }
+      for (let index = 0; index < rows.length; index++) {
+        const source = rows[index];
+        if (!source || typeof source !== 'object') continue;
+        const payload = normalize(entity, source);
+        if (entity === 'appointments' && (!payload.starts_at || !payload.ends_at)) continue;
+        if (entity === 'agenda_blocks' && (!payload.starts_at || !payload.ends_at)) continue;
+        if (entity === 'financial_transactions' && (!payload.type || !payload.direction || payload.amount == null || !payload.description)) continue;
+        const saved = UUID.test(String(source.id || ''))
+          ? await window.EDDU_NEON_API.update(entity, source.id, payload)
+          : await window.EDDU_NEON_API.insert(entity, payload)...[truncated]      persistedIds[entity] = new Set(rows.map(row => String(row?.id || '')).filter(id => UUID.test(id)));
+    }
+    window.__EDDU_NEON_LAST_PERSIST = { at:new Date().toISOString(), writes:report.length, rows:report };
+    window.dispatchEvent(new CustomEvent('eddu-neon-persist-complete', { detail:window.__EDDU_NEON_LAST_PERSIST }));
+    return window.__EDDU_NEON_LAST_PERSIST;
+  }
+  function persist() {
+    running = running.then(persistSnapshot).catch(error => {
+      notify(String(error?.message || error));
+      throw error;
+    });
+    return running;
+  }
+  window.EDDU_NEON_PERSIST_SNAPSHOT = persistSnapshot;
+  window.persist = persist;
 
-HÂˆ[›š[™ÈH[›š[™Ë[Š\œÚ\ÝÛ˜\ÚÝ
-K˜Ø]Ú
-\œ›ÜˆOˆÂˆ›ÝYžJÝš[™Ê\œ›ÜË›Y\ÜØYÙH\œ›ÜŠJNÂˆ›ÝÈ\œ›ÜŽÂˆJNÂˆ™]\›ˆ[›š[™ÎÂˆBˆÚ[™ÝË‘QWÓ‘SÓ—ÔT”ÒTÕÔÓTÒÕH\œÚ\ÝÛ˜\ÚÝÂˆÚ[™ÝËœ\œÚ\ÝH\œÚ\ÝÂ‚ˆÛÛœÝ˜]]™TÙ]][HHÝÜ˜YÙKœ›ÝÝ\KœÙ]][NÂˆÛÛœÝ˜]]™QÙ]][HHÝÜ˜YÙKœ›ÝÝ\K™Ù]][NÂˆÛÛœÝ˜]]™T™[[Ý™R][HHÝÜ˜YÙKœ›ÝÝ\Kœ™[[Ý™R][NÂˆÛÛœÝÝX\™YÙ^\ÈH™]ÈÙ]
-Âˆ	ÙYWÙ]IË	ÙYWÙš[˜[˜ÙIË	ÙYWÜÝ]IË	ÙYWÛX\Ý\—Ù]WÝŒIË	ÙYWÛX\Ý\‘š[˜[˜ÙIËˆ	ÙYWÝ—ÛX[X[ØÛÝ\ÛœÉË	ÙYWÛX\Ý\—ØÛÝ\Ûœ×Ý‰Ëˆ	ÙYWÝ—ØØ\™Ú[›ÚXÙ\ÉË	ÙYWÛX\Ý\—ØØ\™Ú[›ÚXÙ\×Ý‰Ëˆ	ÙYWÛ\ÝØ[˜[[™\Ú\ÉË	ÙYWØ™Y›Ü™WØY\—ÙØ[\žIË	ÙYWØØ][ÙÛ×ÜÙ\šXÛÜ×ÝŒM‰ÂˆJNÂˆÝÜ˜YÙKœ›ÝÝ\K™Ù]][HH[˜Ý[Ûˆ
-Ù^JHÂˆYˆ
-Ýš[™ÊÙ^JHOOH	ÙYWÛX\Ý\‘š[˜[˜ÙIí®éÜj×catch (_) { throw new Error('NEON_ONLY_INVALID_JSON:' + key); }
+  const nativeSetItem = Storage.prototype.setItem;
+  const nativeGetItem = Storage.prototype.getItem;
+  const nativeRemoveItem = Storage.prototype.removeItem;
+  const guardedKeys = new Set([
+    'eddu_data','eddu_finance','eddu_state','eddu_master_data_v1','eddu_masterFinance',
+    'eddu_v46_manual_coupons','eddu_master_coupons_v46',
+    'eddu_v46_card_invoices','eddu_master_card_invoices_v46',
+    'eddu_last_anamnesis','eddu_before_after_gallery','eddu_catalogo_servicos_v16'
+  ]);
+  Storage.prototype.getItem = function (key) {
+    if (String(key) === 'eddu_masterFinance') {
+      const data = window.data && typeof window.data === 'object' ? window.data : {};
+      const payables = (Array.isArray(data.payables) ? data.payables : []).map(row => ({ ...row, desc:row.desc || row.description || '', origin:row.origin || row.supplier || '', cat:row.cat || row.category || '', due:row.due || row.due_at || '' }));
+      const receivables = (Array.isArray(data.receivables) ? data.receivables : []).map(row => ({ ...row, client:row.client || row.metadata?.client || '', service:row.service || row.description || '', command:row.command || row.metadata?.command || '', total:row.total ?? row.total_amount ?? 0, paid:row.paid ?? row.paid_amount ?? 0, due:row.due || row.due_at || '' }));
+      const commissions = Array.isArray(data.commissions) ? data.commissions : [];
+      const sales = commissions.reduce((sum,row) => sum + Number(row.base_amount || 0), 0);
+      const generated = commissions.reduce((sum,row) => sum + Number(row.commission_amount || 0), 0);
+      const paid = commissions.reduce((sum,row) => sum + Number(row.paid_amount || 0), 0);
+      return JSON.stringify({ payables, receivables, commissions:{ sales, rate:sales ? generated / sales * 100 : 0, proDue:Math.max(0,generated-paid), ed:Math.max(0,generated-paid), du:0 }, accounts:[] });
+    }
+    return nativeGetItem.call(this, key);
+  };
+  Storage.prototype.setItem = function (key, value) {
+    if (guardedKeys.has(String(key))) {
+      let parsed;
+      try { parsed = JSON.parse(String(value)); } catch (_) { throw new Error('NEON_ONLY_INVALID_JSON:' + key); }
       if (!window.data || typeof window.data !== 'object') window.data = {};
       if (key === 'eddu_data') Object.assign(window.data, parsed);
       if (key === 'eddu_master_data_v1') {
@@ -67,4 +208,27 @@ K˜Ø]Ú
       if (key.includes('card_invoices')) window.data.cardInvoices = Array.isArray(parsed) ? parsed : [];
       if (key === 'eddu_last_anamnesis') {
         const current = Array.isArray(window.data.anamneses) ? window.data.anamneses : [];
-        window.data.anamneses = [parsed, ...¶»§q«^
+        window.data.anamneses = [parsed, ...current.filter(item => item.id !== parsed.id)];
+      }
+      if (key === 'eddu_before_after_gallery') window.data.beforeAfterGallery = Array.isArray(parsed) ? parsed : [];
+      if (key === 'eddu_catalogo_servicos_v16') window.data.services = Array.isArray(parsed) ? parsed : [];
+      persist();
+      return;
+    }
+    return nativeSetItem.call(this, key, value);
+  };
+  Storage.prototype.removeItem = function (key) {
+    if (guardedKeys.has(String(key))) {
+      notify('a remoÃ§Ã£o local foi bloqueada; use EDDU_NEON_API.delete(entity, id) para excluir no banco.');
+      return;
+    }
+    return nativeRemoveItem.call(this, key);
+  };
+  window.EDDU_NEON_DELETE = async (entity, id) => window.EDDU_NEON_API.delete(entity, id);
+  window.addEventListener('eddu-neon-persist-complete', event => {
+    if (event.detail?.error) notify(String(event.detail.error));
+  });
+  window.addEventListener('eddu-neon-session-changed', event => {
+    if (!event.detail?.authenticated) window.__EDDU_NEON_CONNECTED = false;
+  });
+})();
