@@ -54,7 +54,7 @@ export async function onRequest({request,env}){
    const rows=await sql`
     WITH new_command AS (
      INSERT INTO public.commands(client_id,professional_id,appointment_id,status,subtotal,discount,discount_reason,total,created_by)
-     VALUES(${body.client_id},${body.professional_id},${body.appointment_id||null},'open',${v.subtotal},${v.discount},${v.discount_reason},${v.total},${user.id})
+     VALUES(${body.client_id},${body.professional_id},${body.appointment_id||null},'open',${v.subtotal},${v.discount},${v.discount_reason},${v.total},${auth.id})
      RETURNING *
     ), new_items AS (
      INSERT INTO public.command_items(command_id,item_type,service_id,product_id,description,quantity,unit_price,professional_id,unit_cost,commission_percent)
