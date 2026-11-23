@@ -109,5 +109,19 @@ window.__edduSelectGateway=function(gateway,method){
 function isClose(el){if(!el)return false;const t=((el.innerText||el.textContent||'')+' '+(el.getAttribute('aria-label')||'')).toLowerCase().replace(/\s+/g,' ');return /(fechar|finalizar|encerrar)\s*(comanda|atendimento)|fechar\s*comanda|finalizar\s*comanda/.test(t)}
 document.addEventListener('click',e=>{const el=e.target?.closest?.('button,a,[role="button"],[onclick]');if(!isClose(el)||el.closest('.gateway-choice')||el.id==='v52Checkout')return;e.preventDefault();e.stopImmediatePropagation();window.__edduOpenGatewayRanking(currentCommand())},true);
 window.closeCommandAndOpenGateway=c=>window.__edduOpenGatewayRanking(c||currentCommand());
+document.addEventListener('click',function(event){
+ const button=event.target?.closest?.('button,a,[role="button"],[onclick]');
+ if(!button)return;
+ const label=String(button.innerText||button.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+ if(/salvar e enviar para pagamento|enviar para pagamento/.test(label)){
+  event.preventDefault();event.stopImmediatePropagation();
+  window.__edduOpenGatewayRanking(currentCommand());
+  return;
+ }
+ if(/^💾?\s*salvar comanda$/.test(label)){
+  event.preventDefault();event.stopImmediatePropagation();
+  persistCommandBeforeCheckout(currentCommand()).then(()=>toast('Comanda salva no Neon.')).catch(error=>toast('Não foi possível salvar a comanda: '+String(error?.message||error)));
+ }
+},true);
 window.EDDU_MASTER_V53_UNIFIED_GATEWAYS=true;
 })();
