@@ -23,6 +23,7 @@ const validationFiles=[
   'master/runtime-production-guard.js',
   'master/neon-live-bridge.js',
   'master/runtime-neon-persistence.js',
+  'master/runtime-client-registration.js',
   'functions/api/payments.js',
   'functions/api/_lib/payment-settlement.js',
   'functions/api/webhooks/asaas.js',
