@@ -139,5 +139,5 @@ await writeFile(resolve(dist,'version.json'),JSON.stringify({
 },null,2));
 const distFiles=await readdir(dist);
 const allowed=new Set(['index.html','_redirects','_headers','_routes.json','version.json']);
-if(distFiles.length!==4||distFiles.some(x=>!allowed.has(x))) throw new Error('Unexpected dist files: '+distFiles.join(','));
+if(distFiles.length!==5||distFiles.some(x=>!allowed.has(x))) throw new Error('Unexpected dist files: '+distFiles.join(','));
 console.log('Built canonical Master only.');
