@@ -6,6 +6,8 @@ const legacyFree=html.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/gi,'');
 const commandApiSource = await readFile('functions/api/commands.js','utf8');
 const clientCommandApiSource = await readFile('functions/api/client/commands.js','utf8');
 const agendaWorkflowSource = await readFile('master/runtime-agenda-workflow.js','utf8');
+const agendaSyncSource = await readFile('master/runtime-agenda-sync.js','utf8');
+const commandRuntimeSource = await readFile('master/runtime-command-operations.js','utf8');
 
 if (/(?:V33|v33|fin33|eddu_v33)/i.test(legacyFree))
   throw new Error('Legacy version reference found in built Master artifact.');
@@ -80,3 +82,15 @@ if (!clientCommandApiSource.includes('!/^Bearer\\s+\\S+/i.test(authorization)'))
 if (!agendaWorkflowSource.includes("button.closest('.option,.card,article")) throw new Error('Agenda lifecycle controls are not attached to each appointment card.');
 if (!agendaWorkflowSource.includes('window.__EDDU_SELECTED_DAY')) throw new Error('Agenda lifecycle does not track the selected calendar day.');
 console.log('Persistent command authentication and per-appointment lifecycle regression QA: PASS');
+const clientAgendaSource = agendaSyncSource.slice(agendaSyncSource.indexOf('function clientAppointmentsView'),agendaSyncSource.indexOf("window.addEventListener('eddu-neon-data-loaded'"));
+for (const token of ['apt-service-checkbox','aptServicesSummary','for (const selected of selectedServices)','appointment_services','price_base','service_names'])
+  if (!agendaSyncSource.includes(token)) throw new Error('Professional multi-service booking or pricing is missing: '+token);
+if (/money\\(|unit_price|price_base|R\\$/i.test(clientAgendaSource))
+  throw new Error('Professional service prices leaked into the client appointment view.');
+if (!agendaWorkflowSource.includes('await window.edduCreateCommandFromAppointment') || !agendaWorkflowSource.includes('const existing=rows(\'commands\')'))
+  throw new Error('Starting an appointment must open/reuse its linked command.');
+if (!commandRuntimeSource.includes("credentials:'include'") || !commandRuntimeSource.includes("saved.status||'').toLowerCase()!=='cancelled'"))
+  throw new Error('Command save authentication or cancellation confirmation is missing.');
+if (!commandApiSource.includes('unit_price,total,professional_id'))
+  throw new Error('Command item totals are not persisted in Neon.');
+console.log('Professional multi-service pricing, client price privacy, appointment command launch and command lifecycle QA: PASS');
