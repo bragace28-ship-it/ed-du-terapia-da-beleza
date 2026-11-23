@@ -29,6 +29,7 @@ const validationFiles=[
   'master/neon-auth-sdk-entry.js',
   'functions/api/data/[entity].js',
   'functions/api/payments.js',
+  'functions/api/client/commands.js',
   'functions/api/_lib/payment-settlement.js',
   'functions/api/webhooks/asaas.js',
   'functions/api/webhooks/pagbank.js',
