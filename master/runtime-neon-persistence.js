@@ -139,7 +139,9 @@
     const data = window.data && typeof window.data === 'object' ? window.data : {};
     if (!persistedIds) capturePersistedIds();
     const report = [];
+    const entityStatus = window.__EDDU_NEON_ENTITY_STATUS || {};
     for (const [key, entity] of Object.entries(TABLES)) {
+      if (entityStatus[entity]?.ok === false) continue;
       const rows = Array.isArray(data[key]) ? data[key] : [];
       const currentIds = new Set(rows.map(row => String(row?.id || '')).filter(id => UUID.test(id)));
       for (const oldId of persistedIds[entity] || []) if (!currentIds.has(oldId)) { await window.EDDU_NEON_API.delete(entity, oldId); report.push({ entity, id:oldId, operation:'delete' }); }
