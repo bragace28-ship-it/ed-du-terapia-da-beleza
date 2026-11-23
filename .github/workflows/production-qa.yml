@@ -93,6 +93,16 @@ jobs:
           set -euo pipefail
           npx --yes wrangler@3.90.0 pages project list
           npx --yes wrangler@3.90.0 pages deployment list --project-name=ed-du-terapia-da-beleza
+          status="$(curl --silent --output /tmp/beleza-project.json --write-out '%{http_code}' "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/beleza" -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}")"
+          if [ "$status" = "404" ]; then
+            echo "Creating the missing beleza.pages.dev alias project."
+            npx --yes wrangler@3.90.0 pages project create beleza --production-branch=main
+          elif [ "$status" = "200" ]; then
+            python3 -c 'import json; x=json.load(open("/tmp/beleza-project.json")); assert x.get("success") is True, x'
+          else
+            cat /tmp/beleza-project.json
+            exit 1
+          fi
           npx --yes wrangler@3.90.0 pages deployment list --project-name=beleza
 
       - name: Set Cloudflare production branch to main
@@ -132,7 +142,6 @@ jobs:
         run: |
           set -euo pipefail
           npx --yes wrangler@3.90.0 pages secret list --project-name=ed-du-terapia-da-beleza
-          npx --yes wrangler@3.90.0 pages secret list --project-name=beleza
 
       - name: Preserve existing Cloudflare production runtime secrets
         run: |
@@ -154,12 +163,17 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=ed-du-terapia-da-beleza --commit-hash=${{ github.sha }} --commit-message="Canonical Master production"
       
-      - name: Deploy same canonical Master to the URL used by the salon
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=beleza --commit-hash=${{ github.sha }} --commit-message="Canonical Master production"
+      - name: Redirect the old salon URL to the canonical production app
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/eddu-beleza-alias
+          printf '%s\n' '/* https://ed-du-terapia-da-beleza.pages.dev/:splat 302' > /tmp/eddu-beleza-alias/_redirects
+          printf '%s\n' '<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=https://ed-du-terapia-da-beleza.pages.dev/"><title>ED & DU</title><p>Redirecionando para o sistema oficial ED & DU…</p></html>' > /tmp/eddu-beleza-alias/index.html
+          cd /tmp/eddu-beleza-alias
+          npx --yes wrangler@3.90.0 pages deploy . --project-name=beleza --branch=main --commit-hash="${GITHUB_SHA}" --commit-message="Redirect legacy salon URL to canonical production"
 
       - name: Smoke test production runtime
         shell: bash
@@ -183,13 +197,15 @@ jobs:
           echo "payment_rank_http=$rank_status body=$rank"
           test "$rank_status" = "401"
           python3 -c 'import json,sys; x=json.loads(sys.argv[1]); assert x.get("error") == "UNAUTHORIZED", x; print("Production payment ranking authentication gate: PASS")' "$rank"
-          beleza_base="https://beleza.pages.dev"
-          beleza_health="$(curl --silent --show-error --max-time 20 "$beleza_base/api/health")"
-          echo "beleza_health=$beleza_health"
-          python3 -c 'import json,sys; x=json.loads(sys.argv[1]); assert x.get("ok") is True and x.get("reachable") is True, x; print("beleza.pages.dev Neon health: PASS")' "$beleza_health"
-          curl --fail --silent --show-error "$beleza_base/neon-auth-sdk.bundle.js" -o /tmp/beleza-neon-auth-sdk.bundle.js
-          grep -q 'createClient' /tmp/beleza-neon-auth-sdk.bundle.js
-          echo "beleza.pages.dev local Neon SDK asset: PASS"
+          alias_status="$(curl --silent --show-error --max-time 20 -o /dev/null -w '%{http_code}' "$beleza_base/version.json")"
+          alias_location="$(curl --silent --show-error --max-time 20 -o /dev/null -w '%{redirect_url}' "$beleza_base/version.json")"
+          echo "legacy_alias_http=$alias_status redirect=$alias_location"
+          test "$alias_status" = "302"
+          test "$alias_location" = "https://ed-du-terapia-da-beleza.pages.dev/version.json"
+          alias_version="$(curl --fail --silent --show-error --max-time 20 -L "$beleza_base/version.json")"
+          python3 -c 'import json,sys; x=json.loads(sys.argv[1]); assert x.get("version") == "46.0.0", x; print("Legacy URL redirect to canonical Master 46.0.0: PASS")' "$alias_version"
+          alias_health="$(curl --fail --silent --show-error --max-time 20 -L "$beleza_base/api/health")"
+          python3 -c 'import json,sys; x=json.loads(sys.argv[1]); assert x.get("ok") is True and x.get("reachable") is True, x; print("Legacy URL redirects to healthy Neon API: PASS")' "$alias_health"
 
       - name: Delete legacy Cloudflare preview deployments
         env:
