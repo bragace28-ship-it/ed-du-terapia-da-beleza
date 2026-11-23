@@ -1,7 +1,7 @@
 /* ED & DU — command workspace. All business records are persisted in Neon. */
 (function () {
   'use strict';
-  const UUID=/^[0-9a-f]{8}-[0-9a-f]{3}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   const $=id=>document.getElementById(id);
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const money=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0);
@@ -32,7 +32,7 @@
       '<div style="margin:8px 0">'+(items.length?items.map(i=>'<div class="row"><span>'+esc(i.description)+' × '+esc(i.quantity||1)+'</span><b>'+money(i.total??Number(i.quantity||1)*Number(i.unit_price||0))+'</b></div>').join(''):'<span class="sub">Sem itens</span>')+'</div>'+
       (Number(c.discount||0)>0?'<div class="row"><span>Desconto '+esc(c.discount_reason||'')+'</span><b>− '+money(c.discount)+'</b></div>':'')+
       '<div class="row"><span>Total</span><b>'+money(total)+'</b></div><div class="grid2" style="margin-top:10px">'+
-      (isOpen?'<button type="button" class="btn" data-eddu-command-action="edit" data-command-id="'+esc(c.id)+'">Editar comanda</button><button type="button" class="btn" data-eddu-command-action="delete" data-command-id="'+esc(c.id)+'">Excluir comanda</button><button type="button" class="btn primary full" data-eddu-command-action="payment" data-command-id="'+esc(c.id)+'">Enviar para pagamento</button>':'')+
+      (isOpen?(String(c.status||'open').toLowerCase()==='open'?'<button type="button" class="btn" data-eddu-command-action="edit" data-command-id="'+esc(c.id)+'">Editar comanda</button><button type="button" class="btn" data-eddu-command-action="delete" data-command-id="'+esc(c.id)+'">Excluir comanda</button>':'')+'<button type="button" class="btn" data-eddu-command-action="cancel" data-command-id="'+esc(c.id)+'">Cancelar comanda</button><button type="button" class="btn primary full" data-eddu-command-action="payment" data-command-id="'+esc(c.id)+'">Enviar para pagamento</button>':'')+
       (isPaid?'<span class="sub">Registro encerrado</span>':'')+'</div></article>';
   }
   function renderList(){
@@ -106,6 +106,10 @@
     const type=String(c.type||'').toLowerCase();if(!['percent','percentage','percentual','porcentagem','fixed','amount','valor','fixed_amount'].includes(type))throw new Error('Tipo de desconto do cupom não reconhecido: '+c.type);
     d.coupon={id:c.id,code:c.code,type:c.type,value:Number(c.value)};d.couponCode=c.code;refresh();
   }
+  async function cancelCommand(id){const db=await api();const saved=await db.update('commands',id,{status:'cancelled'});if(!saved?.id)throw new Error('O Neon não confirmou o cancelamento.');data().commands=[saved,...rows('commands').filter(x=>x.id!==id)];window.state.commands=data().commands;window.toast?.('Comanda cancelada no Neon.');refresh();}
+  window.edduCancelCommand=cancelCommand;
+  window.edduCreateCommand=async()=>{window.__EDDU_COMMAND_MODE='form';await saveDraft();};
+  window.edduSendCommandToPayment=sendPayment;
   async function removeCommand(id){
     const c=activeCommands().find(x=>x.id===id);if(!c)throw new Error('Comanda não encontrada.');
     if(String(c.status||'open').toLowerCase()!=='open')throw new Error('Só é possível excluir definitivamente comandas ainda não enviadas para pagamento. Para pagamentos pendentes, use o cancelamento.');
@@ -144,6 +148,7 @@
       else if(action==='remove-coupon'){const d=window.__EDDU_COMMAND_DRAFT;d.coupon=null;d.couponCode='';refresh();}
       else if(action==='save')await saveDraft();
       else if(action==='delete'){if(!confirm('Excluir definitivamente esta comanda aberta e seus itens?'))return;await removeCommand(id);}
+      else if(action==='cancel'){if(!confirm('Cancelar esta comanda?'))return;await cancelCommand(id);}
       else if(action==='payment')await sendPayment(id);
     }catch(error){console.error('[EDDU] command action failed',error);window.toast?.(String(error?.message||error));}
     finally{b.dataset.busy='0';}
