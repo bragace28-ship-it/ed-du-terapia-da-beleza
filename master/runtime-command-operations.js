@@ -26,13 +26,13 @@
   function itemPrice(kind,item){return Number(kind==='product'?(item.sale_price??item.price??0):(item.price_base??item.price??0));}
   function commandCard(c){
     const items=c.items||[],total=Number(c.total??c.subtotal??0),isOpen=openStatuses.includes(String(c.status||'open').toLowerCase()),isPaid=terminal.includes(String(c.status||'').toLowerCase());
-    const client=typeof c.client==='string'?c.client:c.client?.name||'Cliente',professional=typeof c.professional==='string'?c.professional:c.professional?.name||'Profissional';
+    const client=typeof c.client==='string'?c.client:c.client?.name||'Cliente',professional=typeof c.professional==='string'?c.professional:c.professional?.name||'Profissional',status=String(c.status||'open').toLowerCase(),hasPendingPayment=rows('payments').some(p=>p.command_id===c.id&&['CHECKOUT_PENDING','PENDING','AWAITING_PAYMENT'].includes(String(p.status||'').toUpperCase()));
     return '<article class="card" style="margin:10px 0"><div class="row"><b>Comanda '+esc(String(c.id).slice(0,8))+'</b><b>'+esc(statusLabel(c.status))+'</b></div>'+
       '<div class="row"><span>Cliente</span><b>'+esc(client)+'</b></div><div class="row"><span>Profissional</span><b>'+esc(professional)+'</b></div>'+
       '<div style="margin:8px 0">'+(items.length?items.map(i=>'<div class="row"><span>'+esc(i.description)+' × '+esc(i.quantity||1)+'</span><b>'+money(i.total??Number(i.quantity||1)*Number(i.unit_price||0))+'</b></div>').join(''):'<span class="sub">Sem itens</span>')+'</div>'+
       (Number(c.discount||0)>0?'<div class="row"><span>Desconto '+esc(c.discount_reason||'')+'</span><b>− '+money(c.discount)+'</b></div>':'')+
       '<div class="row"><span>Total</span><b>'+money(total)+'</b></div><div class="grid2" style="margin-top:10px">'+
-      (isOpen?(String(c.status||'open').toLowerCase()==='open'?'<button type="button" class="btn" data-eddu-command-action="edit" data-command-id="'+esc(c.id)+'">Editar comanda</button><button type="button" class="btn" data-eddu-command-action="delete" data-command-id="'+esc(c.id)+'">Excluir comanda</button>':'')+'<button type="button" class="btn" data-eddu-command-action="cancel" data-command-id="'+esc(c.id)+'">Cancelar comanda</button><button type="button" class="btn primary full" data-eddu-command-action="payment" data-command-id="'+esc(c.id)+'">Enviar para pagamento</button>':'')+
+      (isOpen?(status==='open'?'<button type="button" class="btn" data-eddu-command-action="edit" data-command-id="'+esc(c.id)+'">Editar comanda</button><button type="button" class="btn" data-eddu-command-action="delete" data-command-id="'+esc(c.id)+'">Excluir comanda</button><button type="button" class="btn" data-eddu-command-action="cancel" data-command-id="'+esc(c.id)+'">Cancelar comanda</button>':'')+(!hasPendingPayment&&status!=='payment_pending'?'<button type="button" class="btn primary full" data-eddu-command-action="payment" data-command-id="'+esc(c.id)+'">Enviar para pagamento</button>':'<p class="sub">Link de pagamento enviado ao aplicativo do cliente. Aguardando confirmação do gateway.</p>'):'')+
       (isPaid?'<span class="sub">Registro encerrado</span>':'')+'</div></article>';
   }
   function renderList(){
@@ -106,7 +106,7 @@
     const type=String(c.type||'').toLowerCase();if(!['percent','percentage','percentual','porcentagem','fixed','amount','valor','fixed_amount'].includes(type))throw new Error('Tipo de desconto do cupom não reconhecido: '+c.type);
     d.coupon={id:c.id,code:c.code,type:c.type,value:Number(c.value)};d.couponCode=c.code;refresh();
   }
-  async function cancelCommand(id){const db=await api();const saved=await db.update('commands',id,{status:'cancelled'});if(!saved?.id)throw new Error('O Neon não confirmou o cancelamento.');data().commands=[saved,...rows('commands').filter(x=>x.id!==id)];window.state.commands=data().commands;window.toast?.('Comanda cancelada no Neon.');refresh();}
+  async function cancelCommand(id){if(rows('payments').some(p=>p.command_id===id&&['CHECKOUT_PENDING','PENDING','AWAITING_PAYMENT'].includes(String(p.status||'').toUpperCase())))throw new Error('Esta comanda já possui cobrança pendente. Cancele a cobrança no gateway antes de cancelar a comanda.');const db=await api();const saved=await db.update('commands',id,{status:'cancelled'});if(!saved?.id)throw new Error('O Neon não confirmou o cancelamento.');data().commands=[saved,...rows('commands').filter(x=>x.id!==id)];window.state.commands=data().commands;window.toast?.('Comanda cancelada no Neon.');refresh();}
   window.edduCancelCommand=cancelCommand;
   window.edduCreateCommand=async()=>{window.__EDDU_COMMAND_MODE='form';await saveDraft();};
   window.edduSendCommandToPayment=sendPayment;
@@ -123,6 +123,7 @@
   async function sendPayment(id){
     const c=activeCommands().find(x=>x.id===id);if(!c)throw new Error('Comanda não encontrada.');
     if(terminal.includes(String(c.status||'').toLowerCase()))throw new Error('Esta comanda já foi encerrada.');
+    if(rows('payments').some(p=>p.command_id===id&&['CHECKOUT_PENDING','PENDING','AWAITING_PAYMENT'].includes(String(p.status||'').toUpperCase())))throw new Error('Esta comanda já foi enviada ao cliente e possui cobrança pendente. Consulte o aplicativo do cliente antes de gerar outra cobrança.');
     if(!c.client_id||!c.items.length||!(Number(c.total)>0))throw new Error('A comanda precisa ter cliente, itens e total válido.');
     window.state=window.state||{};window.state.activeCommandId=id;
     if(typeof window.__edduOpenGatewayRanking!=='function')throw new Error('O ranking de gateways não foi carregado.');
