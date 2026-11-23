@@ -4,6 +4,7 @@ const html = await readFile('dist/index.html','utf8');
 const release = JSON.parse(await readFile('dist/version.json','utf8'));
 const legacyFree=html.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/gi,'');
 const commandApiSource = await readFile('functions/api/commands.js','utf8');
+const clientCommandApiSource = await readFile('functions/api/client/commands.js','utf8');
 const agendaWorkflowSource = await readFile('master/runtime-agenda-workflow.js','utf8');
 
 if (/(?:V33|v33|fin33|eddu_v33)/i.test(legacyFree))
@@ -74,6 +75,7 @@ for (const token of ['Iniciar atendimento','Cancelar atendimento','Reagendar ate
   if (!html.includes(token)) throw new Error('Agenda lifecycle controls are missing: '+token);
 console.log('Atomic Neon command transaction and agenda lifecycle QA: PASS');
 if (!commandApiSource.includes("match(/^Bearer\\s+(.+)$/i)")) throw new Error('Atomic command API bearer token parser is invalid.');
+if (!clientCommandApiSource.includes('!/^Bearer\\\\s+\\\\S+/i.test(authorization)')) throw new Error('Client command API bearer token parser is invalid.');
 if (!agendaWorkflowSource.includes("button.closest('.option,.card,article")) throw new Error('Agenda lifecycle controls are not attached to each appointment card.');
 if (!agendaWorkflowSource.includes('window.__EDDU_SELECTED_DAY')) throw new Error('Agenda lifecycle does not track the selected calendar day.');
 console.log('Persistent command authentication and per-appointment lifecycle regression QA: PASS');
