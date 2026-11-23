@@ -20,11 +20,11 @@ export async function onRequestGet({request,env}){
    COALESCE((SELECT json_agg(json_build_object('description',ci.description,'quantity',ci.quantity,'unit_price',ci.unit_price,'total',ci.total) ORDER BY ci.created_at)
     FROM public.command_items ci WHERE ci.command_id=c.id),'[]'::json) AS items,
    p.id AS payment_id,p.gateway,p.method,p.status AS payment_status,p.installments,
-   p.metadata->>'checkoutUrl' AS checkout_url,p.metadata->>'qrCode' AS qr_code
+   p.metadata->>'checkoutUrl' AS checkout_url,p.metadata->>'qrCode' AS qr_code,p.metadata->>'qrCodeBase64' AS qr_code_base64
   FROM public.clients cl
   JOIN public.commands c ON c.client_id=cl.id
   JOIN LATERAL (SELECT pay.* FROM public.payments pay WHERE pay.command_id=c.id AND upper(pay.status) IN ('CHECKOUT_PENDING','PENDING','AWAITING_PAYMENT') ORDER BY pay.created_at DESC LIMIT 1) p ON true
-  WHERE lower(COALESCE(cl.email,''))=${auth.email} OR cl.user_id::text=${auth.id}
+  WHERE (lower(COALESCE(cl.email,''))=${auth.email} OR cl.user_id::text=${auth.id})
   ORDER BY c.created_at DESC
   LIMIT 50
  `;
