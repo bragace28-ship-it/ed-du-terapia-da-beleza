@@ -105,7 +105,7 @@
 
     try {
       if (name.length < 2) throw new Error('Informe o nome completo do cliente.');
-    if (!validOptionalEmail(email)) return toast('E-mail inválido. Confira o endereço digitado ou deixe o campo vazio.');
+      if (!validOptionalEmail(email)) throw new Error('E-mail inválido. Confira o endereço digitado ou deixe o campo vazio.');
       if (cpf && cpf.length !== 11) throw new Error('O CPF deve conter 11 números.');
       if (email && rows('clients').some(c => c.active !== false && String(c.email || '').trim().toLowerCase() === email)) {
         throw new Error('Já existe um cliente ativo com este e-mail.');
