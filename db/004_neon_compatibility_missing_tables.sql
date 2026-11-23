@@ -4,6 +4,15 @@
 
 create extension if not exists pgcrypto;
 
+-- Client records created by the professional are later claimed by the client.
+alter table public.clients add column if not exists user_id uuid references neon_auth."user"(id) on delete set null;
+alter table public.clients add column if not exists cpf text;
+alter table public.clients add column if not exists birth_date date;
+alter table public.clients add column if not exists loyalty_points integer not null default 0;
+alter table public.clients add column if not exists active boolean not null default true;
+create index if not exists clients_user_idx on public.clients(user_id);
+create index if not exists clients_cpf_idx on public.clients(cpf);
+
 create table if not exists app_users (
   id uuid primary key default gen_random_uuid(),
   auth_user_id text unique,
