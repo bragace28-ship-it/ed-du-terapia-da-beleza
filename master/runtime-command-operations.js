@@ -71,9 +71,10 @@
   };
   async function saveCommandTransaction(payload,draftId){
     const session=await window.EDDU_NEON_REFRESH_SESSION?.();
-    const token=session?.session?.token||session?.token||session?.accessToken||session?.session?.accessToken;
+    const cached=window.__EDDU_NEON_SESSION_DATA||{};
+    const token=session?.session?.token||session?.session?.access_token||session?.token||session?.accessToken||session?.session?.accessToken||cached?.session?.token||cached?.session?.access_token||cached?.data?.session?.access_token||cached?.access_token||cached?.accessToken||cached?.token;
     if(!token)throw new Error('Sessão autenticada do Neon indisponível. Entre novamente.');
-    const response=await fetch('/api/commands',{method:draftId?'PATCH':'POST',credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json','Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({...payload,...(draftId?{id:draftId}:{})})});
+    const response=await fetch('/api/commands',{method:draftId?'PATCH':'POST',credentials:'include',cache:'no-store',headers:{Accept:'application/json','Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({...payload,...(draftId?{id:draftId}:{})})});
     const result=await response.json().catch(()=>({}));
     if(!response.ok||!result.ok)throw new Error(result.message||result.error||('Falha ao salvar comanda ('+response.status+').'));
     if(!result.command?.id||!Array.isArray(result.items)||result.items.length!==payload.items.length)throw new Error('O Neon não confirmou a gravação de todos os itens da comanda.');
@@ -85,6 +86,7 @@
     if(!UUID.test(d.clientId)||!UUID.test(d.professionalId))throw new Error('Selecione cliente e profissional cadastrados no Neon.');
     if(!d.items.length)throw new Error('Adicione pelo menos um serviço ou produto.');
     const db=await api(),sum=totals(d),professional=rows('professionals').find(x=>x.id===d.professionalId);
+    if(!d.id&&d.appointmentId){const linked=rows('commands').find(c=>c.appointment_id===d.appointmentId&&!terminal.includes(String(c.status||'').toLowerCase()));if(linked)d.id=linked.id;}
     if(!(sum.total>=0)||sum.subtotal<=0)throw new Error('O total da comanda precisa ser maior que zero.');
     const payload={client_id:d.clientId,professional_id:d.professionalId,appointment_id:d.appointmentId||null,subtotal:sum.subtotal,total:sum.total,discount:sum.discount,discount_reason:d.coupon?.code||(sum.discount>0?d.couponCode||null:null),items:d.items.map(item=>({item_type:item.item_type,service_id:item.service_id||null,product_id:item.product_id||null,description:item.description,quantity:Number(item.quantity||1),unit_price:Number(item.unit_price||0),total:Number(item.total??Number(item.quantity||1)*Number(item.unit_price||0)),unit_cost:Number(item.unit_cost||0),commission_percent:Number(item.commission_percent??professional?.commission_rate??0)}))};
     const result=await saveCommandTransaction(payload,d.id),command=result.command,saved=result.items;
@@ -109,7 +111,14 @@
     const type=String(c.type||'').toLowerCase();if(!['percent','percentage','percentual','porcentagem','fixed','amount','valor','fixed_amount'].includes(type))throw new Error('Tipo de desconto do cupom não reconhecido: '+c.type);
     d.coupon={id:c.id,code:c.code,type:c.type,value:Number(c.value)};d.couponCode=c.code;d.existingDiscount=0;refresh();
   }
-  async function cancelCommand(id){if(rows('payments').some(p=>p.command_id===id&&['CHECKOUT_PENDING','PENDING','AWAITING_PAYMENT'].includes(String(p.status||'').toUpperCase())))throw new Error('Esta comanda já possui cobrança pendente. Cancele a cobrança no gateway antes de cancelar a comanda.');const db=await api();const saved=await db.update('commands',id,{status:'cancelled'});if(!saved?.id)throw new Error('O Neon não confirmou o cancelamento.');data().commands=[saved,...rows('commands').filter(x=>x.id!==id)];window.state.commands=data().commands;window.toast?.('Comanda cancelada no Neon.');refresh();}
+  async function cancelCommand(id){
+    if(rows('payments').some(p=>p.command_id===id&&['CHECKOUT_PENDING','PENDING','AWAITING_PAYMENT'].includes(String(p.status||'').toUpperCase())))throw new Error('Esta comanda já possui cobrança pendente. Cancele a cobrança no gateway antes de cancelar a comanda.');
+    const db=await api(),saved=await db.update('commands',id,{status:'cancelled'});
+    if(!saved?.id||String(saved.status||'').toLowerCase()!=='cancelled')throw new Error('O Neon não confirmou o cancelamento da comanda.');
+    data().commands=[saved,...rows('commands').filter(x=>x.id!==id)];window.state=window.state||{};window.state.commands=data().commands;
+    try{await window.EDDU_NEON_SYNC?.();}catch(syncError){console.error('[EDDU] command cancellation refresh failed',syncError);}
+    window.toast?.('Comanda cancelada e confirmada no Neon.');refresh();
+  }
   window.edduCancelCommand=cancelCommand;
   window.edduCreateCommand=async()=>{window.__EDDU_COMMAND_MODE='form';await saveDraft();};
   window.edduSendCommandToPayment=sendPayment;
@@ -140,7 +149,7 @@
     try{
       if(action==='new')draftNew();
       else if(action==='reload'){await api();await window.EDDU_NEON_SYNC?.();window.__EDDU_COMMAND_MODE='list';refresh();}
-      else if(action==='back'){window.__EDDU_COMMAND_DRAFT=null;window.__EDDU_COMMAND_MODE='list';refresh();}
+      else if(action==='back'){window.__EDDU_COMMAND_DRAFT=null;window.__EDDU_COMMAND_MODE='list';window.toast?.('Operação cancelada. Nenhuma comanda foi gravada.');refresh();}
       else if(action==='edit'){const c=activeCommands().find(x=>x.id===id);if(!c)throw new Error('Comanda não encontrada.');draftFromCommand(c);}
       else if(action==='add-draft-item'){
         const d=window.__EDDU_COMMAND_DRAFT,raw=$('edduCommandItem')?.value,qty=Number($('edduCommandQty')?.value||1);if(!raw)throw new Error('Selecione um serviço ou produto.');if(!Number.isInteger(qty)||qty<1)throw new Error('Quantidade inválida.');
