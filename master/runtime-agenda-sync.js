@@ -7,6 +7,7 @@
   const toast = message => { try { if (typeof window.toast === 'function') window.toast(message); else alert(message); } catch (_) {} };
   const api = () => window.EDDU_NEON_API;
   const rows = key => Array.isArray(window.data?.[key]) ? window.data[key] : [];
+  const money = value => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(value)||0);
   const localDate = value => {
     const d = new Date(value);
     if (!Number.isFinite(d.getTime())) return '';
@@ -21,8 +22,10 @@
   function hydrateAppointment(row) {
     const client = rows('clients').find(x => x.id === row.client_id);
     const professional = rows('professionals').find(x => x.id === row.professional_id);
-    const serviceLink = rows('appointmentServices').find(x => x.appointment_id === row.id);
-    const service = rows('services').find(x => x.id === (serviceLink?.service_id || row.service_id));
+    const serviceLinks = rows('appointmentServices').filter(x => x.appointment_id === row.id);
+    const linkedServices = serviceLinks.map(link => rows('services').find(x => x.id === link.service_id)).filter(Boolean);
+    const serviceNames = linkedServices.map(x => x.name);
+    const service = linkedServices[0] || rows('services').find(x => x.id === row.service_id);
     return {
       ...row,
       date: row.date || localDate(row.starts_at),
@@ -30,9 +33,11 @@
       end: row.end || localTime(row.ends_at),
       client: row.client || client?.name || '',
       professional: row.professional || professional?.name || '',
-      service: row.service || service?.name || '',
-      service_name: row.service_name || service?.name || '',
-      service_id: row.service_id || serviceLink?.service_id || service?.id || null,
+      service: serviceNames.join(' + ') || row.service || service?.name || '',
+      service_name: serviceNames.join(' + ') || row.service_name || service?.name || '',
+      service_names: serviceNames.length ? serviceNames : (service?.name ? [service.name] : []),
+      service_ids: serviceLinks.map(x => x.service_id),
+      service_id: row.service_id || serviceLinks[0]?.service_id || service?.id || null,
       status: row.status || 'Confirmado'
     };
   }
@@ -57,22 +62,23 @@
     const clientField = '<select id="aptClientId" required>'+selectOptions(clients, window.__EDDU_PENDING_CLIENT_ID || '', 'Selecione o cliente')+'<option value="__NEW__">＋ Cadastrar novo cliente</option></select>'+
       (clients.length ? '' : '<p class="sub">Ainda não há clientes cadastrados. Use “Cadastrar novo cliente” para incluir o primeiro.</p>');
     const professionalSelected = window.__EDDU_PENDING_PROFESSIONAL_ID || '';
-    const serviceSelected = window.__EDDU_PENDING_SERVICE_ID || '';
+    const pendingServiceIds = Array.isArray(window.__EDDU_PENDING_SERVICE_IDS) ? window.__EDDU_PENDING_SERVICE_IDS : (window.__EDDU_PENDING_SERVICE_ID ? [window.__EDDU_PENDING_SERVICE_ID] : []);
     const professionalField = professionals.length
       ? '<select id="aptProfessionalId" required>'+selectOptions(professionals, professionalSelected, 'Selecione o profissional')+'</select><button type="button" class="btn full" onclick="window.openAgendaProfessionalCreateM()">＋ Cadastrar novo profissional</button>'
       : '<p class="sub">Nenhum profissional cadastrado no Neon. Cadastre agora para liberar a Agenda.</p><button type="button" class="btn full" onclick="window.openAgendaProfessionalCreateM()">＋ Cadastrar novo profissional</button><select id="aptProfessionalId" required disabled><option value="">Profissional indisponível</option></select>';
     const serviceField = services.length
-      ? '<select id="aptServiceId" required>'+selectOptions(services, serviceSelected, 'Selecione o serviço')+'</select>'
-      : '<p class="sub">Nenhum serviço cadastrado no Neon. Cadastre agora para liberar a Agenda.</p><button type="button" class="btn full" onclick="window.openAgendaServiceCreateM()">＋ Cadastrar serviço</button><select id="aptServiceId" required disabled><option value="">Serviço indisponível</option></select>';
+      ? '<div id="aptServicesList" style="display:grid;gap:8px">'+services.map(item=>'<label class="row" style="align-items:flex-start;gap:10px;padding:9px;border:1px solid var(--border,#ddd);border-radius:10px"><input class="apt-service-checkbox" type="checkbox" value="'+escapeHtml(item.id)+'" data-price="'+Number(item.price_base ?? item.price ?? 0)+'" data-duration="'+Number(item.duration_minutes || 60)+'" '+(pendingServiceIds.includes(item.id)?'checked':'')+'><span style="flex:1"><b>'+escapeHtml(item.name)+'</b><small style="display:block">Base: '+money(item.price_base ?? item.price ?? 0)+(Number(item.price_long ?? item.price_base ?? item.price ?? 0)!==Number(item.price_base ?? item.price ?? 0)?' · Cabelo longo: '+money(item.price_long):'')+' · '+Number(item.duration_minutes || 60)+' min</small></span></label>').join('')+'</div><div id="aptServicesSummary" class="card" style="margin-top:10px"><b>Selecione um ou mais serviços</b></div>'
+      : '<p class="sub">Nenhum serviço cadastrado no Neon. Cadastre agora para liberar a Agenda.</p><button type="button" class="btn full" onclick="window.openAgendaServiceCreateM()">＋ Cadastrar serviço</button>';
     window.__EDDU_PENDING_PROFESSIONAL_ID = null;
     window.__EDDU_PENDING_SERVICE_ID = null;
+    window.__EDDU_PENDING_SERVICE_IDS = null;
     const pendingClientId = window.__EDDU_PENDING_CLIENT_ID || '';
     window.__EDDU_PENDING_CLIENT_ID = null;
     window.views.agendaAdd = () =>
       '<h2>Adicionar agendamento</h2><p class="sub">Novo atendimento diretamente na Agenda.</p>'+
       '<div class="card"><label>Cliente</label>'+clientField+
       '<label>Profissional</label>'+professionalField+
-      '<label>Serviço</label>'+serviceField+
+      '<label>Serviços do atendimento</label><p class="sub">Selecione quantos procedimentos forem necessários. Os valores aparecem somente nesta tela profissional.</p>'+serviceField+
       '<div class="row"><div><label>Data</label><input id="aptDate" type="date" value="'+escapeHtml(date)+'" required></div><div><label>Início</label><input id="aptStart" type="time" value="10:00" required></div></div>'+
       '<div class="row"><div><label>Término</label><input id="aptEnd" type="time" value="11:00" required></div><div><label>Status</label><select id="aptStatus"><option value="Confirmado">Confirmado</option><option value="Pendente">Pendente</option></select></div></div>'+
       '<div class="action-row"><button id="edduSaveAppointment" type="button" class="btn primary full">Salvar agendamento</button><button id="edduCancelAppointment" type="button" class="btn full">Cancelar</button></div></div>';
@@ -166,14 +172,14 @@
     const date = $('aptDate')?.value, start = $('aptStart')?.value, end = $('aptEnd')?.value;
     const clientId = $('aptClientId')?.value || null;
     const professionalId = $('aptProfessionalId')?.value || null;
-    const serviceId = $('aptServiceId')?.value || null;
+    const selectedServices = Array.from(document.querySelectorAll('.apt-service-checkbox:checked')).map(input => rows('services').find(x => x.id === input.value)).filter(Boolean);
     const client = clientId ? rows('clients').find(x => x.id === clientId) : null;
     const professional = professionalId ? rows('professionals').find(x => x.id === professionalId) : null;
-    const service = serviceId ? rows('services').find(x => x.id === serviceId) : null;
+    const service = selectedServices[0] || null;
     const clientName = client?.name || '';
     const professionalName = professional?.name || '';
-    const serviceName = service?.name || '';
-    if (!date || !start || !end || !clientId || !professionalId || !serviceId || !clientName || !professionalName || !serviceName) return toast('Selecione um cliente, profissional e serviço cadastrados no Neon, além de data e horários.');
+    const serviceName = selectedServices.map(x => x.name).join(' + ');
+    if (!date || !start || !end || !clientId || !professionalId || !clientName || !professionalName || !selectedServices.length) return toast('Selecione cliente, profissional e pelo menos um serviço, além de data e horários.');
     // Client email is optional for an in-salon booking. When present, the client portal can match it to the signed-in account; it must never block the salon from saving an appointment.
     if (end <= start) return toast('O término deve ser posterior ao início.');
     if (!api() || window.__EDDU_NEON_READY !== true || window.__EDDU_NEON_SESSION !== true) return toast('Entre na sua conta e aguarde a autenticação do Neon antes de salvar.');
@@ -196,20 +202,19 @@
       };
       const saved = await api().insert('appointments', payload);
       if (!saved?.id) throw new Error('O Neon não retornou o identificador do agendamento.');
-      let serviceLink;
+      const serviceLinks = [];
       try {
-        serviceLink = await api().insert('appointment_services', {
-          appointment_id: saved.id,
-          service_id: serviceId,
-          price: Number(service.price || service.price_base || 0),
-          duration_minutes: Number(service.duration_minutes || 60)
-        });
-        if (!serviceLink?.id) throw new Error('O Neon não confirmou o vínculo do serviço.');
+        for (const selected of selectedServices) {
+          const link = await api().insert('appointment_services', { appointment_id:saved.id, service_id:selected.id, price:Number(selected.price_base ?? selected.price ?? 0), duration_minutes:Number(selected.duration_minutes || 60) });
+          if (!link?.id) throw new Error('O Neon não confirmou o vínculo do serviço: '+selected.name+'.');
+          serviceLinks.push(link);
+        }
       } catch (linkError) {
+        for (const link of serviceLinks) { try { await api().delete('appointment_services', link.id); } catch (rollbackError) { console.error('[EDDU] service link rollback failed', rollbackError); } }
         try { await api().delete('appointments', saved.id); } catch (rollbackError) { console.error('[EDDU] appointment rollback failed', rollbackError); }
         throw linkError;
       }
-      window.data.appointmentServices = [serviceLink, ...rows('appointmentServices').filter(x => x.id !== serviceLink.id)];
+      window.data.appointmentServices = [...serviceLinks, ...rows('appointmentServices').filter(x => x.appointment_id !== saved.id)];
       const hydrated = hydrateAppointment({ ...saved, service:serviceName, client:clientName, professional:professionalName });
       window.data.appointments = [hydrated, ...rows('appointments').filter(x => x.id !== saved.id)];
       try { if (typeof window.syncAgendaCalendarM === 'function') window.syncAgendaCalendarM(); } catch (_) {}
@@ -235,6 +240,14 @@
     const shade = $('shade');
     if (shade) { shade.classList.remove('show'); shade.style.display='none'; }
   }
+  document.addEventListener('change', event => {
+    if (!event.target?.matches?.('.apt-service-checkbox')) return;
+    const selected = Array.from(document.querySelectorAll('.apt-service-checkbox:checked'));
+    const total = selected.reduce((sum,input)=>sum+Number(input.dataset.price||0),0);
+    const duration = selected.reduce((sum,input)=>sum+Number(input.dataset.duration||0),0);
+    const summary = $('aptServicesSummary');
+    if (summary) summary.innerHTML = selected.length ? '<div class="row"><span>Serviços selecionados</span><b>'+selected.length+'</b></div><div class="row"><span>Duração total estimada</span><b>'+duration+' min</b></div><div class="row"><b>Total previsto</b><b>'+money(total)+'</b></div>' : '<b>Selecione um ou mais serviços</b>';
+  }, true);
   document.addEventListener('click', event => {
     const close = event.target?.closest?.('#shade .close,#shade [data-eddu-close],#shade .sheet-close,#shade [aria-label="Fechar"],#shade button[title="Fechar"]');
     if (close) {
@@ -265,7 +278,7 @@
     const items = rows('appointments').map(hydrateAppointment).filter(x => x.client_id === client.id).sort((a,b) => String(a.starts_at).localeCompare(String(b.starts_at)));
     if (!items.length) return '<h2>Meus agendamentos</h2><p class="sub">Você ainda não possui agendamentos.</p>';
     return '<h2>Meus agendamentos</h2>'+items.map(item =>
-      '<div class="card"><b>'+escapeHtml(item.service || 'Atendimento')+'</b>'+
+      '<div class="card"><b>'+escapeHtml((item.service_names || [item.service || 'Atendimento']).join(' + '))+'</b>'+
       '<p class="sub">'+escapeHtml(new Date(item.starts_at).toLocaleString('pt-BR'))+' · '+escapeHtml(item.professional || 'Profissional')+'</p>'+
       '<div class="row"><span>Status</span><b>'+escapeHtml(({confirmed:'Confirmado',requested:'Pendente',rescheduled:'Reagendado',in_progress:'Em andamento',completed:'Concluído',cancelled:'Cancelado',no_show:'Não compareceu'})[item.status] || item.status)+'</b></div></div>'
     ).join('');
