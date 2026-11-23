@@ -53,13 +53,13 @@
     const services = rows('services').filter(x => x.active !== false && String(x.status || 'Ativo').toLowerCase() !== 'inativo');
     const clientField = clients.length
       ? '<select id="aptClientId" required>'+selectOptions(clients, '', 'Selecione o cliente')+'</select>'
-      : '<input id="aptClientName" placeholder="Nome do cliente" required>';
+      : '<p class="sub">Nenhum cliente cadastrado no Neon. Cadastre o cliente antes de agendar.</p><select id="aptClientId" required disabled><option value="">Cliente indisponível</option></select>';
     const professionalField = professionals.length
       ? '<select id="aptProfessionalId" required>'+selectOptions(professionals, '', 'Selecione o profissional')+'</select>'
-      : '<input id="aptProfessionalName" placeholder="Profissional" required>';
+      : '<p class="sub">Nenhum profissional cadastrado no Neon.</p><select id="aptProfessionalId" required disabled><option value="">Profissional indisponível</option></select>';
     const serviceField = services.length
       ? '<select id="aptServiceId" required>'+selectOptions(services, '', 'Selecione o serviço')+'</select>'
-      : '<input id="aptServiceName" placeholder="Serviço" required>';
+      : '<p class="sub">Nenhum serviço cadastrado no Neon.</p><select id="aptServiceId" required disabled><option value="">Serviço indisponível</option></select>';
     window.views.agendaAdd = () =>
       '<h2>Adicionar agendamento</h2><p class="sub">Novo atendimento diretamente na Agenda.</p>'+
       '<div class="card"><label>Cliente</label>'+clientField+
@@ -80,10 +80,11 @@
     const client = clientId ? rows('clients').find(x => x.id === clientId) : null;
     const professional = professionalId ? rows('professionals').find(x => x.id === professionalId) : null;
     const service = serviceId ? rows('services').find(x => x.id === serviceId) : null;
-    const clientName = client?.name || $('aptClientName')?.value.trim() || '';
-    const professionalName = professional?.name || $('aptProfessionalName')?.value.trim() || '';
-    const serviceName = service?.name || $('aptServiceName')?.value.trim() || '';
-    if (!date || !start || !end || !clientName || !professionalName || !serviceName) return toast('Preencha cliente, profissional, serviço, data e horários.');
+    const clientName = client?.name || '';
+    const professionalName = professional?.name || '';
+    const serviceName = service?.name || '';
+    if (!date || !start || !end || !clientId || !professionalId || !serviceId || !clientName || !professionalName || !serviceName) return toast('Selecione um cliente, profissional e serviço cadastrados no Neon, além de data e horários.');
+    if (!String(client.email || '').trim()) return toast('Este cadastro de cliente não possui e-mail. Vincule o mesmo e-mail usado no acesso do cliente antes de agendar.');
     if (end <= start) return toast('O término deve ser posterior ao início.');
     if (!api() || window.__EDDU_NEON_READY !== true || window.__EDDU_NEON_CONNECTED !== true) return toast('Aguarde a conexão autenticada com o Neon antes de salvar.');
     const startDate = new Date(date+'T'+start+':00');
