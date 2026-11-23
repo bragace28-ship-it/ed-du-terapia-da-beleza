@@ -9,7 +9,7 @@ const TABLES = {
   appointments: ['client_id','professional_id','starts_at','ends_at','status','notes','created_by'],
   appointment_services: ['appointment_id','service_id','price','duration_minutes'],
   commands: ['client_id','professional_id','appointment_id','status','discount','discount_reason','subtotal','total','created_by','total_cost','commission','profit','payment_gateway','payment_card_brand','payment_installments','payment_estimated_fee','payment_estimated_net','payment_installment_amount','payment_link'],
-  command_items: ['command_id','item_type','service_id','product_id','description','quantity','unit_price','total','professional_id','unit_cost','commission_percent'],
+  command_items: ['command_id','item_type','service_id','product_id','description','quantity','unit_price','professional_id','unit_cost','commission_percent'],
   financial_transactions: ['type','direction','command_id','client_id','description','amount','due_date','paid_at','status','category','metadata','created_by'],
   agenda_blocks: ['professional_id','starts_at','ends_at','reason'],
   coupons: ['code','type','value','service_id','active','starts_at','expires_at','usage_limit','usage_count','metadata'],
