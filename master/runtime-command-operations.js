@@ -83,7 +83,7 @@
           '<label>Profissional *</label><select id="edduCommandProfessional"><option value="">Selecione o profissional</option>'+professionals.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join('')+'</select>'+
           '<label>Serviço ou produto inicial *</label><select id="edduCommandItem"><option value="">Selecione o item</option>'+serviceOptions+productOptions+'</select>'+
           '<label>Quantidade</label><input id="edduCommandQty" type="number" min="1" step="1" value="1">'+
-          '<button type="button" class="btn primary full" style="margin-top:12px" data-eddu-command-action="create">＋ Abrir comanda no Neon</button>')+
+          '<button type="button" class="btn primary full" style="margin-top:12px" data-eddu-command-action="create">＋ Lançar comanda no Neon</button>')+
       '</div>';
     const selectedPanel = selected ? '<h3>Comanda em atendimento</h3>'+commandCard(selected)+
       (['open','awaiting_payment'].includes(String(selected.status||'open').toLowerCase())
