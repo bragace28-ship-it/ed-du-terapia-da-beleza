@@ -25,6 +25,9 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Install production build dependencies
+        run: npm install --no-audit --no-fund
+
       - name: Validate canonical Master
         run: npm run master:check
 
@@ -65,6 +68,7 @@ jobs:
           sleep 2
           curl --fail --silent --show-error http://127.0.0.1:4173/index.html >/dev/null
           curl --fail --silent --show-error http://127.0.0.1:4173/version.json >/dev/null
+          curl --fail --silent --show-error http://127.0.0.1:4173/neon-auth-sdk.bundle.js | grep -q 'createClient'
           curl --fail --silent --show-error http://127.0.0.1:4173/_redirects >/dev/null
 
       - name: Release identity
