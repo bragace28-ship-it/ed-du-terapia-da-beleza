@@ -24,6 +24,7 @@ const validationFiles=[
   'master/neon-live-bridge.js',
   'master/runtime-neon-persistence.js',
   'master/runtime-client-registration.js',
+  'master/runtime-agenda-sync.js',
   'master/neon-auth-sdk-entry.js',
   'functions/api/data/[entity].js',
   'functions/api/payments.js',
