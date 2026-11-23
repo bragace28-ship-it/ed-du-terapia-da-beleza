@@ -31,7 +31,8 @@ const runtimeFiles=[
   'master/runtime-real-checkout.js',
   'master/neon-live-bridge.js',
   'master/runtime-neon-persistence.js',
-  'master/neon-auth-client.js'
+  'master/neon-auth-client.js',
+  'master/neon-auth-sdk-entry.js'
 ];
 
 const apiFiles=[
