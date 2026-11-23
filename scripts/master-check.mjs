@@ -29,6 +29,7 @@ for(const marker of required)
 const runtimeFiles=[
   'master/runtime-navigation-hardening.js',
   'master/runtime-command-operations.js',
+  'master/runtime-agenda-workflow.js',
   'master/runtime-real-checkout.js',
   'master/neon-live-bridge.js',
   'master/runtime-neon-persistence.js',
@@ -40,6 +41,7 @@ const apiFiles=[
   'functions/api/data/[entity].js',
   'functions/api/health.js',
   'functions/api/payments.js',
+  'functions/api/commands.js',
   'functions/api/client/commands.js',
   'functions/api/webhooks/asaas.js'
 ];
