@@ -21,7 +21,8 @@
   function hydrateAppointment(row) {
     const client = rows('clients').find(x => x.id === row.client_id);
     const professional = rows('professionals').find(x => x.id === row.professional_id);
-    const service = rows('services').find(x => x.id === row.service_id);
+    const serviceLink = rows('appointmentServices').find(x => x.appointment_id === row.id);
+    const service = rows('services').find(x => x.id === (serviceLink?.service_id || row.service_id));
     return {
       ...row,
       date: row.date || localDate(row.starts_at),
@@ -30,6 +31,8 @@
       client: row.client || client?.name || '',
       professional: row.professional || professional?.name || '',
       service: row.service || service?.name || '',
+      service_name: row.service_name || service?.name || '',
+      service_id: row.service_id || serviceLink?.service_id || service?.id || null,
       status: row.status || 'Confirmado'
     };
   }
@@ -48,11 +51,11 @@
   }
   function openAdd(day) {
     const date = day || localDate(new Date());
-    const clients = rows('clients').filter(x => String(x.status || 'Ativo').toLowerCase() !== 'inativo');
-    const professionals = rows('professionals').filter(x => String(x.status || 'Ativo').toLowerCase() !== 'inativo');
+    const clients = rows('clients').filter(x => x.active !== false && String(x.status || 'Ativo').toLowerCase() !== 'inativo');
+    const professionals = rows('professionals').filter(x => x.active !== false && String(x.status || 'Ativo').toLowerCase() !== 'inativo');
     const services = rows('services').filter(x => x.active !== false && String(x.status || 'Ativo').toLowerCase() !== 'inativo');
     const clientField = clients.length
-      ? '<select id="aptClientId" required>'+selectOptions(clients, '', 'Selecione o cliente')+'</select>'
+      ? '<select id="aptClientId" required>'+selectOptions(clients, window.__EDDU_PENDING_CLIENT_ID || '', 'Selecione o cliente')+'<option value="__NEW__">＋ Cadastrar novo cliente</option></select>'
       : '<p class="sub">Nenhum cliente cadastrado no Neon. Cadastre o cliente antes de agendar.</p><select id="aptClientId" required disabled><option value="">Cliente indisponível</option></select>';
     const professionalField = professionals.length
       ? '<select id="aptProfessionalId" required>'+selectOptions(professionals, '', 'Selecione o profissional')+'</select>'
@@ -60,6 +63,8 @@
     const serviceField = services.length
       ? '<select id="aptServiceId" required>'+selectOptions(services, '', 'Selecione o serviço')+'</select>'
       : '<p class="sub">Nenhum serviço cadastrado no Neon.</p><select id="aptServiceId" required disabled><option value="">Serviço indisponível</option></select>';
+    const pendingClientId = window.__EDDU_PENDING_CLIENT_ID || '';
+    window.__EDDU_PENDING_CLIENT_ID = null;
     window.views.agendaAdd = () =>
       '<h2>Adicionar agendamento</h2><p class="sub">Novo atendimento diretamente na Agenda.</p>'+
       '<div class="card"><label>Cliente</label>'+clientField+
@@ -90,9 +95,8 @@
     const startDate = new Date(date+'T'+start+':00');
     const endDate = new Date(date+'T'+end+':00');
     if (!Number.isFinite(startDate.getTime()) || !Number.isFinite(endDate.getTime()) || endDate <= startDate) return toast('Data ou horário inválido.');
-    const candidate = { date, start, end };
     if (rows('blocks').some(b => b.date === date && start < b.end && end > b.start)) return toast('Este horário está bloqueado na Agenda.');
-    if (rows('appointments').map(hydrateAppointment).some(a => a.date === date && !['Cancelado','Cancelled','canceled'].includes(String(a.status).toLowerCase()) && start < a.end && end > a.start)) return toast('Já existe atendimento nesse intervalo.');
+    if (rows('appointments').map(hydrateAppointment).some(a => a.date === date && a.professional_id === professionalId && !['cancelled','canceled','cancelado'].includes(String(a.status).toLowerCase()) && start < a.end && end > a.start)) return toast('Já existe atendimento nesse intervalo.');
     saving = true;
     const button = $('edduSaveAppointment');
     if (button) { button.disabled = true; button.textContent = 'Salvando…'; }
@@ -100,16 +104,28 @@
       const payload = {
         client_id: clientId,
         professional_id: professionalId,
-        service_id: serviceId,
         starts_at: startDate.toISOString(),
         ends_at: endDate.toISOString(),
-        status: $('aptStatus')?.value || 'Confirmado',
-        source: 'professional_app',
+        status: $('aptStatus')?.value === 'Pendente' ? 'requested' : 'confirmed',
         notes: null
       };
       const saved = await api().insert('appointments', payload);
       if (!saved?.id) throw new Error('O Neon não retornou o identificador do agendamento.');
-      const hydrated = hydrateAppointment({ ...saved, client:clientName, professional:professionalName, service:serviceName });
+      let serviceLink;
+      try {
+        serviceLink = await api().insert('appointment_services', {
+          appointment_id: saved.id,
+          service_id: serviceId,
+          price: Number(service.price || service.price_base || 0),
+          duration_minutes: Number(service.duration_minutes || 60)
+        });
+        if (!serviceLink?.id) throw new Error('O Neon não confirmou o vínculo do serviço.');
+      } catch (linkError) {
+        try { await api().delete('appointments', saved.id); } catch (rollbackError) { console.error('[EDDU] appointment rollback failed', rollbackError); }
+        throw linkError;
+      }
+      window.data.appointmentServices = [serviceLink, ...rows('appointmentServices').filter(x => x.id !== serviceLink.id)];
+      const hydrated = hydrateAppointment({ ...saved, service:serviceName, client:clientName, professional:professionalName });
       window.data.appointments = [hydrated, ...rows('appointments').filter(x => x.id !== saved.id)];
       try { if (typeof window.syncAgendaCalendarM === 'function') window.syncAgendaCalendarM(); } catch (_) {}
       try { if (typeof window.EDDU_NEON_SYNC === 'function') await window.EDDU_NEON_SYNC(); } catch (syncError) { console.error('[EDDU] post-appointment refresh failed', syncError); }
@@ -135,7 +151,7 @@
     if (shade) { shade.classList.remove('show'); shade.style.display='none'; }
   }
   document.addEventListener('click', event => {
-    const close = event.target?.closest?.('.close,[data-eddu-close]');
+    const close = event.target?.closest?.('#shade .close,#shade [data-eddu-close],#shade .sheet-close,#shade [aria-label="Fechar"],#shade button[title="Fechar"]');
     if (close) {
       event.preventDefault(); event.stopImmediatePropagation(); closeModal(); return;
     }
@@ -170,7 +186,7 @@
     ).join('');
   }
   window.addEventListener('eddu-neon-data-loaded', event => {
-    if (event.detail?.entity === 'appointments' || event.detail?.entity === 'clients' || event.detail?.entity === 'professionals' || event.detail?.entity === 'services') refreshLocalAppointments();
+    if (event.detail?.entity === 'appointments' || event.detail?.entity === 'appointment_services' || event.detail?.entity === 'clients' || event.detail?.entity === 'professionals' || event.detail?.entity === 'services') refreshLocalAppointments();
   });
   window.addEventListener('eddu-neon-sync-complete', refreshLocalAppointments);
   const priorAppointmentsView = window.views?.appointments;
