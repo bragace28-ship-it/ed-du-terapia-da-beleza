@@ -24,7 +24,7 @@ export async function onRequestGet({request,env}){
   FROM public.clients cl
   JOIN public.commands c ON c.client_id=cl.id
   JOIN LATERAL (SELECT pay.* FROM public.payments pay WHERE pay.command_id=c.id AND upper(pay.status) IN ('CHECKOUT_PENDING','PENDING','AWAITING_PAYMENT') ORDER BY pay.created_at DESC LIMIT 1) p ON true
-  WHERE (lower(COALESCE(cl.email,''))=${auth.email} OR cl.user_id::text=${auth.id})
+  WHERE (lower(COALESCE(cl.email,''))=${auth.email} OR cl.user_id::text=${auth.id}) AND c.status IN ('payment_pending','awaiting_payment')
   ORDER BY c.created_at DESC
   LIMIT 50
  `;
