@@ -62,6 +62,16 @@
   window.views=window.views||{};
   window.views.command=function(){return window.__EDDU_COMMAND_MODE==='form'?renderForm():renderList();};
   window.edduPrefillCommandFromAppointment=function(sel){const o=sel?.selectedOptions?.[0],d=window.__EDDU_COMMAND_DRAFT;if(!o?.value||!d)return;d.appointmentId=o.value;d.clientId=o.dataset.client||d.clientId;d.professionalId=o.dataset.professional||d.professionalId;refresh();};
+  async function saveCommandTransaction(payload,draftId){
+    const session=await window.EDDU_NEON_REFRESH_SESSION?.();
+    const token=session?.session?.token||session?.token||session?.accessToken||session?.session?.accessToken;
+    if(!token)throw new Error('Sessão autenticada do Neon indisponível. Entre novamente.');
+    const response=await fetch('/api/commands',{method:draftId?'PATCH':'POST',credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json','Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({...payload,...(draftId?{id:draftId}:{})})});
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok||!result.ok)throw new Error(result.message||result.error||('Falha ao salvar comanda ('+response.status+').'));
+    if(!result.command?.id||!Array.isArray(result.items)||result.items.length!==payload.items.length)throw new Error('O Neon não confirmou a gravação de todos os itens da comanda.');
+    return result;
+  }
   async function saveDraft(){
     const d=window.__EDDU_COMMAND_DRAFT;if(!d)throw new Error('Rascunho da comanda não encontrado.');
     d.clientId=$('edduCommandClient')?.value||d.clientId;d.professionalId=$('edduCommandProfessional')?.value||d.professionalId;d.appointmentId=$('edduCommandAppointment')?.value||null;
@@ -69,30 +79,16 @@
     if(!d.items.length)throw new Error('Adicione pelo menos um serviço ou produto.');
     const db=await api(),sum=totals(d),professional=rows('professionals').find(x=>x.id===d.professionalId);
     if(!(sum.total>=0)||sum.subtotal<=0)throw new Error('O total da comanda precisa ser maior que zero.');
-    const payload={client_id:d.clientId,professional_id:d.professionalId,appointment_id:d.appointmentId||null,status:'open',subtotal:sum.subtotal,total:sum.total,discount:sum.discount,discount_reason:d.coupon?.code||(sum.discount>0?d.couponCode||null:null)};
-    let command;
-    if(d.id){command=await db.update('commands',d.id,payload);if(!command?.id)throw new Error('O Neon não confirmou a atualização da comanda.');}
-    else{command=await db.insert('commands',payload);if(!command?.id)throw new Error('O Neon não confirmou a criação da comanda.');}
-    const existing=rows('commandItems').filter(x=>x.command_id===command.id),saved=[];
-    try{
-      for(const item of d.items){
-        const rowPayload={command_id:command.id,item_type:item.item_type,service_id:item.service_id||null,product_id:item.product_id||null,description:item.description,quantity:item.quantity,unit_price:item.unit_price,total:item.total,professional_id:d.professionalId,unit_cost:Number(item.unit_cost||0),commission_percent:Number(item.commission_percent??professional?.commission_rate??0)};
-        let row;
-        if(item.id){row=await db.update('command_items',item.id,rowPayload);}
-        else row=await db.insert('command_items',rowPayload);
-        if(!row?.id)throw new Error('O Neon não confirmou um item da comanda.');
-        saved.push(row);
-      }
-      for(const prior of existing)if(!saved.some(x=>x.id===prior.id))await db.delete('command_items',prior.id);
-      data().commandItems=[...rows('commandItems').filter(x=>x.command_id!==command.id),...saved];
-      data().commands=[command,...rows('commands').filter(x=>x.id!==command.id)];
-      window.state=window.state||{};window.state.commands=data().commands;window.state.activeCommandId=command.id;
-      if(d.coupon?.id&&!d.id){try{const coupon=rows('coupons').find(x=>x.id===d.coupon.id);if(coupon)await db.update('coupons',coupon.id,{usage_count:Number(coupon.usage_count||0)+1});}catch(e){console.error('[EDDU] coupon usage counter update failed',e);}}
-      window.__EDDU_COMMAND_DRAFT=null;window.__EDDU_COMMAND_MODE='list';window.toast?.(d.id?'Comanda atualizada no Neon.':'Comanda lançada no Neon.');refresh();
-    }catch(error){
-      console.error('[EDDU] command item persistence failed',error);
-      throw new Error('A comanda foi criada/atualizada, mas houve falha ao gravar todos os itens: '+String(error?.message||error));
-    }
+    const payload={client_id:d.clientId,professional_id:d.professionalId,appointment_id:d.appointmentId||null,subtotal:sum.subtotal,total:sum.total,discount:sum.discount,discount_reason:d.coupon?.code||(sum.discount>0?d.couponCode||null:null),items:d.items.map(item=>({item_type:item.item_type,service_id:item.service_id||null,product_id:item.product_id||null,description:item.description,quantity:Number(item.quantity||1),unit_price:Number(item.unit_price||0),total:Number(item.total??Number(item.quantity||1)*Number(item.unit_price||0)),unit_cost:Number(item.unit_cost||0),commission_percent:Number(item.commission_percent??professional?.commission_rate??0)}))};
+    const result=await saveCommandTransaction(payload,d.id),command=result.command,saved=result.items;
+    data().commandItems=[...rows('commandItems').filter(x=>x.command_id!==command.id),...saved];
+    data().commands=[command,...rows('commands').filter(x=>x.id!==command.id)];
+    window.state=window.state||{};window.state.commands=data().commands;window.state.activeCommandId=command.id;
+    if(d.coupon?.id&&!d.id){try{const coupon=rows('coupons').find(x=>x.id===d.coupon.id);if(coupon)await db.update('coupons',coupon.id,{usage_count:Number(coupon.usage_count||0)+1});}catch(e){console.error('[EDDU] coupon usage counter update failed',e);}}
+    window.__EDDU_COMMAND_DRAFT=null;window.__EDDU_COMMAND_MODE='list';
+    window.toast?.(d.id?'Comanda atualizada no Neon com todos os itens.':'Comanda e todos os itens gravados no Neon.');
+    try{await window.EDDU_NEON_SYNC?.();}catch(e){console.error('[EDDU] command post-save sync failed',e);}
+    refresh();
   }
   async function applyCoupon(){
     const d=window.__EDDU_COMMAND_DRAFT,code=String($('edduCommandCoupon')?.value||'').trim().toUpperCase();
