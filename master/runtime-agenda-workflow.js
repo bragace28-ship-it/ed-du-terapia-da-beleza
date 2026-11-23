@@ -11,7 +11,7 @@
  const getAppointment=id=>rows('appointments').find(a=>a.id===id);
  function findCardAppointment(card,used){
   const text=String(card.innerText||card.textContent||'').replace(/\s+/g,' ').trim(),time=(text.match(/\b\d{1,2}:\d{2}\b/)||[])[0];
-  const day=window.selectedDayM||localDate(new Date());
+  const day=window.__EDDU_SELECTED_DAY||window.selectedDayM||localDate(new Date());
   const candidates=rows('appointments').filter(a=>localDate(a.starts_at)===day&&!used.has(a.id));
   const client=candidates.find(a=>{const name=rows('clients').find(x=>x.id===a.client_id)?.name;return name&&text.toLocaleLowerCase('pt-BR').includes(name.toLocaleLowerCase('pt-BR'))&&(!time||localTime(a.starts_at)===time);});
   if(client)return client;
@@ -23,7 +23,7 @@
   const used=new Set();
   root.querySelectorAll('button,a,[role="button"]').forEach(button=>{
    if(!/editar agendamento/i.test(button.textContent||''))return;
-   const card=button.closest('.card,article,[class*="appointment"],[class*="booking"]')||button.parentElement;if(!card||card.querySelector('.eddu-agenda-lifecycle'))return;
+   const card=button.closest('.option,.card,article,[class*="appointment"],[class*="booking"]')||button.parentElement;if(!card||card.querySelector('.eddu-agenda-lifecycle'))return;
    const apt=findCardAppointment(card,used);if(!apt)return;used.add(apt.id);
    const status=String(apt.status||'confirmed').toLowerCase(),terminal=['cancelled','completed','no_show'].includes(status);
    const box=document.createElement('div');box.className='eddu-agenda-lifecycle';box.style.cssText='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px';
@@ -87,6 +87,8 @@
   }catch(error){console.error('[EDDU] appointment lifecycle failed',error);const n=$('edduRescheduleError');if(n)n.textContent=error.message;toast(error.message);}
   finally{action.dataset.busy='0';}
  },true);
+ if(typeof window.masterAgendaSelectDay==='function'&&!window.__EDDU_AGENDA_DAY_WRAPPED){const originalSelectDay=window.masterAgendaSelectDay;window.masterAgendaSelectDay=function(day){window.__EDDU_SELECTED_DAY=day;return originalSelectDay.call(this,day);};window.__EDDU_AGENDA_DAY_WRAPPED=true;}
+ window.__EDDU_SELECTED_DAY=window.__EDDU_SELECTED_DAY||localDate(new Date());
  const oldRender=window.render;
  if(typeof oldRender==='function')window.render=function(route,...args){const out=oldRender.call(this,route,...args);if(String(route||'').toLowerCase()==='agenda')setTimeout(enhanceCards,80);return out;};
  window.addEventListener('eddu-neon-sync-complete',()=>{if($('view')&&/agenda/i.test($('view').innerText.slice(0,300)))setTimeout(enhanceCards,50);});
