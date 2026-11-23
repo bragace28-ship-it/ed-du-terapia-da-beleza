@@ -18,14 +18,28 @@ create table if not exists app_users (
 
 create table if not exists clients (
   id uuid primary key default gen_random_uuid(),
+  user_id uuid references neon_auth."user"(id) on delete set null,
   name text not null,
   phone text,
   email text,
+  cpf text,
+  birth_date date,
   notes text,
+  loyalty_points integer not null default 0,
+  active boolean not null default true,
   status text not null default 'Ativo',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Idempotent compatibility for databases created before the client portal fields.
+alter table public.clients add column if not exists user_id uuid references neon_auth."user"(id) on delete set null;
+alter table public.clients add column if not exists cpf text;
+alter table public.clients add column if not exists birth_date date;
+alter table public.clients add column if not exists loyalty_points integer not null default 0;
+alter table public.clients add column if not exists active boolean not null default true;
+create index if not exists clients_user_idx on public.clients(user_id);
+create index if not exists clients_cpf_idx on public.clients(cpf);
 
 create table if not exists professionals (
   id uuid primary key default gen_random_uuid(),
