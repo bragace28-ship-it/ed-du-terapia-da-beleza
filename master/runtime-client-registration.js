@@ -22,10 +22,29 @@
 
   async function ensureNeon() {
     if (!api()) throw new Error('A conexão de gravação do Neon não foi carregada. Recarregue o sistema.');
+    if (window.__EDDU_NEON_READY === false) {
+      throw new Error(window.__EDDU_NEON_LAST_ERROR || 'A inicialização do Neon Auth falhou antes do cadastro.');
+    }
     if (window.__EDDU_NEON_READY !== true) {
       await new Promise((resolve, reject) => {
-        const timer = setTimeout(() => reject(new Error('Tempo esgotado inicializando a conexão segura com o Neon.')), 15000);
-        window.addEventListener('eddu-neon-ready', () => { clearTimeout(timer); resolve(); }, { once:true });
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          window.removeEventListener('eddu-neon-ready', finish);
+          if (window.__EDDU_NEON_READY === true) resolve();
+          else reject(new Error(window.__EDDU_NEON_LAST_ERROR || 'A inicialização do Neon Auth falhou.'));
+        };
+        const timer = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          window.removeEventListener('eddu-neon-ready', finish);
+          reject(new Error('Tempo esgotado aguardando o Neon Auth. Verifique o carregamento do módulo de autenticação.'));
+        }, 15000);
+        window.addEventListener('eddu-neon-ready', finish, { once:true });
+        // Recheck after subscribing so an already-completed initialization cannot be missed.
+        if (window.__EDDU_NEON_READY !== undefined) finish();
       });
     }
     if (window.__EDDU_NEON_READY !== true) throw new Error(window.__EDDU_NEON_LAST_ERROR || 'Não foi possível inicializar o Neon Auth.');
