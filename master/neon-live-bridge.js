@@ -37,7 +37,7 @@
   };
   const DATA_KEYS = {
     clients: 'clients', professionals: 'professionals', services: 'services', products: 'products',
-    appointments: 'appointments', commands: 'commands', financial_transactions: 'financialTransactions',
+    appointments: 'appointments', appointment_services: 'appointmentServices', commands: 'commands', financial_transactions: 'financialTransactions',
     agenda_blocks: 'blocks', payments: 'payments', payables: 'payables', receivables: 'receivables',
     commissions: 'commissions', anamneses: 'anamneses', terms: 'terms', coupons: 'coupons',
     gift_cards: 'giftCards', referrals: 'referrals', card_invoices: 'cardInvoices',
