@@ -3,7 +3,7 @@ const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control
 const DEFAULT_AUTH_URL='https://ep-sweet-meadow-b43jne0i.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
 async function validateSession(request,env){
  const cookie=request.headers.get('Cookie')||'',authorization=request.headers.get('Authorization')||'';
- if(!cookie&&!/^Bearer\\s+\\S+/i.test(authorization))return null;
+ if(!cookie&&!/^Bearer\s+\S+/i.test(authorization))return null;
  const headers=new Headers({Accept:'application/json'});if(cookie)headers.set('Cookie',cookie);if(authorization)headers.set('Authorization',authorization);
  const response=await fetch(String(env.NEON_AUTH_URL||DEFAULT_AUTH_URL).replace(/\/+$/,'')+'/get-session',{headers,signal:AbortSignal.timeout(8000),redirect:'error'});
  if(!response.ok)return null;const payload=await response.json();if(!payload?.user?.id||!payload?.session)return null;
