@@ -7,10 +7,25 @@
   const money = value => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(value)||0);
   const data = () => window.data || (window.data = {});
   const rows = key => Array.isArray(data()[key]) ? data()[key] : [];
-  const api = () => {
+  const api = async () => {
     if (!window.EDDU_NEON_API) throw new Error('A conexão de gravação do Neon não foi carregada.');
-    if (window.__EDDU_NEON_READY !== true || window.__EDDU_NEON_SESSION !== true || window.__EDDU_NEON_CONNECTED !== true)
-      throw new Error('Aguarde a autenticação e a sincronização do Neon antes de operar uma comanda.');
+    if (window.__EDDU_NEON_READY !== true || window.__EDDU_NEON_SESSION !== true)
+      throw new Error('Aguarde a autenticação do Neon antes de operar uma comanda.');
+    if (window.__EDDU_NEON_CONNECTED !== true) {
+      if (window.__EDDU_NEON_SYNCING) {
+        await new Promise((resolve, reject) => {
+          const finish = () => { clearTimeout(timer); window.removeEventListener('eddu-neon-sync-complete', finish); resolve(); };
+          const timer = setTimeout(() => { window.removeEventListener('eddu-neon-sync-complete', finish); reject(new Error('Tempo esgotado aguardando sincronização das comandas.')); }, 15000);
+          window.addEventListener('eddu-neon-sync-complete', finish, { once:true });
+        });
+      } else if (typeof window.EDDU_NEON_SYNC === 'function') {
+        await window.EDDU_NEON_SYNC();
+      }
+    }
+    if (window.__EDDU_NEON_CONNECTED !== true) {
+      const details = (window.__EDDU_NEON_CORE_SYNC_ERRORS || []).map(x => x.entity + ': ' + x.error).join('; ');
+      throw new Error('Não foi possível sincronizar os dados essenciais da comanda.' + (details ? ' ' + details : ''));
+    }
     return window.EDDU_NEON_API;
   };
   const active = () => {
@@ -31,9 +46,9 @@
       '<div class="row"><span>Itens</span><b>'+items.length+'</b></div>'+
       '<div class="row"><span>Total</span><b>'+money(amount)+'</b></div>'+
       '<div class="grid2" style="margin-top:10px">'+
-      '<button type="button" class="btn primary" onclick="window.edduSelectCommand(\''+esc(command.id)+'\')">Abrir comanda</button>'+
-      (canCancel?'<button type="button" class="btn" onclick="window.edduCancelCommand(\''+esc(command.id)+'\')">Cancelar comanda</button>':'')+
-      (canCancel && amount>0 && items.length?'<button type="button" class="btn primary full" onclick="window.edduSendCommandToPayment(\''+esc(command.id)+'\')">Enviar para pagamento</button>':'')+
+      '<button type="button" class="btn primary" data-eddu-command-action="select" data-command-id="'+esc(command.id)+'">Abrir comanda</button>'+
+      (canCancel?'<button type="button" class="btn" data-eddu-command-action="cancel" data-command-id="'+esc(command.id)+'">Cancelar comanda</button>':'')+
+      (canCancel && amount>0 && items.length?'<button type="button" class="btn primary full" data-eddu-command-action="payment" data-command-id="'+esc(command.id)+'">Enviar para pagamento</button>':'')+
       '</div></article>';
   }
   window.views = window.views || {};
@@ -49,7 +64,7 @@
        '<label>Profissional *</label><select id="edduCommandProfessional"><option value="">Selecione o profissional</option>'+professionals.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join('')+'</select>'+
        '<label>Serviço ou produto *</label><select id="edduCommandItem"><option value="">Selecione o item</option>'+serviceOptions+productOptions+'</select>'+
        '<label>Quantidade</label><input id="edduCommandQty" type="number" min="1" step="1" value="1">'+
-       '<button type="button" class="btn primary full" style="margin-top:12px" onclick="window.edduCreateCommand()">＋ Lançar comanda no Neon</button>'
+       '<button type="button" class="btn primary full" style="margin-top:12px" data-eddu-command-action="create">＋ Lançar comanda no Neon</button>'
        : '<p role="alert">Para lançar uma comanda, primeiro cadastre ao menos um cliente e um profissional. Os cadastros são carregados diretamente do Neon.</p>'+
          '<div class="grid2"><button type="button" class="btn" onclick="openSheet(\'clients\')">Cadastrar cliente</button><button type="button" class="btn" onclick="openSheet(\'professionals\')">Cadastrar profissional</button></div>')+
       '</div>'+
@@ -79,7 +94,7 @@
     const total=unitPrice*quantity;
     let command=null;
     try {
-      const db=api();
+      const db=await api();
       command=await db.insert('commands',{client_id:clientId,professional_id:professionalId,status:'open',subtotal:total,total,discount:0});
       if(!command?.id||!UUID.test(command.id)) throw new Error('O Neon não confirmou o identificador da comanda.');
       const line=await db.insert('command_items',{command_id:command.id,item_type:kind,service_id:kind==='service'?itemId:null,product_id:kind==='product'?itemId:null,description:item.name,quantity,unit_price:unitPrice,total,professional_id:professionalId,unit_cost:Number(item.service_cost??item.cost_price??0),commission_percent:Number(professional.commission_rate||0)});
@@ -101,7 +116,8 @@
     if(!command) return window.toast?.('Comanda não encontrada.');
     if(['paid','closed','refunded'].includes(String(command.status||'').toLowerCase())) return window.toast?.('Uma comanda paga ou fechada não pode ser cancelada por esta ação.');
     try {
-      const saved=await api().update('commands',id,{status:'cancelled'});
+      const db=await api();
+      const saved=await db.update('commands',id,{status:'cancelled'});
       Object.assign(command,saved||{status:'cancelled'});
       if(window.state) window.state.commands=rows('commands');
       if(window.state?.activeCommandId===id) window.state.activeCommandId=null;
@@ -125,5 +141,17 @@
     if(typeof window.__edduOpenGatewayRanking!=='function') return window.toast?.('O módulo de pagamento não foi carregado. Atualize o aplicativo.');
     await window.__edduOpenGatewayRanking(command);
   };
+  document.addEventListener('click', function(event) {
+    const button = event.target?.closest?.('[data-eddu-command-action]');
+    if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const action = button.getAttribute('data-eddu-command-action');
+    const id = button.getAttribute('data-command-id');
+    if (action === 'create') window.edduCreateCommand();
+    else if (action === 'select' && id) window.edduSelectCommand(id);
+    else if (action === 'cancel' && id) window.edduCancelCommand(id);
+    else if (action === 'payment' && id) window.edduSendCommandToPayment(id);
+  }, true);
   window.EDDU_COMMANDS_RUNTIME_READY=true;
 })();
