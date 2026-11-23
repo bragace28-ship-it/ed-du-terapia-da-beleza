@@ -20,8 +20,53 @@ async function sessionHeaders(){
   return token?{'Authorization':'Bearer '+token}:{};
  }catch(_){return {}}
 }
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+function byIdOrName(list,id,name){return (Array.isArray(list)?list:[]).find(x=>(id&&x.id===id)||(!id&&name&&String(x.name||'').trim().toLowerCase()===String(name).trim().toLowerCase()))||null}
+async function persistCommandBeforeCheckout(command){
+ const c=command||currentCommand();
+ if(!c||typeof c!=='object')throw new Error('Não encontrei a comanda atual. Abra a comanda e tente novamente.');
+ const data=window.data||(window.data={});
+ const commands=Array.isArray(window.state?.commands)?window.state.commands:(Array.isArray(data.commands)?data.commands:[]);
+ if(!commands.includes(c))commands.unshift(c);
+ data.commands=commands;
+ const client=clientOf(c),clients=Array.isArray(data.clients)?data.clients:[];
+ const clientRow=byIdOrName(clients,client.id,client.name||c.client);
+ c.client_id=c.client_id||c.clientId||clientRow?.id||null;
+ if(!UUID.test(String(c.client_id||'')))throw new Error('Selecione um cliente cadastrado no Neon antes de salvar a comanda.');
+ const professional=c.professional&&typeof c.professional==='object'?c.professional:{};
+ const professionalRow=byIdOrName(data.professionals,c.professional_id||c.professionalId,professional.name||c.professional);
+ c.professional_id=c.professional_id||c.professionalId||professionalRow?.id||null;
+ const amount=amountOf(c);
+ if(!(amount>0))throw new Error('A comanda está sem valor total. Confira os serviços e produtos lançados.');
+ c.subtotal=Number(c.subtotal??c.grossAmount??amount);
+ c.total=amount;
+ c.discount=Number(c.discount||0);
+ if(!['paid','closed','cancelled','refunded'].includes(String(c.status||'').toLowerCase()))c.status='awaiting_payment';
+ const sourceItems=Array.isArray(c.items)?c.items:(Array.isArray(c.services)?c.services:[]);
+ if(!sourceItems.length)throw new Error('A comanda não possui serviços ou produtos vinculados. Adicione ao menos um item antes de enviar para pagamento.');
+ c.items=sourceItems.map(item=>{
+  const product=!!(item.product_id||item.productId||item.item_type==='product');
+  const list=product?data.products:data.services;
+  const found=byIdOrName(list,product?(item.product_id||item.productId):(item.service_id||item.serviceId),item.description||item.service||item.name);
+  const id=product?(item.product_id||item.productId||found?.id):(item.service_id||item.serviceId||found?.id);
+  if(!UUID.test(String(id||'')))throw new Error('O item "'+String(item.description||item.service||item.name||'sem nome')+'" não está vinculado a um '+(product?'produto':'serviço')+' cadastrado no Neon.');
+  const quantity=Number(item.quantity??item.qty??1),unitPrice=Number(item.unit_price??item.price??item.unitPrice??0);
+  if(!(quantity>0)||unitPrice<0||!Number.isFinite(unitPrice))throw new Error('Confira a quantidade e o valor dos itens da comanda.');
+  return {...item,item_type:product?'product':'service',service_id:product?null:id,product_id:product?id:null,description:item.description||item.service||item.name||found?.name||'Item da comanda',quantity,unit_price:unitPrice,total:Number(item.total??quantity*unitPrice),professional_id:item.professional_id||item.professionalId||c.professional_id||null};
+ });
+ if(!window.EDDU_NEON_API||typeof window.persist!=='function')throw new Error('A persistência do Neon não foi carregada. Recarregue o aplicativo.');
+ if(window.__EDDU_NEON_READY!==true||window.__EDDU_NEON_CONNECTED!==true)throw new Error('Aguarde a conexão autenticada com o Neon antes de enviar a comanda.');
+ await window.persist();
+ if(!UUID.test(String(c.id||'')))throw new Error('O Neon não confirmou o identificador da comanda.');
+ if(!(data.commands||[]).some(x=>x.id===c.id))throw new Error('A comanda não foi confirmada na lista persistida do Neon.');
+ return c;
+}
 window.__edduOpenGatewayRanking=async function(command){
- const c=command||currentCommand()||{},p={commandId:commandId(c),amount:amountOf(c),command:c,client:clientOf(c)};window.__edduPendingPayment=p;
+ let c;
+ try{c=await persistCommandBeforeCheckout(command||currentCommand())}catch(error){toast('Não foi possível salvar a comanda no Neon: '+String(error?.message||error));return false}
+ const id=commandId(c);
+ if(!UUID.test(String(id||''))){toast('O identificador da comanda não é válido no Neon.');return false}
+ const p={commandId:id,amount:amountOf(c),command:c,client:clientOf(c)};window.__edduPendingPayment=p;
  window.views=window.views||{};
  window.views.gatewayRanking=function(){return '<h2>Ranking Gateway</h2><p class="sub">O sistema consulta os gateways conectados e compara as condições disponíveis.</p><div class="card"><div class="row"><span>Comanda</span><b>'+esc(p.commandId)+'</b></div><div class="row"><span>Cliente</span><b>'+esc(p.client.name||'Cliente')+'</b></div><div class="row"><span>Total</span><b>'+money(p.amount)+'</b></div></div><div class="card"><h3>Forma de pagamento</h3><select id="v52Method"><option value="pix">PIX</option><option value="card">Cartão de crédito</option><option value="pdv">PDV presencial</option></select><div id="v52RankBox" style="margin-top:12px">Consultando gateways…</div></div><button class="btn full" type="button" onclick="openSheet(\'command\')">← Voltar à comanda</button>'};
  open('gatewayRanking');
@@ -47,15 +92,17 @@ window.__edduSelectGateway=function(gateway,method){
   const sync=()=>{const card=methodEl?.value==='card',stripeOnly=gateway==='Stripe';if(inst){inst.disabled=!card||stripeOnly;if(!card||stripeOnly)inst.value='1';}if(info)info.innerHTML=card?'<div class="row"><span>Parcelamento</span><b>'+inst?.value+'x</b></div>':'<div class="row"><span>Valor</span><b>'+money(p.amount)+'</b></div>'};methodEl?.addEventListener('change',sync);inst?.addEventListener('change',sync);sync();
   document.getElementById('v52Checkout')?.addEventListener('click',async()=>{
    const b=document.getElementById('v52Checkout');b.disabled=true;b.textContent='Gerando cobrança…';
+   let checkoutTab=null;
    try{
+    checkoutTab=window.open('about:blank','_blank');
     const m=methodEl?.value||p.method||'pix',n=m==='card'?Number(inst?.value||1):1;
     const body={commandId:p.commandId,clientId:p.client?.id||null,amount:p.amount,gateway,method:m,installments:n,customerName:p.client?.name||'Cliente ED & DU',customerEmail:p.client?.email||'',customerPhone:p.client?.phone||'',customerDocument:p.client?.document||'',description:'Comanda '+p.commandId};
     const idem='EDDU-'+p.commandId+'-'+gateway+'-'+m+'-'+n;const r=await fetch('/api/payments',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json','Idempotency-Key':idem,...await sessionHeaders()},body:JSON.stringify(body)});const d=await r.json().catch(()=>({}));if(!r.ok||!d.ok)throw new Error(d.error||'Não foi possível gerar a cobrança.');
     const record={...p,method:m,installments:n,payment:d.payment,checkoutUrl:d.checkoutUrl||null,qrCode:d.qrCode||null,status:'CHECKOUT_PENDING',createdAt:new Date().toISOString()};persist(record);window.__edduPendingPayment=record;
-    if(d.checkoutUrl){window.open(d.checkoutUrl,'_blank','noopener,noreferrer');toast('✓ Checkout '+providerLabel(gateway)+' aberto. A comanda só será quitada após a confirmação do gateway.');}
+    if(d.checkoutUrl){if(checkoutTab&&!checkoutTab.closed)checkoutTab.location.replace(d.checkoutUrl);else window.location.assign(d.checkoutUrl);toast('✓ Checkout '+providerLabel(gateway)+' aberto. A comanda só será quitada após a confirmação do gateway.');}
     else if(d.qrCode){info.innerHTML='<p><b>QR/PIX '+esc(providerLabel(gateway))+' gerado.</b></p><textarea readonly style="width:100%;min-height:90px">'+esc(d.qrCode)+'</textarea><p>Não marque a comanda como paga. A baixa ocorrerá após a confirmação do gateway.</p>';toast('✓ Cobrança '+providerLabel(gateway)+' criada.');return;}
     else {toast('✓ Cobrança criada; aguardando confirmação do gateway.');open('payments');}
-   }catch(e){toast('Não foi possível gerar a cobrança: '+e.message);b.disabled=false;b.textContent='✓ Gerar cobrança'}
+   }catch(e){try{if(checkoutTab&&!checkoutTab.closed)checkoutTab.close()}catch(_){}toast('Não foi possível gerar a cobrança: '+e.message);b.disabled=false;b.textContent='✓ Gerar cobrança'}
   },{once:true});
  },40);
 };
