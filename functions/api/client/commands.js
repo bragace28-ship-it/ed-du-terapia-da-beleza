@@ -5,7 +5,7 @@ async function validateSession(request,env){
  const cookie=request.headers.get('Cookie')||'',authorization=request.headers.get('Authorization')||'';
  if(!cookie&&!/^Bearer\\s+\\S+/i.test(authorization))return null;
  const headers=new Headers({Accept:'application/json'});if(cookie)headers.set('Cookie',cookie);if(authorization)headers.set('Authorization',authorization);
- const response=await fetch(String(env.NEON_AUTH_URL||DEFAULT_AUTH_URL).replace(/\\/+$/,'')+'/get-session',{headers,signal:AbortSignal.timeout(8000),redirect:'error'});
+ const response=await fetch(String(env.NEON_AUTH_URL||DEFAULT_AUTH_URL).replace(/\/+$/,'')+'/get-session',{headers,signal:AbortSignal.timeout(8000),redirect:'error'});
  if(!response.ok)return null;const payload=await response.json();if(!payload?.user?.id||!payload?.session)return null;
  if(payload.session.expiresAt&&new Date(payload.session.expiresAt).getTime()<=Date.now())return null;
  return {id:String(payload.user.id),email:String(payload.user.email||'').trim().toLowerCase()};
