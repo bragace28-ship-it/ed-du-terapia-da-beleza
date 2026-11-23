@@ -10,6 +10,15 @@
   const activeClients = () => rows('clients').filter(c => c.active !== false && String(c.status || 'Ativo').toLowerCase() !== 'inativo');
   const dateText = value => value ? new Date(String(value).slice(0,10)+'T12:00:00').toLocaleDateString('pt-BR') : 'Não informado';
   const returnState = () => window.__EDDU_CLIENT_RETURN || { route:'clients' };
+  // Avoid RegExp here: previous inline build double-escaped backslashes in this validator.
+  function validOptionalEmail(value) {
+    const valueText = String(value || '').normalize('NFKC').trim();
+    if (!valueText) return true;
+    const at = valueText.indexOf('@'), lastAt = valueText.lastIndexOf('@'), dot = valueText.lastIndexOf('.');
+    if (at <= 0 || at !== lastAt || dot <= at + 1 || dot >= valueText.length - 1) return false;
+    for (const char of valueText) if (char.charCodeAt(0) <= 32 || char.charCodeAt(0) === 127) return false;
+    return true;
+  }
 
   async function ensureNeon() {
     if (!api()) throw new Error('A conexão de gravação do Neon não foi carregada. Recarregue o sistema.');
@@ -89,14 +98,14 @@
     // Snapshot the form before awaiting network/authentication.
     const name = String($('newClientName')?.value || '').trim().replace(/\s+/g,' ');
     const phone = String($('newClientPhone')?.value || '').trim();
-    const email = String($('newClientEmail')?.value || '').trim().toLowerCase();
+    const email = String($('newClientEmail')?.value || '').normalize('NFKC').trim().toLowerCase();
     const cpf = String($('newClientCpf')?.value || '').replace(/\D/g,'');
     const birthDate = String($('newClientBirthDate')?.value || '').trim();
     const notes = String($('newClientNotes')?.value || '').trim();
 
     try {
       if (name.length < 2) throw new Error('Informe o nome completo do cliente.');
-      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Informe um e-mail válido.');
+      if (!validOptionalEmail(email)) throw new Error('E-mail inválido. Confira o endereço digitado ou deixe o campo vazio.');
       if (cpf && cpf.length !== 11) throw new Error('O CPF deve conter 11 números.');
       if (email && rows('clients').some(c => c.active !== false && String(c.email || '').trim().toLowerCase() === email)) {
         throw new Error('Já existe um cliente ativo com este e-mail.');
@@ -185,10 +194,10 @@
     if (!ensureNeon()) return;
     const c = findClient(id);
     const name = String($('editClientName')?.value || '').trim();
-    const email = String($('editClientEmail')?.value || '').trim().toLowerCase();
+    const email = String($('editClientEmail')?.value || '').normalize('NFKC').trim().toLowerCase();
     const cpf = String($('editClientCpf')?.value || '').replace(/\D/g,'');
     if (!c || name.length < 2) return toast('Informe o nome completo do cliente.');
-      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Informe um e-mail válido.');
+      if (!validOptionalEmail(email)) throw new Error('E-mail inválido. Confira o endereço digitado ou deixe o campo vazio.');
     if (cpf && cpf.length !== 11) return toast('O CPF deve conter 11 números.');
     if (email && rows('clients').some(x => x.id !== id && x.active !== false && String(x.email || '').trim().toLowerCase() === email)) return toast('Este e-mail já está associado a outro cliente.');
     try {
