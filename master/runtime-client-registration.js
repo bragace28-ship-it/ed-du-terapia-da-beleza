@@ -59,7 +59,7 @@
       '<label>Data de nascimento</label><input id="newClientBirthDate" type="date">'+
       '<label>Observações</label><textarea id="newClientNotes" rows="3" maxlength="3000" placeholder="Informações importantes sobre o cliente"></textarea>'+
       '<div id="edduClientSaveError" role="alert" aria-live="polite" style="display:none;color:#b42318;margin:10px 0"></div>'+
-      '<div class="action-row"><button id="edduSaveNewClient" type="button" class="btn primary full" onclick="saveNewClient()">✓ Salvar cliente</button><button type="button" class="btn full" onclick="cancelNewClientRegistration()">Cancelar</button></div>';
+      '<div class="action-row"><button id="edduSaveNewClient" type="button" class="btn primary full">✓ Salvar cliente</button><button type="button" class="btn full" onclick="cancelNewClientRegistration()">Cancelar</button></div>';
   };
 
   window.cancelNewClientRegistration = function () {
@@ -70,24 +70,41 @@
   };
   let creating = false;
   window.saveNewClient = async function () {
+    // Lock synchronously, before the first await. The old flow could enter twice
+    // (capture listener + inline onclick) while Neon Auth was still resolving.
     if (creating) return;
+    creating = true;
+    const button = $('edduSaveNewClient');
     const errorNode = $('edduClientSaveError');
+    const setError = message => {
+      if (errorNode) {
+        errorNode.textContent = message;
+        errorNode.style.display = 'block';
+      }
+      toast(message);
+    };
     if (errorNode) { errorNode.style.display='none'; errorNode.textContent=''; }
-    try { await ensureNeon(); } catch (authError) { if (errorNode) { errorNode.textContent=String(authError.message||authError); errorNode.style.display='block'; } toast(String(authError.message||authError)); return; }
-    const name = String($('newClientName')?.value || '').trim().replace(/\s+/g,' ');
+    if (button) { button.disabled = true; button.textContent = 'Validando e salvando…'; }
+
+    // Snapshot the form before awaiting network/authentication.
+    const name = String($('newClientName')?.value || '').trim().replace(/\\s+/g,' ');
     const phone = String($('newClientPhone')?.value || '').trim();
     const email = String($('newClientEmail')?.value || '').trim().toLowerCase();
-    const cpf = String($('newClientCpf')?.value || '').replace(/\D/g,'');
+    const cpf = String($('newClientCpf')?.value || '').replace(/\\D/g,'');
     const birthDate = String($('newClientBirthDate')?.value || '').trim();
     const notes = String($('newClientNotes')?.value || '').trim();
-    if (name.length < 2) return toast('Informe o nome completo do cliente.');
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return toast('Informe um e-mail válido.');
-    if (cpf && cpf.length !== 11) return toast('O CPF deve conter 11 números.');
-    if (email && rows('clients').some(c => c.active !== false && String(c.email || '').trim().toLowerCase() === email)) return toast('Já existe um cliente ativo com este e-mail.');
-    const button = $('edduSaveNewClient');
-    creating = true;
-    if (button) { button.disabled = true; button.textContent = 'Salvando no Neon…'; }
+
     try {
+      if (name.length < 2) throw new Error('Informe o nome completo do cliente.');
+      if (email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) throw new Error('Informe um e-mail válido.');
+      if (cpf && cpf.length !== 11) throw new Error('O CPF deve conter 11 números.');
+      if (email && rows('clients').some(c => c.active !== false && String(c.email || '').trim().toLowerCase() === email)) {
+        throw new Error('Já existe um cliente ativo com este e-mail.');
+      }
+      await ensureNeon();
+      if (!api() || typeof api().insert !== 'function') throw new Error('A função de gravação do Neon não está disponível.');
+
+      if (button) button.textContent = 'Gravando no banco oficial…';
       const payload = {
         name,
         phone: phone || null,
@@ -98,12 +115,14 @@
         active: true
       };
       const saved = await api().insert('clients', payload);
-      if (!saved?.id) throw new Error('O Neon não retornou o identificador do cliente.');
+      if (!saved?.id) throw new Error('A API não confirmou a gravação do cliente no Neon. Seus dados continuam nesta tela.');
+
+      // Only transition away after the POST returned a persisted row with an ID.
       window.data.clients = [saved, ...rows('clients').filter(c => c.id !== saved.id)];
       window.dispatchEvent(new CustomEvent('eddu-client-created', { detail:{ client:saved } }));
-      toast('Cliente salvo no Neon com sucesso.');
       const back = returnState();
       window.__EDDU_CLIENT_RETURN = null;
+      toast('Cliente gravado e confirmado no banco oficial.');
       if (back.route === 'agenda') {
         window.__EDDU_PENDING_CLIENT_ID = saved.id;
         window.selectedDayM = back.date || window.selectedDayM;
@@ -114,9 +133,8 @@
       }
     } catch (error) {
       console.error('[EDDU] client create failed', error);
-      const message = String(error?.message || error || 'Falha desconhecida ao salvar.');
-      if (errorNode) { errorNode.textContent='Falha ao salvar no banco oficial: '+message; errorNode.style.display='block'; }
-      toast('Não foi possível cadastrar o cliente: '+message);
+      // Never close the form on validation, authentication, API, or DB errors.
+      setError('Não foi possível salvar. O formulário foi mantido aberto. Motivo: ' + String(error?.message || error || 'Falha desconhecida.'));
     } finally {
       creating = false;
       const current = $('edduSaveNewClient');
