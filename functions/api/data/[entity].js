@@ -5,7 +5,7 @@ const TABLES = {
   professionals: ['user_id','name','email','phone','specialty','commission_rate','active'],
   services: ['category_id','name','description','price','duration_minutes','active','price_base','price_long','service_cost'],
   products: ['category_id','sku','name','description','sale_price','cost_price','stock','minimum_stock','active'],
-  appointments: ['client_id','professional_id','starts_at','ends_at','status','notes','created_by'],
+  appointments: ['client_id','professional_id','service_id','starts_at','ends_at','status','notes','source','created_by'],
   commands: ['client_id','professional_id','appointment_id','status','discount','discount_reason','subtotal','total','created_by','total_cost','commission','profit','payment_gateway','payment_card_brand','payment_installments','payment_estimated_fee','payment_estimated_net','payment_installment_amount','payment_link'],
   command_items: ['command_id','item_type','service_id','product_id','description','quantity','unit_price','total','professional_id','unit_cost','commission_percent'],
   financial_transactions: ['type','direction','command_id','client_id','description','amount','due_date','paid_at','status','category','metadata','created_by'],
