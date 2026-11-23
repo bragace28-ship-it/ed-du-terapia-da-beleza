@@ -54,9 +54,8 @@
     const clients = rows('clients').filter(x => x.active !== false && String(x.status || 'Ativo').toLowerCase() !== 'inativo');
     const professionals = rows('professionals').filter(x => x.active !== false && String(x.status || 'Ativo').toLowerCase() !== 'inativo');
     const services = rows('services').filter(x => x.active !== false && String(x.status || 'Ativo').toLowerCase() !== 'inativo');
-    const clientField = clients.length
-      ? '<select id="aptClientId" required>'+selectOptions(clients, window.__EDDU_PENDING_CLIENT_ID || '', 'Selecione o cliente')+'<option value="__NEW__">＋ Cadastrar novo cliente</option></select>'
-      : '<p class="sub">Nenhum cliente cadastrado no Neon. Cadastre o cliente antes de agendar.</p><select id="aptClientId" required disabled><option value="">Cliente indisponível</option></select>';
+    const clientField = '<select id="aptClientId" required>'+selectOptions(clients, window.__EDDU_PENDING_CLIENT_ID || '', 'Selecione o cliente')+'<option value="__NEW__">＋ Cadastrar novo cliente</option></select>'+
+      (clients.length ? '' : '<p class="sub">Ainda não há clientes cadastrados. Use “Cadastrar novo cliente” para incluir o primeiro.</p>');
     const professionalField = professionals.length
       ? '<select id="aptProfessionalId" required>'+selectOptions(professionals, '', 'Selecione o profissional')+'</select>'
       : '<p class="sub">Nenhum profissional cadastrado no Neon.</p><select id="aptProfessionalId" required disabled><option value="">Profissional indisponível</option></select>';
@@ -182,7 +181,7 @@
     return '<h2>Meus agendamentos</h2>'+items.map(item =>
       '<div class="card"><b>'+escapeHtml(item.service || 'Atendimento')+'</b>'+
       '<p class="sub">'+escapeHtml(new Date(item.starts_at).toLocaleString('pt-BR'))+' · '+escapeHtml(item.professional || 'Profissional')+'</p>'+
-      '<div class="row"><span>Status</span><b>'+escapeHtml(item.status)+'</b></div></div>'
+      '<div class="row"><span>Status</span><b>'+escapeHtml(({confirmed:'Confirmado',requested:'Pendente',rescheduled:'Reagendado',in_progress:'Em andamento',completed:'Concluído',cancelled:'Cancelado',no_show:'Não compareceu'})[item.status] || item.status)+'</b></div></div>'
     ).join('');
   }
   window.addEventListener('eddu-neon-data-loaded', event => {
