@@ -204,7 +204,7 @@ document.addEventListener('click',function(event){
  document.addEventListener('click',event=>{
   const button=event.target?.closest?.('[data-eddu-client-pay]');if(!button)return;
   const url=button.getAttribute('data-eddu-client-pay')||'';
-  if(!/^https:\\/\\//i.test(url)){toast('Link de pagamento inválido.');return;}
+  if(!/^https:\/\//i.test(url)){toast('Link de pagamento inválido.');return;}
   event.preventDefault();window.open(url,'_blank','noopener');
  });
 })();
