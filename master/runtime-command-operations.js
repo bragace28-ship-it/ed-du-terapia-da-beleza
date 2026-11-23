@@ -42,8 +42,10 @@
     const canCancel = !['paid','closed','cancelled','refunded'].includes(String(command.status||'').toLowerCase());
     const amount = Number(command.total ?? command.netAmount ?? command.subtotal ?? 0);
     return '<article class="card" style="margin:10px 0"><div class="row"><b>Comanda '+esc(String(command.id).slice(0,8))+'</b><b>'+esc(statusLabel(command.status))+'</b></div>'+
-      '<div class="row"><span>Cliente</span><b>'+esc(command.client?.name || command.client_name || 'Cliente')+'</b></div>'+
+      '<div class="row"><span>Cliente</span><b>'+esc((typeof command.client==='string'?command.client:command.client?.name) || command.client_name || 'Cliente')+'</b></div>'+
+      '<div class="row"><span>Profissional</span><b>'+esc((typeof command.professional==='string'?command.professional:command.professional?.name) || 'Profissional')+'</b></div>'+
       '<div class="row"><span>Itens</span><b>'+items.length+'</b></div>'+
+      (items.length?'<div style="margin:8px 0">'+items.map(item=>'<div class="row"><span>'+esc(item.description||item.service||'Item')+' × '+esc(item.quantity||item.qty||1)+'</span><b>'+money(item.total??Number(item.unit_price||item.price||0)*Number(item.quantity||item.qty||1))+'</b></div>').join('')+'</div>':'')+
       '<div class="row"><span>Total</span><b>'+money(amount)+'</b></div>'+
       '<div class="grid2" style="margin-top:10px">'+
       '<button type="button" class="btn primary" data-eddu-command-action="select" data-command-id="'+esc(command.id)+'">Abrir comanda</button>'+
