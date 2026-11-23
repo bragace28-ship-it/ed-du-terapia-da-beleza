@@ -1,4 +1,5 @@
 import { neon } from '@neondatabase/serverless';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 const TABLES = {
   clients: ['name','email','phone','cpf','birth_date','notes','loyalty_points','active'],
@@ -56,25 +57,30 @@ function bearer(request) {
   const match = value.match(/^Bearer\s+(.+)$/i);
   return match ? match[1] : null;
 }
+const jwksCache = new Map();
+function getAuthJwks(authBaseUrl) {
+  const base = String(authBaseUrl || DEFAULT_AUTH_URL).replace(/\/+$/, '');
+  let resolver = jwksCache.get(base);
+  if (!resolver) {
+    resolver = createRemoteJWKSet(new URL(base + '/.well-known/jwks.json'));
+    jwksCache.set(base, resolver);
+  }
+  return { resolver, issuer:new URL(base).origin };
+}
 async function validateSession(request, env) {
-  const cookie = request.headers.get('Cookie') || '';
   const token = bearer(request);
-  if (!cookie && !token) return null;
-  const headers = new Headers({ Accept:'application/json' });
-  if (cookie) headers.set('Cookie', cookie);
-  if (token) headers.set('Authorization', 'Bearer ' + token);
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 8000);
+  if (!token) return null;
   try {
-    const base = String(env.NEON_AUTH_URL || DEFAULT_AUTH_URL).replace(/\/+$/, '');
-    const response = await fetch(base + '/get-session', { method:'GET', headers, signal:controller.signal, redirect:'error' });
-    if (!response.ok) return null;
-    const payload = await response.json();
-    if (!payload?.user?.id || !payload?.session) return null;
-    if (payload.session.expiresAt && new Date(payload.session.expiresAt).getTime() <= Date.now()) return null;
-    return { id:String(payload.user.id), email:String(payload.user.email || '').trim().toLowerCase() };
-  } finally {
-    clearTimeout(timer);
+    const { resolver, issuer } = getAuthJwks(env?.NEON_AUTH_URL);
+    const { payload } = await jwtVerify(token, resolver, { issuer });
+    if (!payload?.sub) return null;
+    return {
+      id:String(payload.sub),
+      email:String(payload.email || '').trim().toLowerCase()
+    };
+  } catch (error) {
+    console.warn('EDDU_AUTH_TOKEN_REJECTED', String(error?.code || error?.message || 'JWT_INVALID'));
+    return null;
   }
 }
 function allowed(user, table, method) {
