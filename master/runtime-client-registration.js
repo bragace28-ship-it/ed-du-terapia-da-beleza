@@ -11,10 +11,21 @@
   const dateText = value => value ? new Date(String(value).slice(0,10)+'T12:00:00').toLocaleDateString('pt-BR') : 'Não informado';
   const returnState = () => window.__EDDU_CLIENT_RETURN || { route:'clients' };
 
-  function ensureNeon() {
-    if (!api() || window.__EDDU_NEON_READY !== true || window.__EDDU_NEON_SESSION !== true) {
-      toast('Entre na sua conta e aguarde a autenticação do Neon antes de cadastrar.');
-      return false;
+  async function ensureNeon() {
+    if (!api()) throw new Error('A conexão de gravação do Neon não foi carregada. Recarregue o sistema.');
+    if (window.__EDDU_NEON_READY !== true) {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('Tempo esgotado inicializando a conexão segura com o Neon.')), 15000);
+        window.addEventListener('eddu-neon-ready', () => { clearTimeout(timer); resolve(); }, { once:true });
+      });
+    }
+    if (window.__EDDU_NEON_READY !== true) throw new Error(window.__EDDU_NEON_LAST_ERROR || 'Não foi possível inicializar o Neon Auth.');
+    const session = typeof window.EDDU_NEON_REFRESH_SESSION === 'function'
+      ? await window.EDDU_NEON_REFRESH_SESSION()
+      : null;
+    if (!session) {
+      window.__EDDU_NEON_AUTH_REQUIRED?.();
+      throw new Error('Sua sessão expirou. Entre novamente para salvar o cadastro.');
     }
     return true;
   }
@@ -47,7 +58,8 @@
       '<label>CPF</label><input id="newClientCpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00">'+
       '<label>Data de nascimento</label><input id="newClientBirthDate" type="date">'+
       '<label>Observações</label><textarea id="newClientNotes" rows="3" maxlength="3000" placeholder="Informações importantes sobre o cliente"></textarea>'+
-      '<div class="action-row"><button id="edduSaveNewClient" class="btn primary full" onclick="saveNewClient()">✓ Salvar cliente</button><button class="btn full" onclick="cancelNewClientRegistration()">Cancelar</button></div>';
+      '<div id="edduClientSaveError" role="alert" aria-live="polite" style="display:none;color:#b42318;margin:10px 0"></div>'+
+      '<div class="action-row"><button id="edduSaveNewClient" type="button" class="btn primary full" onclick="saveNewClient()">✓ Salvar cliente</button><button type="button" class="btn full" onclick="cancelNewClientRegistration()">Cancelar</button></div>';
   };
 
   window.cancelNewClientRegistration = function () {
@@ -59,7 +71,9 @@
   let creating = false;
   window.saveNewClient = async function () {
     if (creating) return;
-    if (!ensureNeon()) return;
+    const errorNode = $('edduClientSaveError');
+    if (errorNode) { errorNode.style.display='none'; errorNode.textContent=''; }
+    try { await ensureNeon(); } catch (authError) { if (errorNode) { errorNode.textContent=String(authError.message||authError); errorNode.style.display='block'; } toast(String(authError.message||authError)); return; }
     const name = String($('newClientName')?.value || '').trim().replace(/\s+/g,' ');
     const phone = String($('newClientPhone')?.value || '').trim();
     const email = String($('newClientEmail')?.value || '').trim().toLowerCase();
@@ -100,7 +114,9 @@
       }
     } catch (error) {
       console.error('[EDDU] client create failed', error);
-      toast('Não foi possível cadastrar o cliente: '+String(error?.message || error));
+      const message = String(error?.message || error || 'Falha desconhecida ao salvar.');
+      if (errorNode) { errorNode.textContent='Falha ao salvar no banco oficial: '+message; errorNode.style.display='block'; }
+      toast('Não foi possível cadastrar o cliente: '+message);
     } finally {
       creating = false;
       const current = $('edduSaveNewClient');
@@ -198,5 +214,25 @@
   window.addEventListener('eddu-neon-data-loaded', event => {
     if (event.detail?.entity === 'clients' && window.views) window.__EDDU_CLIENTS_READY = true;
   });
+  // Capture-phase delegation keeps the save action working even if inline onclick
+  // handlers are blocked by browser policy or replaced by another modal runtime.
+  if (!window.__EDDU_CLIENT_SAVE_DELEGATED) {
+    window.__EDDU_CLIENT_SAVE_DELEGATED = true;
+    document.addEventListener('click', event => {
+      const button = event.target?.closest?.('#edduSaveNewClient');
+      if (!button) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (typeof window.saveNewClient === 'function') window.saveNewClient();
+    }, true);
+    document.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' || event.target?.tagName === 'TEXTAREA') return;
+      const formField = event.target?.closest?.('#shade');
+      if (!formField || !document.getElementById('edduSaveNewClient')) return;
+      if (event.target?.tagName === 'BUTTON') return;
+      event.preventDefault();
+      if (typeof window.saveNewClient === 'function') window.saveNewClient();
+    }, true);
+  }
   window.EDDU_CLIENT_REGISTRATION_READY = true;
 })();
