@@ -77,7 +77,8 @@ const runtimeFiles=[
   'master/runtime-real-checkout.js',
   'master/runtime-production-guard.js',
   'master/runtime-navigation-hardening.js',
-  'master/runtime-agenda-sync.js'
+  'master/runtime-agenda-sync.js',
+  'master/runtime-client-registration.js'
 ];
 const runtimeBlocks=[];
 for(const file of runtimeFiles){
