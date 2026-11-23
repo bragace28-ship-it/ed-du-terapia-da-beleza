@@ -14,13 +14,14 @@
   };
   const LEGACY=new RegExp('Pagamento\\\\s+em\\\\s+modo\\\\s+de\\\\s+teste\\\\s*,?\\\\s*sem\\\\s+cobrança\\\\s+real','gi');
   const LEGACY_ALT=/Nenhuma cobrança real é criada nesta tela\.?/gi;
+  const TEST_APPROVAL=/Aprovar pagamento de teste/gi;
   function cleanText(root){
     if(!root)return;
     const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
     const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
     for(const node of nodes){
       const before=node.nodeValue||'';
-      const after=before.replace(LEGACY,'Cobrança processada pelo gateway selecionado.').replace(LEGACY_ALT,'As cobranças são criadas no gateway real selecionado.');
+      const after=before.replace(LEGACY,'Cobrança processada pelo gateway selecionado.').replace(LEGACY_ALT,'As cobranças são criadas no gateway real selecionado.').replace(TEST_APPROVAL,'Escolher gateway e gerar cobrança real');
       if(after!==before)node.nodeValue=after;
     }
   }
