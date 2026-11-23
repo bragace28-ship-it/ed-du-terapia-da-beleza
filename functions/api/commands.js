@@ -4,7 +4,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 const DEFAULT_AUTH_URL='https://ep-sweet-meadow-b43jne0i.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
 const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store, private','Vary':'Cookie, Authorization','X-Content-Type-Options':'nosniff'}});
 const jwksCache=new Map();
-function bearer(request){const m=String(request.headers.get('Authorization')||'').match(/^Bearer\\s+(.+)$/i);return m?.[1]||null;}
+function bearer(request){const m=String(request.headers.get('Authorization')||'').match(/^Bearer\s+(.+)$/i);return m?.[1]||null;}
 function authJwks(base){const url=String(base||DEFAULT_AUTH_URL).replace(/\/+$/,'');if(!jwksCache.has(url))jwksCache.set(url,createRemoteJWKSet(new URL(url+'/.well-known/jwks.json')));return {resolver:jwksCache.get(url),issuer:new URL(url).origin};}
 async function authenticate(request,env){
  const token=bearer(request);if(!token)return null;
