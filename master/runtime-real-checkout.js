@@ -117,10 +117,8 @@ window.__edduSelectGateway=function(gateway,method,installments){
  window.__edduPendingPayment=p;persist(p);
  if(gateway==='PDV'){toast('Fluxo PDV selecionado. Registre o pagamento presencial para lançar a quitação.');open('payments');return}
  const n=p.installments;
- let checkoutTab=null;
- try{checkoutTab=window.open('about:blank','_blank')}catch(_){}
- window.views=window.views||{};
- window.views.gatewayPayment=function(){return '<h2>Checkout · '+esc(providerLabel(gateway))+'</h2><p class="sub">Criando a cobrança no gateway escolhido. A comanda só será quitada após a confirmação do provedor.</p><div class="card"><div class="row"><span>Comanda</span><b>'+esc(p.commandId)+'</b></div><div class="row"><span>Gateway</span><b>'+esc(providerLabel(gateway))+'</b></div><div class="row"><span>Forma</span><b>'+(p.method==='card'?'Cartão de crédito':'PIX')+'</b></div><div class="row"><span>Parcelas</span><b>'+n+'x</b></div><div class="row"><span>Total</span><b>'+money(p.amount)+'</b></div><p id="v52CheckoutInfo">Conectando ao provedor…</p></div><button class="btn full" type="button" onclick="openSheet(\'gatewayRanking\')">← Voltar ao ranking</button>'};
+  window.views=window.views||{};
+ window.views.gatewayPayment=function(){return '<h2>Pagamento enviado ao cliente</h2><p class="sub">Criando a cobrança no gateway escolhido. O checkout ficará disponível na área do cliente; a comanda só será quitada após a confirmação do provedor.</p><div class="card"><div class="row"><span>Comanda</span><b>'+esc(p.commandId)+'</b></div><div class="row"><span>Gateway</span><b>'+esc(providerLabel(gateway))+'</b></div><div class="row"><span>Forma</span><b>'+(p.method==='card'?'Cartão de crédito':'PIX')+'</b></div><div class="row"><span>Parcelas</span><b>'+n+'x</b></div><div class="row"><span>Total</span><b>'+money(p.amount)+'</b></div><p id="v52CheckoutInfo">Conectando ao provedor…</p></div><button class="btn full" type="button" onclick="openSheet(\'gatewayRanking\')">← Voltar ao ranking</button>'};
  open('gatewayPayment');
  (async()=>{
   try{
@@ -132,22 +130,17 @@ window.__edduSelectGateway=function(gateway,method,installments){
    const record={...p,payment:d.payment,checkoutUrl:d.checkoutUrl||null,qrCode:d.qrCode||null,qrCodeBase64:d.qrCodeBase64||null,status:'CHECKOUT_PENDING',createdAt:new Date().toISOString()};
    persist(record);window.__edduPendingPayment=record;
    if(d.checkoutUrl){
-    if(checkoutTab&&!checkoutTab.closed)checkoutTab.location.replace(d.checkoutUrl);
-    else window.location.assign(d.checkoutUrl);
-    const info=document.getElementById('v52CheckoutInfo');if(info)info.textContent='Checkout aberto no provedor. Aguardando confirmação do pagamento.';
-    toast('Checkout '+providerLabel(gateway)+' aberto. A comanda será quitada somente após a confirmação do gateway.');
+    const info=document.getElementById('v52CheckoutInfo');if(info)info.textContent='Cobrança criada. O cliente já pode abrir o checkout pelo aplicativo ED & DU. Aguardando confirmação do pagamento.';
+    toast('Cobrança criada e disponibilizada para o cliente no aplicativo.');
    }else if(d.qrCode||d.qrCodeBase64){
     const info=document.getElementById('v52CheckoutInfo');
     if(info)info.innerHTML=(d.qrCodeBase64?'<img alt="QR Code Pix" style="width:min(260px,100%);display:block;margin:12px auto" src="data:image/png;base64,'+esc(d.qrCodeBase64)+'">':'')+(d.qrCode?'<textarea readonly style="width:100%;min-height:90px">'+esc(d.qrCode)+'</textarea>':'')+'<p>Pagamento aguardando confirmação automática do gateway.</p>';
-    try{if(checkoutTab&&!checkoutTab.closed)checkoutTab.close()}catch(_){}
-    toast('Cobrança PIX criada. Aguardando confirmação do gateway.');
+    toast('Cobrança PIX criada e disponibilizada para o cliente. Aguardando confirmação do gateway.');
    }else{
     const info=document.getElementById('v52CheckoutInfo');if(info)info.textContent='Cobrança criada e aguardando confirmação do gateway.';
     toast('Cobrança criada. Aguardando confirmação do gateway.');
-    try{if(checkoutTab&&!checkoutTab.closed)checkoutTab.close()}catch(_){}
    }
   }catch(error){
-   try{if(checkoutTab&&!checkoutTab.closed)checkoutTab.close()}catch(_){}
    const info=document.getElementById('v52CheckoutInfo');if(info)info.textContent='Falha ao criar cobrança: '+String(error?.message||error);
    toast('Não foi possível gerar a cobrança: '+String(error?.message||error));
   }
@@ -171,5 +164,47 @@ document.addEventListener('click',function(event){
   persistCommandBeforeCheckout(currentCommand()).then(()=>toast('Comanda salva no Neon.')).catch(error=>toast('Não foi possível salvar a comanda: '+String(error?.message||error)));
  }
 },true);
+
+/* Client-side payment inbox: a signed-in client only receives commands linked to their own client record. */
+(function(){
+ const original=window.views?.payments;
+ const escHtml=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const brl=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0);
+ async function load(){
+  const node=document.getElementById('edduClientPendingCommands');if(!node)return;
+  node.innerHTML='<p class="sub">Consultando cobranças vinculadas à sua conta…</p>';
+  try{
+   const result=await fetch('/api/client/commands',{credentials:'include',headers:await sessionHeaders()});
+   const data=await result.json().catch(()=>({}));
+   if(!result.ok||!data.ok)throw new Error(data.error||'Não foi possível consultar as cobranças.');
+   const list=data.commands||[];
+   node.innerHTML='<h3>Comandas aguardando pagamento</h3>'+(list.length?list.map(c=>{
+    const items=Array.isArray(c.items)?c.items:[];
+    return '<article class="card" style="margin:10px 0"><div class="row"><b>Comanda '+escHtml(String(c.command_id).slice(0,8))+'</b><b>'+brl(c.total)+'</b></div>'+
+     '<p>'+items.map(i=>escHtml(i.description)+' × '+escHtml(i.quantity)).join(' · ')+'</p>'+
+     (Number(c.discount||0)>0?'<p>Desconto: − '+brl(c.discount)+' '+escHtml(c.discount_reason||'')+'</p>':'')+
+     '<p class="sub">Gateway: '+escHtml(c.gateway||'')+' · '+escHtml(c.method||'')+'</p>'+
+     (c.checkout_url?'<button type="button" class="btn primary full" data-eddu-client-pay="'+escHtml(c.checkout_url)+'">Pagar agora</button>':
+      (c.qr_code_base64?'<img alt="QR Code PIX" style="width:min(260px,100%);display:block;margin:12px auto" src="data:image/png;base64,'+escHtml(c.qr_code_base64)+'">':'')+
+      (c.qr_code?'<textarea readonly style="width:100%;min-height:90px">'+escHtml(c.qr_code)+'</textarea>':'<p class="sub">Aguardando link do gateway.</p>'))+
+     '</article>';
+   }).join(''):'<p class="sub">Você não possui cobranças pendentes.</p>');
+  }catch(error){node.innerHTML='<p class="sub">Não foi possível carregar as cobranças: '+escHtml(error.message)+'</p>';}
+ }
+ if(window.views){
+  window.views.payments=function(){
+   const base=typeof original==='function'?original():'<h2>Pagamentos</h2>';
+   setTimeout(load,0);
+   return base+'<section id="edduClientPendingCommands" style="margin-top:18px"><p class="sub">Carregando cobranças do cliente…</p></section>';
+  };
+ }
+ document.addEventListener('click',event=>{
+  const button=event.target?.closest?.('[data-eddu-client-pay]');if(!button)return;
+  const url=button.getAttribute('data-eddu-client-pay')||'';
+  if(!/^https:\\/\\//i.test(url)){toast('Link de pagamento inválido.');return;}
+  event.preventDefault();window.open(url,'_blank','noopener');
+ });
+})();
+
 window.EDDU_MASTER_V53_UNIFIED_GATEWAYS=true;
 })();
