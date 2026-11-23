@@ -94,6 +94,7 @@
     const back = returnState();
     window.__EDDU_CLIENT_RETURN = null;
     if (back.route === 'agenda') window.openAgendaAddM(back.date);
+    else if (back.route === 'command') { if(typeof window.render==='function') window.render('command'); else window.openSheet('command'); }
     else window.openSheet('clients');
   };
   let creating = false;
@@ -156,6 +157,9 @@
         window.selectedDayM = back.date || window.selectedDayM;
         if (typeof window.openAgendaAddM === 'function') window.openAgendaAddM(back.date);
         else window.openSheet('agenda');
+      } else if (back.route === 'command') {
+        if (typeof window.EDDU_NEON_SYNC === 'function') await window.EDDU_NEON_SYNC();
+        if (typeof window.render === 'function') window.render('command'); else window.openSheet('command');
       } else {
         window.openSheet('clients');
       }
