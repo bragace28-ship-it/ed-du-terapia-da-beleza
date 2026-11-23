@@ -66,7 +66,7 @@
        '<label>Quantidade</label><input id="edduCommandQty" type="number" min="1" step="1" value="1">'+
        '<button type="button" class="btn primary full" style="margin-top:12px" data-eddu-command-action="create">＋ Lançar comanda no Neon</button>'
        : '<p role="alert">Para lançar uma comanda, primeiro cadastre ao menos um cliente e um profissional. Os cadastros são carregados diretamente do Neon.</p>'+
-         '<div class="grid2"><button type="button" class="btn" onclick="openSheet(\'clients\')">Cadastrar cliente</button><button type="button" class="btn" onclick="openSheet(\'professionals\')">Cadastrar profissional</button></div>')+
+         '<div class="grid2"><button type="button" class="btn" onclick="window.__EDDU_CLIENT_RETURN={route:\'command\'};openSheet(\'newClient\')">Cadastrar cliente</button><button type="button" class="btn" data-eddu-command-action="professional">Cadastrar profissional</button></div>')+
       '</div>'+
       (selected ? '<h3>Comanda selecionada</h3>'+commandCard(selected) : '')+
       '<h3>Comandas registradas</h3>'+
@@ -148,10 +148,20 @@
     event.stopPropagation();
     const action = button.getAttribute('data-eddu-command-action');
     const id = button.getAttribute('data-command-id');
-    if (action === 'create') window.edduCreateCommand();
+    if (action === 'professional') window.openAgendaProfessionalCreateM?.(undefined, 'command');
+    else if (action === 'create') window.edduCreateCommand();
     else if (action === 'select' && id) window.edduSelectCommand(id);
     else if (action === 'cancel' && id) window.edduCancelCommand(id);
     else if (action === 'payment' && id) window.edduSendCommandToPayment(id);
   }, true);
+  window.addEventListener('eddu-neon-sync-complete', function() {
+    const shade=document.getElementById('shade'), view=document.getElementById('view');
+    if(shade?.classList.contains('show') && view?.querySelector('h2')?.textContent?.trim()==='Central de Comandas') refresh();
+  });
+  window.addEventListener('eddu-neon-data-changed', function(event) {
+    if(!['clients','professionals','services','products','commands','command_items'].includes(event.detail?.entity))return;
+    const shade=document.getElementById('shade'), view=document.getElementById('view');
+    if(shade?.classList.contains('show') && view?.querySelector('h2')?.textContent?.trim()==='Central de Comandas') refresh();
+  });
   window.EDDU_COMMANDS_RUNTIME_READY=true;
 })();
