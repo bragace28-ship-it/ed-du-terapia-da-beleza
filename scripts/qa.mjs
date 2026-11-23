@@ -87,8 +87,10 @@ for (const token of ['apt-service-checkbox','aptServicesSummary','for (const sel
   if (!agendaSyncSource.includes(token)) throw new Error('Professional multi-service booking or pricing is missing: '+token);
 if (/money\(|unit_price|price_base|R\$/i.test(clientAgendaSource))
   throw new Error('Professional service prices leaked into the client appointment view.');
-if (!agendaWorkflowSource.includes('await window.edduCreateCommandFromAppointment') || !agendaWorkflowSource.includes('const existing=rows(\'commands\')'))
-  throw new Error('Starting an appointment must open/reuse its linked command.');
+if (!agendaWorkflowSource.includes('await window.edduCreateCommandFromAppointment') || !agendaWorkflowSource.includes('await window.edduSaveCommandDraft()') || !agendaWorkflowSource.includes('window.edduOpenCommandForEdit') || !agendaWorkflowSource.includes('const existing=rows(\'commands\')'))
+  throw new Error('Starting an appointment must persist, open and reuse its linked command.');
+if (!commandRuntimeSource.includes('window.edduSaveCommandDraft=saveDraft') || !commandRuntimeSource.includes('window.edduOpenCommandForEdit=function(id)'))
+  throw new Error('Appointment command save/reopen actions are not exposed.');
 if (!commandRuntimeSource.includes("credentials:'include'") || !commandRuntimeSource.includes("saved.status||'').toLowerCase()!=='cancelled'"))
   throw new Error('Command save authentication or cancellation confirmation is missing.');
 if (!commandApiSource.includes('unit_price,total,professional_id'))
