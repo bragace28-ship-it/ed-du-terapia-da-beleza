@@ -93,6 +93,7 @@ jobs:
           set -euo pipefail
           npx --yes wrangler@3.90.0 pages project list
           npx --yes wrangler@3.90.0 pages deployment list --project-name=ed-du-terapia-da-beleza
+          npx --yes wrangler@3.90.0 pages deployment list --project-name=beleza
 
       - name: Set Cloudflare production branch to main
         env:
@@ -105,6 +106,11 @@ jobs:
             -H "Content-Type: application/json" \
             --data '{"production_branch":"main","preview_deployment_setting":"none","production_deployments_enabled":true}')"
           echo "$response" | python3 -c 'import json,sys; x=json.load(sys.stdin); assert x.get("success") is True, x'
+          beleza_response="$(curl --fail --silent --show-error -X PATCH "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/beleza" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{"production_branch":"main","preview_deployment_setting":"none","production_deployments_enabled":true}')"
+          echo "$beleza_response" | python3 -c 'import json,sys; x=json.load(sys.stdin); assert x.get("success") is True, x'
 
       - name: Inventory Cloudflare account secret bindings (names only)
         env:
@@ -126,6 +132,7 @@ jobs:
         run: |
           set -euo pipefail
           npx --yes wrangler@3.90.0 pages secret list --project-name=ed-du-terapia-da-beleza
+          npx --yes wrangler@3.90.0 pages secret list --project-name=beleza
 
       - name: Preserve existing Cloudflare production runtime secrets
         run: |
@@ -146,6 +153,13 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=ed-du-terapia-da-beleza --commit-hash=${{ github.sha }} --commit-message="Canonical Master production"
+      
+      - name: Deploy same canonical Master to the URL used by the salon
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=beleza --commit-hash=${{ github.sha }} --commit-message="Canonical Master production"
 
       - name: Smoke test production runtime
         shell: bash
@@ -169,6 +183,13 @@ jobs:
           echo "payment_rank_http=$rank_status body=$rank"
           test "$rank_status" = "401"
           python3 -c 'import json,sys; x=json.loads(sys.argv[1]); assert x.get("error") == "UNAUTHORIZED", x; print("Production payment ranking authentication gate: PASS")' "$rank"
+          beleza_base="https://beleza.pages.dev"
+          beleza_health="$(curl --silent --show-error --max-time 20 "$beleza_base/api/health")"
+          echo "beleza_health=$beleza_health"
+          python3 -c 'import json,sys; x=json.loads(sys.argv[1]); assert x.get("ok") is True and x.get("reachable") is True, x; print("beleza.pages.dev Neon health: PASS")' "$beleza_health"
+          curl --fail --silent --show-error "$beleza_base/neon-auth-sdk.bundle.js" -o /tmp/beleza-neon-auth-sdk.bundle.js
+          grep -q 'createClient' /tmp/beleza-neon-auth-sdk.bundle.js
+          echo "beleza.pages.dev local Neon SDK asset: PASS"
 
       - name: Delete legacy Cloudflare preview deployments
         env:
