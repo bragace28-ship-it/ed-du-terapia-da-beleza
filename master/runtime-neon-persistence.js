@@ -3,7 +3,7 @@
   'use strict';
   const TABLES = {
     clients:'clients', professionals:'professionals', services:'services', products:'products',
-    appointments:'appointments', commands:'commands', commandItems:'command_items',
+    appointments:'appointments', appointmentServices:'appointment_services', commands:'commands', commandItems:'command_items',
     financialTransactions:'financial_transactions', blocks:'agenda_blocks', payments:'payments',
     payables:'payables', receivables:'receivables', commissions:'commissions', coupons:'coupons',
     giftCards:'gift_cards', referrals:'referrals', cardInvoices:'card_invoices',
