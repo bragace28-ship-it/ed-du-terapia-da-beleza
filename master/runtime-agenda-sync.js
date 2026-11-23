@@ -59,8 +59,8 @@
     const professionalSelected = window.__EDDU_PENDING_PROFESSIONAL_ID || '';
     const serviceSelected = window.__EDDU_PENDING_SERVICE_ID || '';
     const professionalField = professionals.length
-      ? '<select id="aptProfessionalId" required>'+selectOptions(professionals, professionalSelected, 'Selecione o profissional')+'</select>'
-      : '<p class="sub">Nenhum profissional cadastrado no Neon. Cadastre agora para liberar a Agenda.</p><button type="button" class="btn full" onclick="window.openAgendaProfessionalCreateM()">＋ Cadastrar profissional</button><select id="aptProfessionalId" required disabled><option value="">Profissional indisponível</option></select>';
+      ? '<select id="aptProfessionalId" required>'+selectOptions(professionals, professionalSelected, 'Selecione o profissional')+'</select><button type="button" class="btn full" onclick="window.openAgendaProfessionalCreateM()">＋ Cadastrar novo profissional</button>'
+      : '<p class="sub">Nenhum profissional cadastrado no Neon. Cadastre agora para liberar a Agenda.</p><button type="button" class="btn full" onclick="window.openAgendaProfessionalCreateM()">＋ Cadastrar novo profissional</button><select id="aptProfessionalId" required disabled><option value="">Profissional indisponível</option></select>';
     const serviceField = services.length
       ? '<select id="aptServiceId" required>'+selectOptions(services, serviceSelected, 'Selecione o serviço')+'</select>'
       : '<p class="sub">Nenhum serviço cadastrado no Neon. Cadastre agora para liberar a Agenda.</p><button type="button" class="btn full" onclick="window.openAgendaServiceCreateM()">＋ Cadastrar serviço</button><select id="aptServiceId" required disabled><option value="">Serviço indisponível</option></select>';
@@ -79,6 +79,7 @@
     window.openSheet('agendaAdd');
   }
   window.openAgendaProfessionalCreateM = function () {
+    window.__EDDU_PENDING_PROFESSIONAL_ID = $('aptProfessionalId')?.value || window.__EDDU_PENDING_PROFESSIONAL_ID || '';
     const date = $('aptDate')?.value || window.selectedDayM || localDate(new Date());
     window.views.agendaProfessionalCreate = () =>
       '<h2>Novo profissional</h2><p class="sub">Cadastre quem realizará os atendimentos. O registro será salvo no Neon.</p>'+
