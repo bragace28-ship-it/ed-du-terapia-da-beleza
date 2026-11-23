@@ -25,6 +25,7 @@ const validationFiles=[
   'master/runtime-neon-persistence.js',
   'master/runtime-client-registration.js',
   'master/runtime-agenda-sync.js',
+  'master/runtime-command-operations.js',
   'master/neon-auth-sdk-entry.js',
   'functions/api/data/[entity].js',
   'functions/api/payments.js',
@@ -82,7 +83,8 @@ const runtimeFiles=[
   'master/runtime-production-guard.js',
   'master/runtime-navigation-hardening.js',
   'master/runtime-agenda-sync.js',
-  'master/runtime-client-registration.js'
+  'master/runtime-client-registration.js',
+  'master/runtime-command-operations.js'
 ];
 const runtimeBlocks=[];
 for(const file of runtimeFiles){
