@@ -63,3 +63,6 @@ if (!html.includes('EDDU_COMMANDS_RUNTIME_READY') || !html.includes('edduCreateC
 if (!html.includes('Lançar comanda no Neon') || !html.includes('Cancelar comanda') || !html.includes('Enviar para pagamento'))
   throw new Error('Command lifecycle UI controls are missing from production artifact.');
 console.log('Neon command lifecycle create, cancel and checkout QA: PASS');
+for (const token of ['Comandas em aberto','Adicionar item','Cupom de desconto','Editar comanda','Excluir comanda','edduAddCommandItem','edduClientPendingCommands','/api/client/commands','Pagar agora'])
+  if (!html.includes(token)) throw new Error('Command multi-item, coupon, edit/delete or client checkout flow is missing: '+token);
+console.log('Command workspace multi-item, coupons, CRUD and client-app payment QA: PASS');
