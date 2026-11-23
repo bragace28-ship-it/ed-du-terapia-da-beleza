@@ -85,7 +85,7 @@ console.log('Persistent command authentication and per-appointment lifecycle reg
 const clientAgendaSource = agendaSyncSource.slice(agendaSyncSource.indexOf('function clientAppointmentsView'),agendaSyncSource.indexOf("window.addEventListener('eddu-neon-data-loaded'"));
 for (const token of ['apt-service-checkbox','aptServicesSummary','for (const selected of selectedServices)','appointment_services','price_base','service_names'])
   if (!agendaSyncSource.includes(token)) throw new Error('Professional multi-service booking or pricing is missing: '+token);
-if (/money\\(|unit_price|price_base|R\\$/i.test(clientAgendaSource))
+if (/money\(|unit_price|price_base|R\$/i.test(clientAgendaSource))
   throw new Error('Professional service prices leaked into the client appointment view.');
 if (!agendaWorkflowSource.includes('await window.edduCreateCommandFromAppointment') || !agendaWorkflowSource.includes('const existing=rows(\'commands\')'))
   throw new Error('Starting an appointment must open/reuse its linked command.');
