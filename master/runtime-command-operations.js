@@ -99,6 +99,8 @@
     try{await window.EDDU_NEON_SYNC?.();}catch(e){console.error('[EDDU] command post-save sync failed',e);}
     refresh();
   }
+  window.edduSaveCommandDraft=saveDraft;
+  window.edduOpenCommandForEdit=function(id){const command=activeCommands().find(c=>c.id===id);if(!command)throw new Error('Comanda salva não encontrada no Neon.');draftFromCommand(command);};
   async function applyCoupon(){
     const d=window.__EDDU_COMMAND_DRAFT,code=String($('edduCommandCoupon')?.value||'').trim().toUpperCase();
     if(!d||!code)throw new Error('Digite o código do cupom.');
