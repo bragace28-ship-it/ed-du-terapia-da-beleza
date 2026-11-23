@@ -105,7 +105,7 @@
 
     try {
       if (name.length < 2) throw new Error('Informe o nome completo do cliente.');
-      if (!validOptionalEmail(email)) throw new Error('E-mail inválido. Confira o endereço digitado ou deixe o campo vazio.');
+    if (!validOptionalEmail(email)) return toast('E-mail inválido. Confira o endereço digitado ou deixe o campo vazio.');
       if (cpf && cpf.length !== 11) throw new Error('O CPF deve conter 11 números.');
       if (email && rows('clients').some(c => c.active !== false && String(c.email || '').trim().toLowerCase() === email)) {
         throw new Error('Já existe um cliente ativo com este e-mail.');
@@ -191,13 +191,13 @@
     window.openSheet('clientEdit');
   };
   window.saveRegisteredClient = async function (id) {
-    if (!ensureNeon()) return;
+    try { await ensureNeon(); } catch (error) { toast('Não foi possível autenticar: '+String(error?.message || error)); return; }
     const c = findClient(id);
     const name = String($('editClientName')?.value || '').trim();
     const email = String($('editClientEmail')?.value || '').normalize('NFKC').trim().toLowerCase();
     const cpf = String($('editClientCpf')?.value || '').replace(/\D/g,'');
     if (!c || name.length < 2) return toast('Informe o nome completo do cliente.');
-      if (!validOptionalEmail(email)) throw new Error('E-mail inválido. Confira o endereço digitado ou deixe o campo vazio.');
+    if (!validOptionalEmail(email)) return toast('E-mail inválido. Confira o endereço digitado ou deixe o campo vazio.');
     if (cpf && cpf.length !== 11) return toast('O CPF deve conter 11 números.');
     if (email && rows('clients').some(x => x.id !== id && x.active !== false && String(x.email || '').trim().toLowerCase() === email)) return toast('Este e-mail já está associado a outro cliente.');
     try {
@@ -216,7 +216,7 @@
     }
   };
   window.deactivateRegisteredClient = async function (id) {
-    if (!ensureNeon()) return;
+    try { await ensureNeon(); } catch (error) { toast('Não foi possível autenticar: '+String(error?.message || error)); return; }
     const c = findClient(id);
     if (!c || !confirm('Inativar '+c.name+'? O histórico será preservado.')) return;
     try {
