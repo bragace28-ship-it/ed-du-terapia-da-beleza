@@ -48,7 +48,7 @@
     const sum=totals(d);
     const appointmentOptions=appointments.map(a=>{const c=clients.find(x=>x.id===a.client_id),p=professionals.find(x=>x.id===a.professional_id);return '<option value="'+esc(a.id)+'" data-client="'+esc(a.client_id||'')+'" data-professional="'+esc(a.professional_id||'')+'" '+(d.appointmentId===a.id?'selected':'')+'>'+esc((c?.name||'Cliente')+' · '+(p?.name||'Profissional')+' · '+new Date(a.starts_at).toLocaleString('pt-BR'))+'</option>';}).join('');
     const itemRows=d.items.map((i,n)=>'<div class="row" style="padding:8px 0;border-bottom:1px solid #eee"><span>'+esc(i.description)+'<small style="display:block">'+esc(i.quantity)+' × '+money(i.unit_price)+'</small></span><b>'+money(i.total)+'</b><button type="button" class="btn" data-eddu-command-action="remove-item" data-item-index="'+n+'">Remover</button></div>').join('');
-    return '<h2>'+(d.id?'Editar comanda':'Lançar nova comanda')+'</h2><p class="sub">Selecione o cliente e profissional e adicione quantos serviços e produtos forem necessários.</p>'+
+    return '<h2>'+(d.id?'Editar comanda':'Lançar nova comanda')+'</h2><p class="sub">Selecione o cliente e profissional e adicione quantos serviços e produtos forem necessários.</p><div id="edduCommandError" role="alert" style="display:none;color:#b42318;margin:10px 0"></div>'+
       '<label>Vincular agendamento (opcional)</label><select id="edduCommandAppointment"><option value="">Sem agendamento</option>'+appointmentOptions+'</select>'+
       '<label>Cliente *</label><select id="edduCommandClient">'+options(clients,'Selecione o cliente',d.clientId)+'</select>'+
       '<label>Profissional *</label><select id="edduCommandProfessional">'+options(professionals,'Selecione o profissional',d.professionalId)+'</select>'+
@@ -62,6 +62,13 @@
   window.views=window.views||{};
   window.views.command=function(){return window.__EDDU_COMMAND_MODE==='form'?renderForm():renderList();};
   window.edduPrefillCommandFromAppointment=function(sel){const o=sel?.selectedOptions?.[0],d=window.__EDDU_COMMAND_DRAFT;if(!o?.value||!d)return;d.appointmentId=o.value;d.clientId=o.dataset.client||d.clientId;d.professionalId=o.dataset.professional||d.professionalId;refresh();};
+  window.edduCreateCommandFromAppointment=function(appointment,items){
+    window.__EDDU_COMMAND_DRAFT={id:null,clientId:appointment.client_id||'',professionalId:appointment.professional_id||'',appointmentId:appointment.id||'',items:Array.isArray(items)?items:[],coupon:null,couponCode:'',couponId:null};
+    window.__EDDU_COMMAND_MODE='form';
+    window.state=window.state||{};window.state.activeAppointmentId=appointment.id||null;
+    if(typeof window.render==='function')window.render('command');else window.openSheet?.('command');
+    window.toast?.('Atendimento iniciado. Confira os serviços e salve a comanda para abrir o lançamento.');
+  };
   async function saveCommandTransaction(payload,draftId){
     const session=await window.EDDU_NEON_REFRESH_SESSION?.();
     const token=session?.session?.token||session?.token||session?.accessToken||session?.session?.accessToken;
@@ -148,7 +155,7 @@
       else if(action==='delete'){if(!confirm('Excluir definitivamente esta comanda aberta e seus itens?'))return;await removeCommand(id);}
       else if(action==='cancel'){if(!confirm('Cancelar esta comanda?'))return;await cancelCommand(id);}
       else if(action==='payment')await sendPayment(id);
-    }catch(error){console.error('[EDDU] command action failed',error);window.toast?.(String(error?.message||error));}
+    }catch(error){console.error('[EDDU] command action failed',error);const n=$('edduCommandError');if(n){n.textContent=String(error?.message||error);n.style.display='block';}window.toast?.(String(error?.message||error));}
     finally{b.dataset.busy='0';}
   },true);
   window.addEventListener('eddu-neon-sync-complete',()=>{const shade=$('shade'),view=$('view');if(shade?.classList.contains('show')&&view?.querySelector('h2')?.textContent?.includes('Central de Comandas'))refresh();});
