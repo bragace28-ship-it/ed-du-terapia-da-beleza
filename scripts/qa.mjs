@@ -66,3 +66,8 @@ console.log('Neon command lifecycle create, cancel and checkout QA: PASS');
 for (const token of ['Comandas em aberto','Adicionar item','Cupom de desconto','Editar comanda','Excluir comanda','add-draft-item','edduClientPendingCommands','/api/client/commands','Pagar agora'])
   if (!html.includes(token)) throw new Error('Command multi-item, coupon, edit/delete or client checkout flow is missing: '+token);
 console.log('Command workspace multi-item, coupons, CRUD and client-app payment QA: PASS');
+for (const token of ['/api/commands','saveCommandTransaction','edduCreateCommandFromAppointment','edduCommandError'])
+  if (!html.includes(token)) throw new Error('Atomic command save integration is missing: '+token);
+for (const token of ['Iniciar atendimento','Cancelar atendimento','Reagendar atendimento','eddu-agenda-save-reschedule','in_progress','rescheduled'])
+  if (!html.includes(token)) throw new Error('Agenda lifecycle controls are missing: '+token);
+console.log('Atomic Neon command transaction and agenda lifecycle QA: PASS');
