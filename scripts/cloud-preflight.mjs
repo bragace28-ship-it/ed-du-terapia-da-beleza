@@ -27,7 +27,7 @@ const matrix=JSON.parse(await readFile(resolve(root,'master','FEATURE_MATRIX_86.
 if(matrix.count!==86 || matrix.items?.length!==86 || matrix.items.some((x,i)=>x.id!==String(i+1).padStart(3,'0')))
   throw new Error('MASTER-86 MATRIX FAILED');
 
-const stripEmbeddedDataImages=s=>s.replace(/data:image\\/[^;]+;base64,[A-Za-z0-9+/=]+/gi,'');
+const stripEmbeddedDataImages=s=>s.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/gi,'');
 const legacyFree=stripEmbeddedDataImages(html);
 
 if(/(?:V33|v33|fin33|eddu_v33)/i.test(legacyFree))
