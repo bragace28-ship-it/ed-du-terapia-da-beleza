@@ -90,7 +90,7 @@
     if (!date || !start || !end || !clientId || !professionalId || !serviceId || !clientName || !professionalName || !serviceName) return toast('Selecione um cliente, profissional e serviço cadastrados no Neon, além de data e horários.');
     if (!String(client.email || '').trim()) return toast('Este cadastro de cliente não possui e-mail. Vincule o mesmo e-mail usado no acesso do cliente antes de agendar.');
     if (end <= start) return toast('O término deve ser posterior ao início.');
-    if (!api() || window.__EDDU_NEON_READY !== true || window.__EDDU_NEON_CONNECTED !== true) return toast('Aguarde a conexão autenticada com o Neon antes de salvar.');
+    if (!api() || window.__EDDU_NEON_READY !== true || window.__EDDU_NEON_SESSION !== true) return toast('Entre na sua conta e aguarde a autenticação do Neon antes de salvar.');
     const startDate = new Date(date+'T'+start+':00');
     const endDate = new Date(date+'T'+end+':00');
     if (!Number.isFinite(startDate.getTime()) || !Number.isFinite(endDate.getTime()) || endDate <= startDate) return toast('Data ou horário inválido.');
