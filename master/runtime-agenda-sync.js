@@ -93,7 +93,7 @@
     window.openSheet('agendaProfessionalCreate');
   };
   window.saveAgendaProfessionalM = async function (date) {
-    const name = String($('aptNewProfessionalName')?.value || '').trim().replace(/\\s+/g,' ');
+    const name = String($('aptNewProfessionalName')?.value || '').trim().replace(/\s+/g,' ');
     const phone = String($('aptNewProfessionalPhone')?.value || '').trim();
     const email = String($('aptNewProfessionalEmail')?.value || '').trim().toLowerCase();
     const specialty = String($('aptNewProfessionalSpecialty')?.value || '').trim();
@@ -102,7 +102,7 @@
     const fail = message => { if(error){error.textContent=message;error.style.display='block';} toast(message); };
     try {
       if(name.length<2) throw new Error('Informe o nome do profissional.');
-      if(email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) throw new Error('Informe um e-mail válido ou deixe o campo vazio.');
+      if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Informe um e-mail válido ou deixe o campo vazio.');
       if(!Number.isFinite(commission)||commission<0||commission>100) throw new Error('A comissão deve estar entre 0 e 100%.');
       if(!api() || window.__EDDU_NEON_READY!==true || window.__EDDU_NEON_SESSION!==true) throw new Error('Entre novamente na sua conta para cadastrar o profissional.');
       const saved=await api().insert('professionals',{name,phone:phone||null,email:email||null,specialty:specialty||null,commission_rate:commission,active:true});
@@ -129,7 +129,7 @@
     window.openSheet('agendaServiceCreate');
   };
   window.saveAgendaServiceM = async function (date) {
-    const name=String($('aptNewServiceName')?.value||'').trim().replace(/\\s+/g,' ');
+    const name=String($('aptNewServiceName')?.value||'').trim().replace(/\s+/g,' ');
     const description=String($('aptNewServiceDescription')?.value||'').trim();
     const price=Number($('aptNewServicePrice')?.value);
     const duration=Number($('aptNewServiceDuration')?.value);
