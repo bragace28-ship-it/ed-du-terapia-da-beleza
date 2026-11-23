@@ -7,6 +7,7 @@
     services: 'services',
     products: 'products',
     appointments: 'appointments',
+    appointment_services: 'appointment_services',
     commands: 'commands',
     command_items: 'command_items',
     financial_transactions: 'financial_transactions',
