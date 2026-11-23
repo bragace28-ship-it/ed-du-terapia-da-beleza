@@ -87,16 +87,16 @@
     if (button) { button.disabled = true; button.textContent = 'Validando e salvando…'; }
 
     // Snapshot the form before awaiting network/authentication.
-    const name = String($('newClientName')?.value || '').trim().replace(/\\s+/g,' ');
+    const name = String($('newClientName')?.value || '').trim().replace(/\s+/g,' ');
     const phone = String($('newClientPhone')?.value || '').trim();
     const email = String($('newClientEmail')?.value || '').trim().toLowerCase();
-    const cpf = String($('newClientCpf')?.value || '').replace(/\\D/g,'');
+    const cpf = String($('newClientCpf')?.value || '').replace(/\D/g,'');
     const birthDate = String($('newClientBirthDate')?.value || '').trim();
     const notes = String($('newClientNotes')?.value || '').trim();
 
     try {
       if (name.length < 2) throw new Error('Informe o nome completo do cliente.');
-      if (email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) throw new Error('Informe um e-mail válido.');
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Informe um e-mail válido.');
       if (cpf && cpf.length !== 11) throw new Error('O CPF deve conter 11 números.');
       if (email && rows('clients').some(c => c.active !== false && String(c.email || '').trim().toLowerCase() === email)) {
         throw new Error('Já existe um cliente ativo com este e-mail.');
@@ -188,7 +188,7 @@
     const email = String($('editClientEmail')?.value || '').trim().toLowerCase();
     const cpf = String($('editClientCpf')?.value || '').replace(/\D/g,'');
     if (!c || name.length < 2) return toast('Informe o nome completo do cliente.');
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return toast('Informe um e-mail válido.');
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Informe um e-mail válido.');
     if (cpf && cpf.length !== 11) return toast('O CPF deve conter 11 números.');
     if (email && rows('clients').some(x => x.id !== id && x.active !== false && String(x.email || '').trim().toLowerCase() === email)) return toast('Este e-mail já está associado a outro cliente.');
     try {
