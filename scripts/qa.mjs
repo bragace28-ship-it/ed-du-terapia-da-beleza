@@ -74,7 +74,8 @@ for (const token of ['/api/commands','saveCommandTransaction','edduCreateCommand
 for (const token of ['Iniciar atendimento','Cancelar atendimento','Reagendar atendimento','eddu-agenda-save-reschedule','in_progress','rescheduled'])
   if (!html.includes(token)) throw new Error('Agenda lifecycle controls are missing: '+token);
 console.log('Atomic Neon command transaction and agenda lifecycle QA: PASS');
-if (!commandApiSource.includes("match(/^Bearer\\s+(.+)$/i)")) throw new Error('Atomic command API bearer token parser is invalid.');
+if (!commandApiSource.includes("match(/^Bearer\\s+(.+)$/i)"))
+if (!commandApiSource.includes('${auth.id})') || commandApiSource.includes('${user.id})')) throw new Error('Command creator must use Neon Auth user ID to satisfy commands.created_by foreign key.'); throw new Error('Atomic command API bearer token parser is invalid.');
 if (!clientCommandApiSource.includes('!/^Bearer\\s+\\S+/i.test(authorization)')) throw new Error('Client command API bearer token parser is invalid.');
 if (!agendaWorkflowSource.includes("button.closest('.option,.card,article")) throw new Error('Agenda lifecycle controls are not attached to each appointment card.');
 if (!agendaWorkflowSource.includes('window.__EDDU_SELECTED_DAY')) throw new Error('Agenda lifecycle does not track the selected calendar day.');
