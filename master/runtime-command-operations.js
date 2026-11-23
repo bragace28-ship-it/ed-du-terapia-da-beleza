@@ -123,6 +123,7 @@
   async function sendPayment(id){
     const c=activeCommands().find(x=>x.id===id);if(!c)throw new Error('Comanda não encontrada.');
     if(terminal.includes(String(c.status||'').toLowerCase()))throw new Error('Esta comanda já foi encerrada.');
+    if(String(c.status||'').toLowerCase()==='payment_pending')throw new Error('Esta comanda já foi enviada ao aplicativo do cliente e aguarda pagamento.');
     if(rows('payments').some(p=>p.command_id===id&&['CHECKOUT_PENDING','PENDING','AWAITING_PAYMENT'].includes(String(p.status||'').toUpperCase())))throw new Error('Esta comanda já foi enviada ao cliente e possui cobrança pendente. Consulte o aplicativo do cliente antes de gerar outra cobrança.');
     if(!c.client_id||!c.items.length||!(Number(c.total)>0))throw new Error('A comanda precisa ter cliente, itens e total válido.');
     window.state=window.state||{};window.state.activeCommandId=id;
