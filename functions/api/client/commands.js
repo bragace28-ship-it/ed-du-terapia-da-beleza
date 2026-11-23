@@ -28,5 +28,5 @@ export async function onRequestGet({request,env}){
   ORDER BY c.created_at DESC
   LIMIT 50
  `;
- return json({ok:true,commands:result.map(row=>({...row,checkout_url:typeof row.checkout_url==='string'&&/^https:\\/\\//i.test(row.checkout_url)?row.checkout_url:null}))});
+ return json({ok:true,commands:result.map(row=>({...row,checkout_url:typeof row.checkout_url==='string'&&/^https:\/\//i.test(row.checkout_url)?row.checkout_url:null}))});
 }
