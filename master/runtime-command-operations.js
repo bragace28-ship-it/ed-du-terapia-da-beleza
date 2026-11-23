@@ -18,9 +18,9 @@
   const refresh=()=>{if(typeof window.render==='function')window.render('command');else window.openSheet?.('command');};
   const statusLabel=s=>({open:'Aberta',awaiting_payment:'Aguardando gateway',payment_pending:'Aguardando pagamento',paid:'Paga',closed:'Finalizada',cancelled:'Cancelada',refunded:'Estornada'})[String(s||'open').toLowerCase()]||s||'Aberta';
   const activeCommands=()=> (Array.isArray(window.state?.commands)?window.state.commands:rows('commands')).map(c=>({...c,items:rows('commandItems').filter(i=>i.command_id===c.id),client:rows('clients').find(x=>x.id===c.client_id)||c.client,professional:rows('professionals').find(x=>x.id===c.professional_id)||c.professional}));
-  const totals=d=>{const subtotal=d.items.reduce((n,x)=>n+Number(x.total||0),0);let discount=0;if(d.coupon){const v=Number(d.coupon.value||0),type=String(d.coupon.type||'').toLowerCase();discount=['percent','percentage','percentual','porcentagem'].includes(type)?subtotal*v/100:v;}discount=Math.min(subtotal,Math.max(0,discount));return {subtotal,discount,total:Math.max(0,subtotal-discount)};};
+  const totals=d=>{const subtotal=d.items.reduce((n,x)=>n+Number(x.total||0),0);let discount=Number(d.existingDiscount||0);if(d.coupon){const v=Number(d.coupon.value||0),type=String(d.coupon.type||'').toLowerCase();discount=['percent','percentage','percentual','porcentagem'].includes(type)?subtotal*v/100:v;}discount=Math.min(subtotal,Math.max(0,discount));return {subtotal,discount,total:Math.max(0,subtotal-discount)};};
   function draftNew(){window.__EDDU_COMMAND_DRAFT={id:null,clientId:'',professionalId:'',appointmentId:'',items:[],coupon:null,couponCode:'',couponId:null};window.__EDDU_COMMAND_MODE='form';refresh();}
-  function draftFromCommand(c){window.__EDDU_COMMAND_DRAFT={id:c.id,clientId:c.client_id||'',professionalId:c.professional_id||'',appointmentId:c.appointment_id||'',items:c.items.map(i=>({id:i.id,item_type:i.item_type,service_id:i.service_id,product_id:i.product_id,description:i.description,quantity:Number(i.quantity||1),unit_price:Number(i.unit_price||0),total:Number(i.total??Number(i.quantity||1)*Number(i.unit_price||0)),professional_id:i.professional_id||c.professional_id,unit_cost:Number(i.unit_cost||0),commission_percent:Number(i.commission_percent||0)})),coupon:null,couponCode:c.discount_reason||'',couponId:null,existingDiscount:Number(c.discount||0)};window.__EDDU_COMMAND_MODE='form';window.state.activeCommandId=c.id;refresh();}
+  function draftFromCommand(c){const savedCoupon=rows('coupons').find(x=>String(x.code||'').trim().toUpperCase()===String(c.discount_reason||'').trim().toUpperCase());window.__EDDU_COMMAND_DRAFT={id:c.id,clientId:c.client_id||'',professionalId:c.professional_id||'',appointmentId:c.appointment_id||'',items:c.items.map(i=>({id:i.id,item_type:i.item_type,service_id:i.service_id,product_id:i.product_id,description:i.description,quantity:Number(i.quantity||1),unit_price:Number(i.unit_price||0),total:Number(i.total??Number(i.quantity||1)*Number(i.unit_price||0)),professional_id:i.professional_id||c.professional_id,unit_cost:Number(i.unit_cost||0),commission_percent:Number(i.commission_percent||0)})),coupon:savedCoupon?{id:savedCoupon.id,code:savedCoupon.code,type:savedCoupon.type,value:Number(savedCoupon.value)}:null,couponCode:c.discount_reason||'',couponId:null,existingDiscount:Number(c.discount||0)};window.__EDDU_COMMAND_MODE='form';window.state.activeCommandId=c.id;refresh();}
   function options(list,placeholder,selected){return '<option value="">'+esc(placeholder)+'</option>'+list.map(x=>'<option value="'+esc(x.id)+'" '+(x.id===selected?'selected':'')+'>'+esc(x.name)+'</option>').join('');}
   function itemOptions(){return rows('services').filter(x=>x.active!==false).map(x=>'<option value="service:'+esc(x.id)+'">Serviço · '+esc(x.name)+' — '+money(x.price_base??x.price??0)+'</option>').join('')+rows('products').filter(x=>x.active!==false).map(x=>'<option value="product:'+esc(x.id)+'">Produto · '+esc(x.name)+' — '+money(x.sale_price??x.price??0)+'</option>').join('');}
   function itemPrice(kind,item){return Number(kind==='product'?(item.sale_price??item.price??0):(item.price_base??item.price??0));}
@@ -69,7 +69,7 @@
     if(!d.items.length)throw new Error('Adicione pelo menos um serviço ou produto.');
     const db=await api(),sum=totals(d),professional=rows('professionals').find(x=>x.id===d.professionalId);
     if(!(sum.total>=0)||sum.subtotal<=0)throw new Error('O total da comanda precisa ser maior que zero.');
-    const payload={client_id:d.clientId,professional_id:d.professionalId,appointment_id:d.appointmentId||null,status:'open',subtotal:sum.subtotal,total:sum.total,discount:sum.discount,discount_reason:d.coupon?.code||null};
+    const payload={client_id:d.clientId,professional_id:d.professionalId,appointment_id:d.appointmentId||null,status:'open',subtotal:sum.subtotal,total:sum.total,discount:sum.discount,discount_reason:d.coupon?.code||(sum.discount>0?d.couponCode||null:null)};
     let command;
     if(d.id){command=await db.update('commands',d.id,payload);if(!command?.id)throw new Error('O Neon não confirmou a atualização da comanda.');}
     else{command=await db.insert('commands',payload);if(!command?.id)throw new Error('O Neon não confirmou a criação da comanda.');}
@@ -104,7 +104,7 @@
     if(c.usage_limit!=null&&Number(c.usage_count||0)>=Number(c.usage_limit))throw new Error('Este cupom atingiu o limite de utilizações.');
     if(c.service_id&&!d.items.some(i=>i.service_id===c.service_id))throw new Error('Este cupom só pode ser usado no serviço correspondente.');
     const type=String(c.type||'').toLowerCase();if(!['percent','percentage','percentual','porcentagem','fixed','amount','valor','fixed_amount'].includes(type))throw new Error('Tipo de desconto do cupom não reconhecido: '+c.type);
-    d.coupon={id:c.id,code:c.code,type:c.type,value:Number(c.value)};d.couponCode=c.code;refresh();
+    d.coupon={id:c.id,code:c.code,type:c.type,value:Number(c.value)};d.couponCode=c.code;d.existingDiscount=0;refresh();
   }
   async function cancelCommand(id){if(rows('payments').some(p=>p.command_id===id&&['CHECKOUT_PENDING','PENDING','AWAITING_PAYMENT'].includes(String(p.status||'').toUpperCase())))throw new Error('Esta comanda já possui cobrança pendente. Cancele a cobrança no gateway antes de cancelar a comanda.');const db=await api();const saved=await db.update('commands',id,{status:'cancelled'});if(!saved?.id)throw new Error('O Neon não confirmou o cancelamento.');data().commands=[saved,...rows('commands').filter(x=>x.id!==id)];window.state.commands=data().commands;window.toast?.('Comanda cancelada no Neon.');refresh();}
   window.edduCancelCommand=cancelCommand;
@@ -147,7 +147,7 @@
         refresh();
       }else if(action==='remove-item'){const d=window.__EDDU_COMMAND_DRAFT;d.items.splice(Number(b.dataset.itemIndex),1);refresh();}
       else if(action==='coupon')await applyCoupon();
-      else if(action==='remove-coupon'){const d=window.__EDDU_COMMAND_DRAFT;d.coupon=null;d.couponCode='';refresh();}
+      else if(action==='remove-coupon'){const d=window.__EDDU_COMMAND_DRAFT;d.coupon=null;d.couponCode='';d.existingDiscount=0;refresh();}
       else if(action==='save')await saveDraft();
       else if(action==='delete'){if(!confirm('Excluir definitivamente esta comanda aberta e seus itens?'))return;await removeCommand(id);}
       else if(action==='cancel'){if(!confirm('Cancelar esta comanda?'))return;await cancelCommand(id);}
