@@ -146,6 +146,7 @@
     window.dispatchEvent(new CustomEvent('eddu-neon-data-changed', { detail: { operation: 'delete', entity, id } }));
     return result;
   }
+  const CORE_ENTITIES = new Set(['clients','professionals','services','products','commands','command_items']);
   async function sync() {
     if (window.__EDDU_NEON_SYNCING) return;
     window.__EDDU_NEON_SYNCING = true;
@@ -154,18 +155,28 @@
       const session = await window.EDDU_NEON_REFRESH_SESSION?.();
       if (!session) {
         window.__EDDU_NEON_CONNECTED = false;
+        window.__EDDU_NEON_ENTITY_STATUS = {};
         window.__EDDU_NEON_AUTH_REQUIRED?.();
         return false;
       }
       const entities = Object.keys(TABLES);
       const results = await Promise.allSettled(entities.map(entity => load(entity, { limit: 500 })));
       const failed = results.map((result, index) => result.status === 'rejected' ? { entity: entities[index], error: String(result.reason?.message || result.reason) } : null).filter(Boolean);
+      const entityStatus = {};
+      results.forEach((result, index) => {
+        entityStatus[entities[index]] = result.status === 'fulfilled'
+          ? { ok:true, count:Array.isArray(result.value) ? result.value.length : 0 }
+          : { ok:false, error:String(result.reason?.message || result.reason) };
+      });
+      window.__EDDU_NEON_ENTITY_STATUS = entityStatus;
+      const coreFailed = failed.filter(item => CORE_ENTITIES.has(item.entity));
       hydrateCommands();
-      window.__EDDU_NEON_CONNECTED = failed.length === 0;
+      window.__EDDU_NEON_CONNECTED = coreFailed.length === 0;
       window.__EDDU_NEON_SYNC_ERRORS = failed;
+      window.__EDDU_NEON_CORE_SYNC_ERRORS = coreFailed;
       if (failed.length) console.error('[EDDU] Neon synchronization errors:', failed);
-      window.dispatchEvent(new CustomEvent('eddu-neon-sync-complete', { detail: { connected: failed.length === 0, errors: failed } }));
-      return failed.length === 0;
+      window.dispatchEvent(new CustomEvent('eddu-neon-sync-complete', { detail: { connected:coreFailed.length === 0, errors:failed, coreErrors:coreFailed, entityStatus } }));
+      return coreFailed.length === 0;
     } finally {
       window.__EDDU_NEON_SYNCING = false;
     }
