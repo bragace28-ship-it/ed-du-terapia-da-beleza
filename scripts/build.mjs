@@ -24,6 +24,7 @@ const validationFiles=[
   'master/neon-live-bridge.js',
   'master/runtime-neon-persistence.js',
   'master/runtime-client-registration.js',
+  'master/neon-auth-sdk-entry.js',
   'functions/api/payments.js',
   'functions/api/_lib/payment-settlement.js',
   'functions/api/webhooks/asaas.js',
@@ -94,6 +95,10 @@ output=injectBeforeClosingBody(output,'<script type="module">'+authClient+'\n</s
 
 await rm(dist,{recursive:true,force:true});
 await mkdir(dist,{recursive:true});
+const sdkBuild=spawnSync('npx',['--no-install','esbuild','master/neon-auth-sdk-entry.js','--bundle','--format=esm','--platform=browser','--target=es2022','--outfile=dist/neon-auth-sdk.bundle.js'],{encoding:'utf8'});
+if(sdkBuild.status!==0) throw new Error('Neon Auth SDK local bundle failed: '+(sdkBuild.stderr||sdkBuild.stdout||'unknown error'));
+const sdkBundle=await readFile(resolve(dist,'neon-auth-sdk.bundle.js'),'utf8');
+if(sdkBundle.length<10000 || !sdkBundle.includes('createClient')) throw new Error('Neon Auth SDK bundle is missing or incomplete.');
 await writeFile(resolve(dist,'index.html'),output,'utf8');
 
 const built=await readFile(resolve(dist,'index.html'),'utf8');
@@ -138,6 +143,6 @@ await writeFile(resolve(dist,'version.json'),JSON.stringify({
   legacyRuntime:'DISABLED'
 },null,2));
 const distFiles=await readdir(dist);
-const allowed=new Set(['index.html','_redirects','_headers','_routes.json','version.json']);
-if(distFiles.length!==5||distFiles.some(x=>!allowed.has(x))) throw new Error('Unexpected dist files: '+distFiles.join(','));
+const allowed=new Set(['index.html','_redirects','_headers','_routes.json','version.json','neon-auth-sdk.bundle.js']);
+if(distFiles.length!==6||distFiles.some(x=>!allowed.has(x))) throw new Error('Unexpected dist files: '+distFiles.join(','));
 console.log('Built canonical Master only.');
