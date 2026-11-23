@@ -78,9 +78,11 @@
       '<div class="action-row"><button id="edduSaveAppointment" type="button" class="btn primary full">Salvar agendamento</button><button id="edduCancelAppointment" type="button" class="btn full">Cancelar</button></div></div>';
     window.openSheet('agendaAdd');
   }
-  window.openAgendaProfessionalCreateM = function () {
+  window.openAgendaProfessionalCreateM = function (requestedDate, requestedReturnRoute) {
+    const returnRoute = requestedReturnRoute === 'command' ? 'command' : 'agenda';
+    window.__EDDU_PROFESSIONAL_RETURN_ROUTE = returnRoute;
     window.__EDDU_PENDING_PROFESSIONAL_ID = $('aptProfessionalId')?.value || window.__EDDU_PENDING_PROFESSIONAL_ID || '';
-    const date = $('aptDate')?.value || window.selectedDayM || localDate(new Date());
+    const date = requestedDate || $('aptDate')?.value || window.selectedDayM || localDate(new Date());
     window.views.agendaProfessionalCreate = () =>
       '<h2>Novo profissional</h2><p class="sub">Cadastre quem realizará os atendimentos. O registro será salvo no Neon.</p>'+
       '<label>Nome completo *</label><input id="aptNewProfessionalName" maxlength="160" placeholder="Nome do profissional" required>'+
@@ -111,7 +113,12 @@
       window.data.professionals=[saved,...rows('professionals').filter(x=>x.id!==saved.id)];
       window.__EDDU_PENDING_PROFESSIONAL_ID=saved.id;
       toast('Profissional cadastrado no Neon.');
-      openAdd(date);
+      const returnRoute=window.__EDDU_PROFESSIONAL_RETURN_ROUTE || 'agenda';
+      window.__EDDU_PROFESSIONAL_RETURN_ROUTE=null;
+      if(returnRoute==='command'){
+        try { if(typeof window.EDDU_NEON_SYNC==='function') await window.EDDU_NEON_SYNC(); } catch(syncError) { console.error('[EDDU] professional post-save sync failed',syncError); }
+        if(typeof window.render==='function') window.render('command'); else window.openSheet('command');
+      } else openAdd(date);
     } catch(e) { console.error('[EDDU] professional create failed',e); fail('Não foi possível cadastrar o profissional: '+String(e?.message||e)); }
   };
   window.openAgendaServiceCreateM = function () {
