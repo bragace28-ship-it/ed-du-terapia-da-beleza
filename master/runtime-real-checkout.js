@@ -113,7 +113,7 @@ document.addEventListener('click',function(event){
  const button=event.target?.closest?.('button,a,[role="button"],[onclick]');
  if(!button)return;
  const label=String(button.innerText||button.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
- if(/salvar e enviar para pagamento|enviar para pagamento/.test(label)){
+ if(/salvar e enviar para pagamento|enviar para pagamento|escolher gateway e gerar cobrança real|aprovar pagamento de teste/.test(label)){
   event.preventDefault();event.stopImmediatePropagation();
   window.__edduOpenGatewayRanking(currentCommand());
   return;
