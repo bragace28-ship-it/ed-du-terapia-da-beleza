@@ -54,11 +54,31 @@ async function persistCommandBeforeCheckout(command){
   if(!(quantity>0)||unitPrice<0||!Number.isFinite(unitPrice))throw new Error('Confira a quantidade e o valor dos itens da comanda.');
   return {...item,item_type:product?'product':'service',service_id:product?null:id,product_id:product?id:null,description:item.description||item.service||item.name||found?.name||'Item da comanda',quantity,unit_price:unitPrice,total:Number(item.total??quantity*unitPrice),professional_id:item.professional_id||item.professionalId||c.professional_id||null};
  });
- if(!window.EDDU_NEON_API||typeof window.persist!=='function')throw new Error('A persistência do Neon não foi carregada. Recarregue o aplicativo.');
- if(window.__EDDU_NEON_READY!==true||window.__EDDU_NEON_CONNECTED!==true)throw new Error('Aguarde a conexão autenticada com o Neon antes de enviar a comanda.');
- await window.persist();
- if(!UUID.test(String(c.id||'')))throw new Error('O Neon não confirmou o identificador da comanda.');
- if(!(data.commands||[]).some(x=>x.id===c.id))throw new Error('A comanda não foi confirmada na lista persistida do Neon.');
+ if(!window.EDDU_NEON_API)throw new Error('A API de gravação do Neon não foi carregada. Recarregue o aplicativo.');
+ if(window.__EDDU_NEON_READY!==true||window.__EDDU_NEON_SESSION!==true||window.__EDDU_NEON_CONNECTED!==true)throw new Error('Aguarde a autenticação e a sincronização das comandas no Neon.');
+ const api=window.EDDU_NEON_API;
+ const commandPayload={client_id:c.client_id,professional_id:c.professional_id||null,status:'open',subtotal:c.subtotal,total:c.total,discount:c.discount};
+ const savedCommand=UUID.test(String(c.id||''))?await api.update('commands',c.id,commandPayload):await api.insert('commands',commandPayload);
+ if(!savedCommand?.id||!UUID.test(savedCommand.id))throw new Error('O Neon não confirmou a gravação da comanda.');
+ Object.assign(c,savedCommand);
+ const priorItems=Array.isArray(data.commandItems)?data.commandItems.filter(x=>x.command_id===c.id):[];
+ const savedItems=[];
+ for(let index=0;index<c.items.length;index++){
+  const item=c.items[index], prior=priorItems.find(x=>x.id===item.id)||priorItems[index]||null;
+  const itemPayload={command_id:c.id,item_type:item.item_type,service_id:item.service_id||null,product_id:item.product_id||null,description:item.description,quantity:item.quantity,unit_price:item.unit_price,total:item.total,professional_id:item.professional_id||c.professional_id||null,unit_cost:Number(item.unit_cost||0),commission_percent:Number(item.commission_percent||0)};
+  const itemId=item.id||prior?.id;
+  const savedItem=UUID.test(String(itemId||''))?await api.update('command_items',itemId,itemPayload):await api.insert('command_items',itemPayload);
+  if(!savedItem?.id)throw new Error('O Neon não confirmou um dos itens da comanda.');
+  savedItems.push(savedItem);
+ }
+ const confirmed=await api.update('commands',c.id,{status:'awaiting_payment',subtotal:c.subtotal,total:c.total,discount:c.discount});
+ if(!confirmed?.id)throw new Error('O Neon não confirmou a preparação da comanda para pagamento.');
+ Object.assign(c,confirmed,{items:savedItems});
+ data.commands=[c,...(Array.isArray(data.commands)?data.commands.filter(x=>x.id!==c.id):[])];
+ data.commandItems=[...(Array.isArray(data.commandItems)?data.commandItems.filter(x=>x.command_id!==c.id):[]),...savedItems];
+ window.state=window.state||{};window.state.commands=data.commands;window.state.activeCommandId=c.id;
+ if(!(data.commands||[]).some(x=>x.id===c.id)||savedItems.length!==c.items.length)throw new Error('A confirmação da comanda e de seus itens ficou incompleta.');
+ window.__EDDU_NEON_LAST_COMMAND_SAVE={at:new Date().toISOString(),commandId:c.id,itemCount:savedItems.length,status:confirmed.status};
  return c;
 }
 window.__edduOpenGatewayRanking=async function(command){
@@ -129,6 +149,7 @@ window.closeCommandAndOpenGateway=c=>window.__edduOpenGatewayRanking(c||currentC
 document.addEventListener('click',function(event){
  const button=event.target?.closest?.('button,a,[role="button"],[onclick]');
  if(!button)return;
+ if(button.matches?.('[data-eddu-command-action]')||/edduSendCommandToPayment|edduCreateCommand|edduCancelCommand/.test(button.getAttribute('onclick')||''))return;
  const label=String(button.innerText||button.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
  if(/salvar e enviar para pagamento|enviar para pagamento|escolher gateway e gerar cobrança real|aprovar pagamento de teste/.test(label)){
   event.preventDefault();event.stopImmediatePropagation();
