@@ -25,6 +25,7 @@ const validationFiles=[
   'master/runtime-neon-persistence.js',
   'master/runtime-client-registration.js',
   'master/neon-auth-sdk-entry.js',
+  'functions/api/data/[entity].js',
   'functions/api/payments.js',
   'functions/api/_lib/payment-settlement.js',
   'functions/api/webhooks/asaas.js',
