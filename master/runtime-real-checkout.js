@@ -129,6 +129,9 @@ window.__edduSelectGateway=function(gateway,method,installments){
    if(!r.ok||!d.ok)throw new Error(d.error||'Não foi possível gerar a cobrança.');
    const record={...p,payment:d.payment,checkoutUrl:d.checkoutUrl||null,qrCode:d.qrCode||null,qrCodeBase64:d.qrCodeBase64||null,status:'CHECKOUT_PENDING',createdAt:new Date().toISOString()};
    persist(record);window.__edduPendingPayment=record;
+   const localCommand=window.state?.commands?.find(x=>x.id===p.commandId);if(localCommand){localCommand.status='payment_pending';localCommand.payment_link=d.checkoutUrl||null;}
+   if(window.data){window.data.payments=[d.payment,...(Array.isArray(window.data.payments)?window.data.payments.filter(x=>x.id!==d.payment?.id):[])];}
+   window.dispatchEvent(new CustomEvent('eddu-neon-data-changed',{detail:{operation:'update',entity:'commands',row:localCommand||null}}));
    if(d.checkoutUrl){
     const info=document.getElementById('v52CheckoutInfo');if(info)info.textContent='Cobrança criada. O cliente já pode abrir o checkout pelo aplicativo ED & DU. Aguardando confirmação do pagamento.';
     toast('Cobrança criada e disponibilizada para o cliente no aplicativo.');
