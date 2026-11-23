@@ -5,7 +5,8 @@ const TABLES = {
   professionals: ['user_id','name','email','phone','specialty','commission_rate','active'],
   services: ['category_id','name','description','price','duration_minutes','active','price_base','price_long','service_cost'],
   products: ['category_id','sku','name','description','sale_price','cost_price','stock','minimum_stock','active'],
-  appointments: ['client_id','professional_id','service_id','starts_at','ends_at','status','notes','source','created_by'],
+  appointments: ['client_id','professional_id','starts_at','ends_at','status','notes','created_by'],
+  appointment_services: ['appointment_id','service_id','price','duration_minutes'],
   commands: ['client_id','professional_id','appointment_id','status','discount','discount_reason','subtotal','total','created_by','total_cost','commission','profit','payment_gateway','payment_card_brand','payment_installments','payment_estimated_fee','payment_estimated_net','payment_installment_amount','payment_link'],
   command_items: ['command_id','item_type','service_id','product_id','description','quantity','unit_price','total','professional_id','unit_cost','commission_percent'],
   financial_transactions: ['type','direction','command_id','client_id','description','amount','due_date','paid_at','status','category','metadata','created_by'],
@@ -35,7 +36,7 @@ const TABLES = {
 };
 const PERMISSIONS = {
   clients:'clients', professionals:'professionals', services:'services', products:'products',
-  appointments:'agenda', agenda_blocks:'agenda', commands:'commands', command_items:'commands',
+  appointments:'agenda', appointment_services:'agenda', agenda_blocks:'agenda', commands:'commands', command_items:'commands',
   financial_transactions:'finance', payments:'finance', receivables:'finance',
   receivable_installments:'finance', payables:'finance', card_invoices:'finance',
   commissions:'finance', coupons:'marketing', quotes:'quotes', referrals:'loyalty',
@@ -107,10 +108,15 @@ function cleanPayload(table, body) {
     if (row.message == null && body?.body != null) row.message = body.body;
     if (row.metadata == null && body?.payload != null) row.metadata = body.payload;
   }
-  const required = { clients:['name'], professionals:['name'], services:['name'], products:['name'], appointments:['starts_at','ends_at'], financial_transactions:['type','direction','amount','description'] };
+  const required = { clients:['name'], professionals:['name'], services:['name'], products:['name'], appointments:['starts_at','ends_at'], appointment_services:['appointment_id','service_id'], financial_transactions:['type','direction','amount','description'] };
   for (const field of required[table] || []) if (row[field] == null || row[field] === '') throw new Error(field + '_required');
   if (table === 'financial_transactions' && !['in','out'].includes(row.direction)) throw new Error('INVALID_TRANSACTION_DIRECTION');
+  if (table === 'appointment_services') {
+    if (row.price != null && Number(row.price) < 0) throw new Error('INVALID_AMOUNT');
+    if (row.duration_minutes != null && Number(row.duration_minutes) <= 0) throw new Error('INVALID_DURATION');
+  }
   if (table === 'appointments') {
+    if (row.status != null && !['requested','confirmed','rescheduled','in_progress','completed','cancelled','no_show'].includes(String(row.status))) throw new Error('INVALID_APPOINTMENT_STATUS');
     const start = new Date(row.starts_at).getTime(), end = new Date(row.ends_at).getTime();
     if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) throw new Error('INVALID_APPOINTMENT_PERIOD');
   }
@@ -184,7 +190,7 @@ async function handler({ request, env, params }) {
   } catch (error) {
     if (error?.name === 'AbortError') return json({ ok:false, error:'AUTH_TIMEOUT' }, 504);
     const message = String(error?.message || '');
-    if (message.endsWith('_required') || ['EMPTY_PAYLOAD','INVALID_TRANSACTION_DIRECTION','INVALID_APPOINTMENT_PERIOD','INVALID_AMOUNT'].includes(message)) return json({ ok:false, error:message }, 400);
+    if (message.endsWith('_required') || ['EMPTY_PAYLOAD','INVALID_TRANSACTION_DIRECTION','INVALID_APPOINTMENT_PERIOD','INVALID_APPOINTMENT_STATUS','INVALID_AMOUNT','INVALID_DURATION'].includes(message)) return json({ ok:false, error:message }, 400);
     console.error('EDDU_DATA_API_ERROR', { entity:table, method, error:message });
     return json({ ok:false, error:'DATABASE_OPERATION_FAILED' }, 500);
   }
