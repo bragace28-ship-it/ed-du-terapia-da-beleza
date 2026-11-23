@@ -8,6 +8,7 @@ const required=[
   'master/index.html',
   'master/FEATURE_MATRIX_86.json',
   'master/neon-auth-client.js',
+  'master/neon-auth-sdk-entry.js',
   'master/neon-live-bridge.js',
   'master/runtime-neon-persistence.js',
   'master/runtime-command-gateway.js',
