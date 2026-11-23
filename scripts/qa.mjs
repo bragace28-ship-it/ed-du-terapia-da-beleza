@@ -51,3 +51,5 @@ if (!html.includes('window.__EDDU_MASTER_LOCAL_DATA=window.data=') || html.inclu
 if (!html.includes('eddu_master_data_v1') || !html.includes("operation:'delete'"))
   throw new Error('Neon write-through or DELETE synchronization is missing.');
 console.log('Master shared state, demo-data removal and Neon DELETE QA: PASS');
+if (!html.includes('EDDU_AGENDA_RUNTIME_READY') || !html.includes('clientAppointmentsView') || !html.includes('edduSaveAppointment')) throw new Error('Agenda create/close/client visibility runtime is missing.');
+console.log('Master Agenda save, modal controls and client view QA: PASS');
