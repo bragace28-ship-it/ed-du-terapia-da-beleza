@@ -47,9 +47,15 @@
       '<label>CPF</label><input id="newClientCpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00">'+
       '<label>Data de nascimento</label><input id="newClientBirthDate" type="date">'+
       '<label>Observações</label><textarea id="newClientNotes" rows="3" maxlength="3000" placeholder="Informações importantes sobre o cliente"></textarea>'+
-      '<div class="action-row"><button id="edduSaveNewClient" class="btn primary full" onclick="saveNewClient()">✓ Salvar cliente</button><button class="btn full" onclick="closeSheet()">Cancelar</button></div>';
+      '<div class="action-row"><button id="edduSaveNewClient" class="btn primary full" onclick="saveNewClient()">✓ Salvar cliente</button><button class="btn full" onclick="cancelNewClientRegistration()">Cancelar</button></div>';
   };
 
+  window.cancelNewClientRegistration = function () {
+    const back = returnState();
+    window.__EDDU_CLIENT_RETURN = null;
+    if (back.route === 'agenda') window.openAgendaAddM(back.date);
+    else window.openSheet('clients');
+  };
   let creating = false;
   window.saveNewClient = async function () {
     if (creating) return;
