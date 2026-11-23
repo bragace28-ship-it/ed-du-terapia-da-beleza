@@ -76,7 +76,8 @@ const runtimeFiles=[
   'master/runtime-neon-persistence.js',
   'master/runtime-real-checkout.js',
   'master/runtime-production-guard.js',
-  'master/runtime-navigation-hardening.js'
+  'master/runtime-navigation-hardening.js',
+  'master/runtime-agenda-sync.js'
 ];
 const runtimeBlocks=[];
 for(const file of runtimeFiles){
