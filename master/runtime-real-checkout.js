@@ -59,16 +59,25 @@ async function persistCommandBeforeCheckout(command){
  if(window.__EDDU_NEON_READY!==true||window.__EDDU_NEON_SESSION!==true||window.__EDDU_NEON_CONNECTED!==true)throw new Error('Aguarde a autenticação e a sincronização das comandas no Neon.');
  const api=window.EDDU_NEON_API;
  const commandPayload={client_id:c.client_id,professional_id:c.professional_id||null,status:'open',subtotal:c.subtotal,total:c.total,discount:c.discount};
- const savedCommand=UUID.test(String(c.id||''))?await api.update('commands',c.id,commandPayload):await api.insert('commands',commandPayload);
+ const originalCommandId=c.id;
+ let savedCommand;
+ if(UUID.test(String(c.id||''))){
+  try{savedCommand=await api.update('commands',c.id,commandPayload)}
+  catch(error){if(!/NOT_FOUND/.test(String(error?.message||error)))throw error;savedCommand=await api.insert('commands',commandPayload)}
+ }else savedCommand=await api.insert('commands',commandPayload);
  if(!savedCommand?.id||!UUID.test(savedCommand.id))throw new Error('O Neon não confirmou a gravação da comanda.');
  Object.assign(c,savedCommand);
- const priorItems=Array.isArray(data.commandItems)?data.commandItems.filter(x=>x.command_id===c.id):[];
+ const priorItems=Array.isArray(data.commandItems)?data.commandItems.filter(x=>x.command_id===c.id||x.command_id===originalCommandId):[];
  const savedItems=[];
  for(let index=0;index<itemsToSave.length;index++){
   const item=itemsToSave[index], prior=priorItems.find(x=>x.id===item.id)||priorItems[index]||null;
   const itemPayload={command_id:c.id,item_type:item.item_type,service_id:item.service_id||null,product_id:item.product_id||null,description:item.description,quantity:item.quantity,unit_price:item.unit_price,total:item.total,professional_id:item.professional_id||c.professional_id||null,unit_cost:Number(item.unit_cost||0),commission_percent:Number(item.commission_percent||0)};
   const itemId=item.id||prior?.id;
-  const savedItem=UUID.test(String(itemId||''))?await api.update('command_items',itemId,itemPayload):await api.insert('command_items',itemPayload);
+  let savedItem;
+  if(UUID.test(String(itemId||''))){
+   try{savedItem=await api.update('command_items',itemId,itemPayload)}
+   catch(error){if(!/NOT_FOUND/.test(String(error?.message||error)))throw error;savedItem=await api.insert('command_items',itemPayload)}
+  }else savedItem=await api.insert('command_items',itemPayload);
   if(!savedItem?.id)throw new Error('O Neon não confirmou um dos itens da comanda.');
   savedItems.push(savedItem);
  }
