@@ -54,6 +54,7 @@ async function persistCommandBeforeCheckout(command){
   if(!(quantity>0)||unitPrice<0||!Number.isFinite(unitPrice))throw new Error('Confira a quantidade e o valor dos itens da comanda.');
   return {...item,item_type:product?'product':'service',service_id:product?null:id,product_id:product?id:null,description:item.description||item.service||item.name||found?.name||'Item da comanda',quantity,unit_price:unitPrice,total:Number(item.total??quantity*unitPrice),professional_id:item.professional_id||item.professionalId||c.professional_id||null};
  });
+ const itemsToSave=c.items.slice();
  if(!window.EDDU_NEON_API)throw new Error('A API de gravação do Neon não foi carregada. Recarregue o aplicativo.');
  if(window.__EDDU_NEON_READY!==true||window.__EDDU_NEON_SESSION!==true||window.__EDDU_NEON_CONNECTED!==true)throw new Error('Aguarde a autenticação e a sincronização das comandas no Neon.');
  const api=window.EDDU_NEON_API;
@@ -63,8 +64,8 @@ async function persistCommandBeforeCheckout(command){
  Object.assign(c,savedCommand);
  const priorItems=Array.isArray(data.commandItems)?data.commandItems.filter(x=>x.command_id===c.id):[];
  const savedItems=[];
- for(let index=0;index<c.items.length;index++){
-  const item=c.items[index], prior=priorItems.find(x=>x.id===item.id)||priorItems[index]||null;
+ for(let index=0;index<itemsToSave.length;index++){
+  const item=itemsToSave[index], prior=priorItems.find(x=>x.id===item.id)||priorItems[index]||null;
   const itemPayload={command_id:c.id,item_type:item.item_type,service_id:item.service_id||null,product_id:item.product_id||null,description:item.description,quantity:item.quantity,unit_price:item.unit_price,total:item.total,professional_id:item.professional_id||c.professional_id||null,unit_cost:Number(item.unit_cost||0),commission_percent:Number(item.commission_percent||0)};
   const itemId=item.id||prior?.id;
   const savedItem=UUID.test(String(itemId||''))?await api.update('command_items',itemId,itemPayload):await api.insert('command_items',itemPayload);
@@ -77,7 +78,7 @@ async function persistCommandBeforeCheckout(command){
  data.commands=[c,...(Array.isArray(data.commands)?data.commands.filter(x=>x.id!==c.id):[])];
  data.commandItems=[...(Array.isArray(data.commandItems)?data.commandItems.filter(x=>x.command_id!==c.id):[]),...savedItems];
  window.state=window.state||{};window.state.commands=data.commands;window.state.activeCommandId=c.id;
- if(!(data.commands||[]).some(x=>x.id===c.id)||savedItems.length!==c.items.length)throw new Error('A confirmação da comanda e de seus itens ficou incompleta.');
+ if(!(data.commands||[]).some(x=>x.id===c.id)||savedItems.length!==itemsToSave.length)throw new Error('A confirmação da comanda e de seus itens ficou incompleta.');
  window.__EDDU_NEON_LAST_COMMAND_SAVE={at:new Date().toISOString(),commandId:c.id,itemCount:savedItems.length,status:confirmed.status};
  return c;
 }
