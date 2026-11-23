@@ -40,6 +40,7 @@ const apiFiles=[
   'functions/api/data/[entity].js',
   'functions/api/health.js',
   'functions/api/payments.js',
+  'functions/api/client/commands.js',
   'functions/api/webhooks/asaas.js'
 ];
 
