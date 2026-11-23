@@ -63,22 +63,35 @@
   if(['cancelled','completed','no_show'].includes(String(apt.status).toLowerCase()))throw new Error('Este agendamento já foi encerrado.');
   const existing=rows('commands').find(c=>c.appointment_id===id&&!['cancelled','closed','paid','refunded'].includes(String(c.status||'').toLowerCase()));
   if(existing){
-   window.__EDDU_COMMAND_MODE='list';window.__EDDU_COMMAND_DRAFT=null;window.state=window.state||{};window.state.activeCommandId=existing.id;
-   if(typeof window.render==='function')window.render('command');else window.openSheet?.('command');
-   toast('A comanda já vinculada a este agendamento foi aberta.');
+   const statusSaved=await api().update('appointments',id,{status:'in_progress'});
+   if(!statusSaved?.id)throw new Error('O Neon não confirmou o início do atendimento.');
+   try{await window.EDDU_NEON_SYNC?.();}catch(e){console.error('[EDDU] start appointment sync failed',e);}
+   if(typeof window.edduOpenCommandForEdit==='function')window.edduOpenCommandForEdit(existing.id);
+   else{window.__EDDU_COMMAND_MODE='list';window.__EDDU_COMMAND_DRAFT=null;window.state=window.state||{};window.state.activeCommandId=existing.id;if(typeof window.render==='function')window.render('command');else window.openSheet?.('command');}
+   toast('A comanda vinculada foi recuperada e aberta.');
    return;
   }
   const links=rows('appointmentServices').filter(x=>x.appointment_id===id);
   const items=links.map(link=>{const service=rows('services').find(x=>x.id===link.service_id);return service?{item_type:'service',service_id:service.id,product_id:null,description:service.name,quantity:1,unit_price:Number(link.price??service.price_base??service.price??0),total:Number(link.price??service.price_base??service.price??0),unit_cost:Number(service.service_cost||0),commission_percent:Number(rows('professionals').find(p=>p.id===apt.professional_id)?.commission_rate||0)}:null;}).filter(Boolean);
   if(!items.length)throw new Error('Este agendamento não possui serviços vinculados. Edite o agendamento e selecione pelo menos um serviço.');
-  if(typeof window.edduCreateCommandFromAppointment!=='function')throw new Error('A tela de comandas não foi carregada. Atualize o aplicativo e tente novamente.');
-  await window.edduCreateCommandFromAppointment(apt,items);
-  if(!window.__EDDU_COMMAND_DRAFT||window.__EDDU_COMMAND_DRAFT.appointmentId!==id)throw new Error('Não foi possível preparar a comanda deste agendamento.');
-  const saved=await api().update('appointments',id,{status:'in_progress'});
-  if(!saved?.id)throw new Error('A comanda foi preparada, mas o Neon não confirmou o início do atendimento.');
-  try{await window.EDDU_NEON_SYNC?.();}catch(e){console.error('[EDDU] start appointment sync failed',e);}
-  if(typeof window.render==='function')window.render('command');else window.openSheet?.('command');
-  toast('Comanda aberta com os serviços e valores do agendamento. Revise e salve para registrar no Neon.');
+  if(typeof window.edduCreateCommandFromAppointment!=='function'||typeof window.edduSaveCommandDraft!=='function')throw new Error('A tela de comandas não foi carregada. Atualize o aplicativo e tente novamente.');
+  const previousStatus=apt.status;
+  const statusSaved=await api().update('appointments',id,{status:'in_progress'});
+  if(!statusSaved?.id)throw new Error('O Neon não confirmou o início do atendimento.');
+  try{
+   await window.edduCreateCommandFromAppointment(apt,items);
+   if(!window.__EDDU_COMMAND_DRAFT||window.__EDDU_COMMAND_DRAFT.appointmentId!==id)throw new Error('Não foi possível preparar a comanda deste agendamento.');
+   await window.edduSaveCommandDraft();
+   const created=rows('commands').find(c=>c.appointment_id===id&&!['cancelled','closed','paid','refunded'].includes(String(c.status||'').toLowerCase()));
+   if(!created?.id)throw new Error('O Neon não confirmou a criação da comanda vinculada.');
+   try{await window.EDDU_NEON_SYNC?.();}catch(e){console.error('[EDDU] start appointment sync failed',e);}
+   if(typeof window.edduOpenCommandForEdit==='function')window.edduOpenCommandForEdit(created.id);
+   else{window.__EDDU_COMMAND_MODE='list';window.__EDDU_COMMAND_DRAFT=null;window.state=window.state||{};window.state.activeCommandId=created.id;if(typeof window.render==='function')window.render('command');else window.openSheet?.('command');}
+   toast('Atendimento iniciado. Comanda e serviços gravados no Neon e abertos para edição.');
+  }catch(error){
+   try{await api().update('appointments',id,{status:previousStatus||'confirmed'});}catch(rollbackError){console.error('[EDDU] appointment status rollback failed',rollbackError);}
+   throw error;
+  }
  }
  async function cancelAppointment(id){
   const apt=getAppointment(id);if(!apt)throw new Error('Agendamento não encontrado.');
