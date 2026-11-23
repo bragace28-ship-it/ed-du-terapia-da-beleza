@@ -58,3 +58,8 @@ if (!html.includes('openAgendaProfessionalCreateM') || !html.includes('saveAgend
 if (html.includes('Vincule o mesmo e-mail usado no acesso do cliente antes de agendar.'))
   throw new Error('Client email must not block professional-side appointment creation.');
 console.log('Agenda professional/service registration and optional client email QA: PASS');
+if (!html.includes('EDDU_COMMANDS_RUNTIME_READY') || !html.includes('edduCreateCommand') || !html.includes('edduCancelCommand') || !html.includes('edduSendCommandToPayment'))
+  throw new Error('Real Neon command create/cancel/payment actions are missing from production artifact.');
+if (!html.includes('Lançar comanda no Neon') || !html.includes('Cancelar comanda') || !html.includes('Enviar para pagamento'))
+  throw new Error('Command lifecycle UI controls are missing from production artifact.');
+console.log('Neon command lifecycle create, cancel and checkout QA: PASS');
