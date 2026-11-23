@@ -115,6 +115,18 @@ const builtBytes=Buffer.from(built,'utf8');
 const builtSha=createHash('sha256').update(builtBytes).digest('hex');
 if(builtBytes.length<3000000) throw new Error('MASTER build output is unexpectedly small.');
 await writeFile(resolve(dist,'_redirects'),'/* /index.html 200\n');
+await writeFile(resolve(dist,'_headers'),[
+  '/',
+  '  Cache-Control: no-store, no-cache, must-revalidate, max-age=0',
+  '  Pragma: no-cache',
+  '/index.html',
+  '  Cache-Control: no-store, no-cache, must-revalidate, max-age=0',
+  '  Pragma: no-cache',
+  '/version.json',
+  '  Cache-Control: no-store, no-cache, must-revalidate, max-age=0',
+  '  Pragma: no-cache',
+  ''
+].join('\n'));
 await writeFile(resolve(dist,'_routes.json'),JSON.stringify({version:1,include:['/api/*'],exclude:[]}));
 await writeFile(resolve(dist,'version.json'),JSON.stringify({
   version:lock.canonical_release,
@@ -126,6 +138,6 @@ await writeFile(resolve(dist,'version.json'),JSON.stringify({
   legacyRuntime:'DISABLED'
 },null,2));
 const distFiles=await readdir(dist);
-const allowed=new Set(['index.html','_redirects','_routes.json','version.json']);
+const allowed=new Set(['index.html','_redirects','_headers','_routes.json','version.json']);
 if(distFiles.length!==4||distFiles.some(x=>!allowed.has(x))) throw new Error('Unexpected dist files: '+distFiles.join(','));
 console.log('Built canonical Master only.');
