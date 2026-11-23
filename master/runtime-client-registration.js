@@ -12,8 +12,8 @@
   const returnState = () => window.__EDDU_CLIENT_RETURN || { route:'clients' };
 
   function ensureNeon() {
-    if (!api() || window.__EDDU_NEON_READY !== true || window.__EDDU_NEON_CONNECTED !== true) {
-      toast('Aguarde a conexão autenticada e a sincronização completa com o Neon antes de cadastrar.');
+    if (!api() || window.__EDDU_NEON_READY !== true || window.__EDDU_NEON_SESSION !== true) {
+      toast('Entre na sua conta e aguarde a autenticação do Neon antes de cadastrar.');
       return false;
     }
     return true;
