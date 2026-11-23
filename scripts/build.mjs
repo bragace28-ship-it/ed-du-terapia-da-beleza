@@ -87,7 +87,8 @@ const runtimeFiles=[
   'master/runtime-navigation-hardening.js',
   'master/runtime-agenda-sync.js',
   'master/runtime-client-registration.js',
-  'master/runtime-command-operations.js'
+  'master/runtime-command-operations.js',
+  'master/runtime-agenda-workflow.js'
 ];
 const runtimeBlocks=[];
 for(const file of runtimeFiles){
