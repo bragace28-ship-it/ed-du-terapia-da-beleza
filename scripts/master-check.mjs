@@ -28,6 +28,7 @@ for(const marker of required)
 
 const runtimeFiles=[
   'master/runtime-navigation-hardening.js',
+  'master/runtime-command-operations.js',
   'master/runtime-real-checkout.js',
   'master/neon-live-bridge.js',
   'master/runtime-neon-persistence.js',
