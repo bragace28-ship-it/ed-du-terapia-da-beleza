@@ -38,7 +38,7 @@
   function renderList(){
     const commands=activeCommands(),opened=commands.filter(c=>openStatuses.includes(String(c.status||'open').toLowerCase())),history=commands.filter(c=>!openStatuses.includes(String(c.status||'open').toLowerCase()));
     return '<h2>Central de Comandas</h2><p class="sub">Acompanhe atendimentos em aberto, lançamentos e pagamentos.</p>'+
-      '<div class="grid2"><button type="button" class="btn primary" data-eddu-command-action="new">＋ Lançar comanda</button><button type="button" class="btn" data-eddu-command-action="reload">Atualizar comandas</button></div>'+
+      '<div class="grid2"><button type="button" class="btn primary" data-eddu-command-action="new">＋ Lançar comanda no Neon</button><button type="button" class="btn" data-eddu-command-action="reload">Atualizar comandas</button></div>'+
       '<h3>Comandas em aberto ('+opened.length+')</h3>'+(opened.length?opened.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).map(commandCard).join(''):'<p class="sub">Nenhuma comanda em aberto.</p>')+
       '<h3>Histórico ('+history.length+')</h3>'+(history.length?history.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))).map(commandCard).join(''):'<p class="sub">Nenhuma comanda finalizada ou cancelada.</p>');
   }
