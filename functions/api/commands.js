@@ -75,9 +75,9 @@ export async function onRequest({request,env}){
    ), deleted_items AS (
     DELETE FROM public.command_items WHERE command_id IN (SELECT id FROM changed_command) RETURNING id
    ), new_items AS (
-    INSERT INTO public.command_items(command_id,item_type,service_id,product_id,description,quantity,unit_price,total,professional_id,unit_cost,commission_percent)
-    SELECT c.id,x.item_type,x.service_id,x.product_id,x.description,x.quantity,x.unit_price,x.total,x.professional_id,x.unit_cost,x.commission_percent
-    FROM changed_command c CROSS JOIN (SELECT count(*) FROM deleted_items) gone CROSS JOIN jsonb_to_recordset(${JSON.stringify(v.items)}::jsonb) AS x(item_type text,service_id uuid,product_id uuid,description text,quantity numeric,unit_price numeric,total numeric,professional_id uuid,unit_cost numeric,commission_percent numeric)
+    INSERT INTO public.command_items(command_id,item_type,service_id,product_id,description,quantity,unit_price,professional_id,unit_cost,commission_percent)
+    SELECT c.id,x.item_type,x.service_id,x.product_id,x.description,x.quantity,x.unit_price,x.professional_id,x.unit_cost,x.commission_percent
+    FROM changed_command c CROSS JOIN (SELECT count(*) FROM deleted_items) gone CROSS JOIN jsonb_to_recordset(${JSON.stringify(v.items)}::jsonb) AS x(item_type text,service_id uuid,product_id uuid,description text,quantity numeric,unit_price numeric,professional_id uuid,unit_cost numeric,commission_percent numeric)
     RETURNING *
    )
    SELECT row_to_json(c) AS command,COALESCE((SELECT json_agg(i ORDER BY i.created_at) FROM new_items i),'[]'::json) AS items FROM changed_command c
