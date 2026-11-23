@@ -9,7 +9,7 @@
 
   async function start() {
     try {
-      const mod = await import('https://esm.sh/@neondatabase/neon-js@0.1.0?bundle');
+      const mod = await import('/neon-auth-sdk.bundle.js');
       const client = mod.createClient({ auth: { url: AUTH_URL }, dataApi: { url: DATA_API_URL } });
       window.__EDDU_NEON_CLIENT = client;
       window.__EDDU_NEON_AUTH_URL = AUTH_URL;
