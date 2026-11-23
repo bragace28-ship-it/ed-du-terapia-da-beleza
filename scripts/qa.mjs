@@ -53,3 +53,8 @@ if (!html.includes('eddu_master_data_v1') || !html.includes("operation:'delete'"
 console.log('Master shared state, demo-data removal and Neon DELETE QA: PASS');
 if (!html.includes('EDDU_AGENDA_RUNTIME_READY') || !html.includes('clientAppointmentsView') || !html.includes('edduSaveAppointment')) throw new Error('Agenda create/close/client visibility runtime is missing.');
 console.log('Master Agenda save, modal controls and client view QA: PASS');
+if (!html.includes('openAgendaProfessionalCreateM') || !html.includes('saveAgendaProfessionalM') || !html.includes('openAgendaServiceCreateM') || !html.includes('saveAgendaServiceM'))
+  throw new Error('Agenda professional/service registration flow is missing from production artifact.');
+if (html.includes('Vincule o mesmo e-mail usado no acesso do cliente antes de agendar.'))
+  throw new Error('Client email must not block professional-side appointment creation.');
+console.log('Agenda professional/service registration and optional client email QA: PASS');
