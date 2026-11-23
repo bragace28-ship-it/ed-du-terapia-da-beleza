@@ -56,12 +56,16 @@
     const services = rows('services').filter(x => x.active !== false && String(x.status || 'Ativo').toLowerCase() !== 'inativo');
     const clientField = '<select id="aptClientId" required>'+selectOptions(clients, window.__EDDU_PENDING_CLIENT_ID || '', 'Selecione o cliente')+'<option value="__NEW__">＋ Cadastrar novo cliente</option></select>'+
       (clients.length ? '' : '<p class="sub">Ainda não há clientes cadastrados. Use “Cadastrar novo cliente” para incluir o primeiro.</p>');
+    const professionalSelected = window.__EDDU_PENDING_PROFESSIONAL_ID || '';
+    const serviceSelected = window.__EDDU_PENDING_SERVICE_ID || '';
     const professionalField = professionals.length
-      ? '<select id="aptProfessionalId" required>'+selectOptions(professionals, '', 'Selecione o profissional')+'</select>'
-      : '<p class="sub">Nenhum profissional cadastrado no Neon.</p><select id="aptProfessionalId" required disabled><option value="">Profissional indisponível</option></select>';
+      ? '<select id="aptProfessionalId" required>'+selectOptions(professionals, professionalSelected, 'Selecione o profissional')+'</select>'
+      : '<p class="sub">Nenhum profissional cadastrado no Neon. Cadastre agora para liberar a Agenda.</p><button type="button" class="btn full" onclick="window.openAgendaProfessionalCreateM()">＋ Cadastrar profissional</button><select id="aptProfessionalId" required disabled><option value="">Profissional indisponível</option></select>';
     const serviceField = services.length
-      ? '<select id="aptServiceId" required>'+selectOptions(services, '', 'Selecione o serviço')+'</select>'
-      : '<p class="sub">Nenhum serviço cadastrado no Neon.</p><select id="aptServiceId" required disabled><option value="">Serviço indisponível</option></select>';
+      ? '<select id="aptServiceId" required>'+selectOptions(services, serviceSelected, 'Selecione o serviço')+'</select>'
+      : '<p class="sub">Nenhum serviço cadastrado no Neon. Cadastre agora para liberar a Agenda.</p><button type="button" class="btn full" onclick="window.openAgendaServiceCreateM()">＋ Cadastrar serviço</button><select id="aptServiceId" required disabled><option value="">Serviço indisponível</option></select>';
+    window.__EDDU_PENDING_PROFESSIONAL_ID = null;
+    window.__EDDU_PENDING_SERVICE_ID = null;
     const pendingClientId = window.__EDDU_PENDING_CLIENT_ID || '';
     window.__EDDU_PENDING_CLIENT_ID = null;
     window.views.agendaAdd = () =>
@@ -74,6 +78,80 @@
       '<div class="action-row"><button id="edduSaveAppointment" type="button" class="btn primary full">Salvar agendamento</button><button id="edduCancelAppointment" type="button" class="btn full">Cancelar</button></div></div>';
     window.openSheet('agendaAdd');
   }
+  window.openAgendaProfessionalCreateM = function () {
+    const date = $('aptDate')?.value || window.selectedDayM || localDate(new Date());
+    window.views.agendaProfessionalCreate = () =>
+      '<h2>Novo profissional</h2><p class="sub">Cadastre quem realizará os atendimentos. O registro será salvo no Neon.</p>'+
+      '<label>Nome completo *</label><input id="aptNewProfessionalName" maxlength="160" placeholder="Nome do profissional" required>'+
+      '<label>WhatsApp</label><input id="aptNewProfessionalPhone" maxlength="30" placeholder="(11) 99999-9999">'+
+      '<label>E-mail</label><input id="aptNewProfessionalEmail" type="email" maxlength="254" placeholder="profissional@email.com">'+
+      '<label>Especialidade</label><input id="aptNewProfessionalSpecialty" maxlength="160" placeholder="Ex.: Terapeuta capilar">'+
+      '<label>Comissão (%)</label><input id="aptNewProfessionalCommission" type="number" min="0" max="100" step="0.01" value="30">'+
+      '<div id="aptProfessionalError" role="alert" style="display:none;color:#b42318;margin:10px 0"></div>'+
+      '<div class="action-row"><button type="button" class="btn primary full" onclick="window.saveAgendaProfessionalM(\''+escapeHtml(date)+'\')">Salvar profissional</button>'+
+      '<button type="button" class="btn full" onclick="window.openAgendaAddM(\''+escapeHtml(date)+'\')">Voltar</button></div>';
+    window.openSheet('agendaProfessionalCreate');
+  };
+  window.saveAgendaProfessionalM = async function (date) {
+    const name = String($('aptNewProfessionalName')?.value || '').trim().replace(/\\s+/g,' ');
+    const phone = String($('aptNewProfessionalPhone')?.value || '').trim();
+    const email = String($('aptNewProfessionalEmail')?.value || '').trim().toLowerCase();
+    const specialty = String($('aptNewProfessionalSpecialty')?.value || '').trim();
+    const commission = Number($('aptNewProfessionalCommission')?.value || 0);
+    const error = $('aptProfessionalError');
+    const fail = message => { if(error){error.textContent=message;error.style.display='block';} toast(message); };
+    try {
+      if(name.length<2) throw new Error('Informe o nome do profissional.');
+      if(email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) throw new Error('Informe um e-mail válido ou deixe o campo vazio.');
+      if(!Number.isFinite(commission)||commission<0||commission>100) throw new Error('A comissão deve estar entre 0 e 100%.');
+      if(!api() || window.__EDDU_NEON_READY!==true || window.__EDDU_NEON_SESSION!==true) throw new Error('Entre novamente na sua conta para cadastrar o profissional.');
+      const saved=await api().insert('professionals',{name,phone:phone||null,email:email||null,specialty:specialty||null,commission_rate:commission,active:true});
+      if(!saved?.id) throw new Error('O Neon não confirmou o cadastro do profissional.');
+      window.data.professionals=[saved,...rows('professionals').filter(x=>x.id!==saved.id)];
+      window.__EDDU_PENDING_PROFESSIONAL_ID=saved.id;
+      toast('Profissional cadastrado no Neon.');
+      openAdd(date);
+    } catch(e) { console.error('[EDDU] professional create failed',e); fail('Não foi possível cadastrar o profissional: '+String(e?.message||e)); }
+  };
+  window.openAgendaServiceCreateM = function () {
+    const date = $('aptDate')?.value || window.selectedDayM || localDate(new Date());
+    window.views.agendaServiceCreate = () =>
+      '<h2>Novo serviço</h2><p class="sub">Cadastre o procedimento e sua duração. O registro será salvo no Neon.</p>'+
+      '<label>Nome do serviço *</label><input id="aptNewServiceName" maxlength="160" placeholder="Ex.: Terapia capilar" required>'+
+      '<label>Descrição</label><textarea id="aptNewServiceDescription" rows="2" maxlength="1000" placeholder="Descrição do procedimento"></textarea>'+
+      '<label>Preço (R$) *</label><input id="aptNewServicePrice" type="number" min="0" step="0.01" value="0" required>'+
+      '<label>Duração (minutos) *</label><input id="aptNewServiceDuration" type="number" min="1" step="1" value="60" required>'+
+      '<label>Preço cabelo longo (R$)</label><input id="aptNewServiceLongPrice" type="number" min="0" step="0.01" placeholder="Opcional">'+
+      '<label>Custo do serviço (R$)</label><input id="aptNewServiceCost" type="number" min="0" step="0.01" value="0">'+
+      '<div id="aptServiceError" role="alert" style="display:none;color:#b42318;margin:10px 0"></div>'+
+      '<div class="action-row"><button type="button" class="btn primary full" onclick="window.saveAgendaServiceM(\''+escapeHtml(date)+'\')">Salvar serviço</button>'+
+      '<button type="button" class="btn full" onclick="window.openAgendaAddM(\''+escapeHtml(date)+'\')">Voltar</button></div>';
+    window.openSheet('agendaServiceCreate');
+  };
+  window.saveAgendaServiceM = async function (date) {
+    const name=String($('aptNewServiceName')?.value||'').trim().replace(/\\s+/g,' ');
+    const description=String($('aptNewServiceDescription')?.value||'').trim();
+    const price=Number($('aptNewServicePrice')?.value);
+    const duration=Number($('aptNewServiceDuration')?.value);
+    const longRaw=$('aptNewServiceLongPrice')?.value;
+    const longPrice=longRaw===''||longRaw==null?price:Number(longRaw);
+    const cost=Number($('aptNewServiceCost')?.value||0);
+    const error=$('aptServiceError');
+    const fail=message=>{if(error){error.textContent=message;error.style.display='block';}toast(message);};
+    try {
+      if(name.length<2) throw new Error('Informe o nome do serviço.');
+      if(!Number.isFinite(price)||price<0||!Number.isFinite(longPrice)||longPrice<0||!Number.isFinite(cost)||cost<0) throw new Error('Confira os valores do serviço. Não use valores negativos.');
+      if(!Number.isInteger(duration)||duration<1) throw new Error('A duração deve ser de pelo menos 1 minuto.');
+      if(!api()||window.__EDDU_NEON_READY!==true||window.__EDDU_NEON_SESSION!==true) throw new Error('Entre novamente na sua conta para cadastrar o serviço.');
+      const saved=await api().insert('services',{name,description:description||null,price,price_base:price,price_long:longPrice,service_cost:cost,duration_minutes:duration,active:true});
+      if(!saved?.id) throw new Error('O Neon não confirmou o cadastro do serviço.');
+      window.data.services=[saved,...rows('services').filter(x=>x.id!==saved.id)];
+      window.__EDDU_PENDING_SERVICE_ID=saved.id;
+      toast('Serviço cadastrado no Neon.');
+      openAdd(date);
+    } catch(e) { console.error('[EDDU] service create failed',e); fail('Não foi possível cadastrar o serviço: '+String(e?.message||e)); }
+  };
+
   let saving = false;
   async function saveAdd() {
     if (saving) return;
@@ -88,7 +166,7 @@
     const professionalName = professional?.name || '';
     const serviceName = service?.name || '';
     if (!date || !start || !end || !clientId || !professionalId || !serviceId || !clientName || !professionalName || !serviceName) return toast('Selecione um cliente, profissional e serviço cadastrados no Neon, além de data e horários.');
-    if (!String(client.email || '').trim()) return toast('Este cadastro de cliente não possui e-mail. Vincule o mesmo e-mail usado no acesso do cliente antes de agendar.');
+    // Client email is optional for an in-salon booking. When present, the client portal can match it to the signed-in account; it must never block the salon from saving an appointment.
     if (end <= start) return toast('O término deve ser posterior ao início.');
     if (!api() || window.__EDDU_NEON_READY !== true || window.__EDDU_NEON_SESSION !== true) return toast('Entre na sua conta e aguarde a autenticação do Neon antes de salvar.');
     const startDate = new Date(date+'T'+start+':00');
