@@ -3,11 +3,24 @@
   'use strict';
   const AUTH_URL = 'https://ep-sweet-meadow-b43jne0i.neonauth.c-6.us-east-2.aws.neon.tech/neondb/auth';
   const DATA_API_URL = 'https://ep-sweet-meadow-b43jne0i.apirest.c-6.us-east-2.aws.neon.tech/neondb/rest/v1';
+  const PUBLIC_DEV_MODE = true;
+  window.EDDU_PUBLIC_DEV_MODE = PUBLIC_DEV_MODE;
 
   const dispatch = (name, detail) => window.dispatchEvent(new CustomEvent(name, { detail }));
   const waitForBody = () => document.body ? Promise.resolve() : new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }));
 
   async function start() {
+    if (PUBLIC_DEV_MODE) {
+      window.__EDDU_NEON_READY = true;
+      window.__EDDU_NEON_SESSION = true;
+      window.__EDDU_NEON_SESSION_DATA = { publicDevelopment:true, user:{ email:'public-development@eddu.local' } };
+      window.EDDU_NEON_REFRESH_SESSION = async () => window.__EDDU_NEON_SESSION_DATA;
+      window.EDDU_NEON_GET_SESSION = window.EDDU_NEON_REFRESH_SESSION;
+      window.EDDU_NEON_SIGNIN = async () => { throw new Error('Login desativado durante o desenvolvimento público.'); };
+      window.EDDU_NEON_SIGNOUT = async () => ({ data:{ session:null } });
+      dispatch('eddu-neon-ready', { authenticated:true, publicDevelopment:true });
+      return;
+    }
     try {
       const mod = await import('/neon-auth-sdk.bundle.js');
       const client = mod.createClient({ auth: { url: AUTH_URL }, dataApi: { url: DATA_API_URL } });
