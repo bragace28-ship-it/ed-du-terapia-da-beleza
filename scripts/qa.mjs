@@ -11,7 +11,6 @@ const commandRuntimeSource = await readFile('master/runtime-command-operations.j
 const authRuntimeSource = await readFile('master/neon-auth-client.js','utf8');
 const neonBridgeSource = await readFile('master/neon-live-bridge.js','utf8');
 const dataApiSource = await readFile('functions/api/data/[entity].js','utf8');
-const commandApiSource = await readFile('functions/api/commands.js','utf8');
 const wranglerSource = await readFile('wrangler.toml','utf8');
 
 if (!authRuntimeSource.includes('PUBLIC_DEV_MODE = true') || !authRuntimeSource.includes('publicDevelopment:true'))
