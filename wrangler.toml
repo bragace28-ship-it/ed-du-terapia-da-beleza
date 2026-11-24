@@ -4,6 +4,7 @@ compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "./dist"
 [vars]
 VITE_APP_VERSION = "46.0.0"
+EDDU_PUBLIC_DEV_MODE = "true"
 
 # MASTER V46 production canonical
 

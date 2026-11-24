@@ -61,7 +61,7 @@
   async function api(entity, method, body, query) {
     if (!TABLES[entity]) throw new Error('Entidade não autorizada: ' + entity);
     await waitReady();
-    const session = await window.EDDU_NEON_REFRESH_SESSION?.();
+    const session = window.EDDU_PUBLIC_DEV_MODE === true ? { publicDevelopment:true } : await window.EDDU_NEON_REFRESH_SESSION?.();
     if (!session) {
       window.__EDDU_NEON_AUTH_REQUIRED?.();
       throw new Error('AUTH_REQUIRED');
@@ -70,14 +70,14 @@
     if (query?.id) url.searchParams.set('id', query.id);
     if (query?.limit) url.searchParams.set('limit', String(query.limit));
     const authToken = session?.session?.token || session?.token || session?.accessToken || session?.session?.accessToken;
-    if (!authToken) throw new Error('NEON_SESSION_TOKEN_UNAVAILABLE');
+    if (!authToken && window.EDDU_PUBLIC_DEV_MODE !== true) throw new Error('NEON_SESSION_TOKEN_UNAVAILABLE');
     const response = await fetch(url.toString(), {
       method: method || 'GET',
       credentials: 'same-origin',
       cache: 'no-store',
       headers: {
         Accept: 'application/json',
-        Authorization: 'Bearer ' + authToken,
+        ...(authToken ? { Authorization: 'Bearer ' + authToken } : {}),
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {})
       },
       ...(body !== undefined ? { body: JSON.stringify(body) } : {})
@@ -152,7 +152,7 @@
     window.__EDDU_NEON_SYNCING = true;
     try {
       await waitReady();
-      const session = await window.EDDU_NEON_REFRESH_SESSION?.();
+      const session = window.EDDU_PUBLIC_DEV_MODE === true ? { publicDevelopment:true } : await window.EDDU_NEON_REFRESH_SESSION?.();
       if (!session) {
         window.__EDDU_NEON_CONNECTED = false;
         window.__EDDU_NEON_ENTITY_STATUS = {};

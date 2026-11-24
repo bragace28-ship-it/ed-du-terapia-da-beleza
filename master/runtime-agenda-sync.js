@@ -6,6 +6,16 @@
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const toast = message => { try { if (typeof window.toast === 'function') window.toast(message); else alert(message); } catch (_) {} };
   const api = () => window.EDDU_NEON_API;
+  async function requireSession() {
+    if (window.__EDDU_NEON_READY !== true) throw new Error(window.__EDDU_NEON_LAST_ERROR || 'O serviço Neon ainda está inicializando.');
+    if (typeof window.EDDU_NEON_REFRESH_SESSION !== 'function') throw new Error('O serviço de sessão do Neon não foi inicializado.');
+    const session = await window.EDDU_NEON_REFRESH_SESSION();
+    window.__EDDU_NEON_SESSION = !!session;
+    window.__EDDU_NEON_SESSION_DATA = session || null;
+    if (!session) { window.__EDDU_NEON_AUTH_REQUIRED?.(); throw new Error('AUTH_REQUIRED'); }
+    if (!api()) throw new Error('A conexão de dados do Neon não foi inicializada.');
+    return session;
+  }
   const rows = key => Array.isArray(window.data?.[key]) ? window.data[key] : [];
   const money = value => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(value)||0);
   const localDate = value => {
@@ -113,7 +123,7 @@
       if(name.length<2) throw new Error('Informe o nome do profissional.');
       if(email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Informe um e-mail válido ou deixe o campo vazio.');
       if(!Number.isFinite(commission)||commission<0||commission>100) throw new Error('A comissão deve estar entre 0 e 100%.');
-      if(!api() || window.__EDDU_NEON_READY!==true || window.__EDDU_NEON_SESSION!==true) throw new Error('Entre novamente na sua conta para cadastrar o profissional.');
+      await requireSession();
       const saved=await api().insert('professionals',{name,phone:phone||null,email:email||null,specialty:specialty||null,commission_rate:commission,active:true});
       if(!saved?.id) throw new Error('O Neon não confirmou o cadastro do profissional.');
       window.data.professionals=[saved,...rows('professionals').filter(x=>x.id!==saved.id)];
@@ -156,7 +166,7 @@
       if(name.length<2) throw new Error('Informe o nome do serviço.');
       if(!Number.isFinite(price)||price<0||!Number.isFinite(longPrice)||longPrice<0||!Number.isFinite(cost)||cost<0) throw new Error('Confira os valores do serviço. Não use valores negativos.');
       if(!Number.isInteger(duration)||duration<1) throw new Error('A duração deve ser de pelo menos 1 minuto.');
-      if(!api()||window.__EDDU_NEON_READY!==true||window.__EDDU_NEON_SESSION!==true) throw new Error('Entre novamente na sua conta para cadastrar o serviço.');
+      await requireSession();
       const saved=await api().insert('services',{name,description:description||null,price,price_base:price,price_long:longPrice,service_cost:cost,duration_minutes:duration,active:true});
       if(!saved?.id) throw new Error('O Neon não confirmou o cadastro do serviço.');
       window.data.services=[saved,...rows('services').filter(x=>x.id!==saved.id)];
@@ -182,7 +192,7 @@
     if (!date || !start || !end || !clientId || !professionalId || !clientName || !professionalName || !selectedServices.length) return toast('Selecione cliente, profissional e pelo menos um serviço, além de data e horários.');
     // Client email is optional for an in-salon booking. When present, the client portal can match it to the signed-in account; it must never block the salon from saving an appointment.
     if (end <= start) return toast('O término deve ser posterior ao início.');
-    if (!api() || window.__EDDU_NEON_READY !== true || window.__EDDU_NEON_SESSION !== true) return toast('Entre na sua conta e aguarde a autenticação do Neon antes de salvar.');
+    try { await requireSession(); } catch (sessionError) { return toast(String(sessionError?.message || sessionError)); }
     const startDate = new Date(date+'T'+start+':00');
     const endDate = new Date(date+'T'+end+':00');
     if (!Number.isFinite(startDate.getTime()) || !Number.isFinite(endDate.getTime()) || endDate <= startDate) return toast('Data ou horário inválido.');

@@ -144,12 +144,18 @@ async function handler({ request, env, params }) {
   if (method !== 'GET' && !checkOrigin(request)) return json({ ok:false, error:'INVALID_ORIGIN' }, 403);
   if (method !== 'GET' && READ_ONLY.has(table)) return json({ ok:false, error:'READ_ONLY_ENTITY' }, 403);
   try {
-    const authUser = await validateSession(request, env);
-    if (!authUser) return json({ ok:false, error:'UNAUTHORIZED' }, 401);
+    const publicDevelopment = env.EDDU_PUBLIC_DEV_MODE === 'true';
     const sql = neon(env.NEON_DATABASE_URL);
-    const user = await applicationUser(sql, authUser);
-    if (!user) return json({ ok:false, error:'APPLICATION_USER_NOT_ACTIVE' }, 403);
-    if (!allowed(user, table, method)) return json({ ok:false, error:'FORBIDDEN' }, 403);
+    let user;
+    if (publicDevelopment) {
+      user = { id:null, role:'admin', permissions:['*'], public_development:true };
+    } else {
+      const authUser = await validateSession(request, env);
+      if (!authUser) return json({ ok:false, error:'UNAUTHORIZED' }, 401);
+      user = await applicationUser(sql, authUser);
+      if (!user) return json({ ok:false, error:'APPLICATION_USER_NOT_ACTIVE' }, 403);
+      if (!allowed(user, table, method)) return json({ ok:false, error:'FORBIDDEN' }, 403);
+    }
 
     if (method === 'GET') {
       const url = new URL(request.url);
