@@ -10,7 +10,13 @@
   const terminal=['paid','closed','cancelled','refunded'];
   const openStatuses=['open','awaiting_payment','payment_pending'];
   const api=async()=>{
-    if(!window.EDDU_NEON_API||window.__EDDU_NEON_READY!==true||window.__EDDU_NEON_SESSION!==true)throw new Error('Aguarde a autenticação do Neon.');
+    if(window.__EDDU_NEON_READY!==true)throw new Error(window.__EDDU_NEON_LAST_ERROR||'O serviço Neon ainda está inicializando.');
+    if(typeof window.EDDU_NEON_REFRESH_SESSION!=='function')throw new Error('O serviço de sessão do Neon não foi inicializado.');
+    const session=await window.EDDU_NEON_REFRESH_SESSION();
+    window.__EDDU_NEON_SESSION=!!session;
+    window.__EDDU_NEON_SESSION_DATA=session||null;
+    if(!session){window.__EDDU_NEON_AUTH_REQUIRED?.();throw new Error('AUTH_REQUIRED');}
+    if(!window.EDDU_NEON_API)throw new Error('A conexão de dados do Neon não foi inicializada.');
     if(window.__EDDU_NEON_CONNECTED!==true&&typeof window.EDDU_NEON_SYNC==='function')await window.EDDU_NEON_SYNC();
     if(window.__EDDU_NEON_CONNECTED!==true)throw new Error('Não foi possível sincronizar clientes, profissionais, serviços e comandas com o Neon.');
     return window.EDDU_NEON_API;
