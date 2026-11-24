@@ -9,6 +9,11 @@ const agendaWorkflowSource = await readFile('master/runtime-agenda-workflow.js',
 const agendaSyncSource = await readFile('master/runtime-agenda-sync.js','utf8');
 const commandRuntimeSource = await readFile('master/runtime-command-operations.js','utf8');
 
+if (!agendaSyncSource.includes('async function requireSession()') || !agendaSyncSource.includes('await requireSession();'))
+  throw new Error('Agenda writes must refresh the Neon session instead of trusting a stale session flag.');
+if (!commandRuntimeSource.includes('await window.EDDU_NEON_REFRESH_SESSION()'))
+  throw new Error('Command operations must refresh the Neon session before checking sync state.');
+
 if (/(?:V33|v33|fin33|eddu_v33)/i.test(legacyFree))
   throw new Error('Legacy version reference found in built Master artifact.');
 
