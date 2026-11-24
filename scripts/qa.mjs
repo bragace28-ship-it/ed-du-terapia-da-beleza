@@ -8,6 +8,18 @@ const clientCommandApiSource = await readFile('functions/api/client/commands.js'
 const agendaWorkflowSource = await readFile('master/runtime-agenda-workflow.js','utf8');
 const agendaSyncSource = await readFile('master/runtime-agenda-sync.js','utf8');
 const commandRuntimeSource = await readFile('master/runtime-command-operations.js','utf8');
+const authRuntimeSource = await readFile('master/neon-auth-client.js','utf8');
+const neonBridgeSource = await readFile('master/neon-live-bridge.js','utf8');
+const dataApiSource = await readFile('functions/api/data/[entity].js','utf8');
+const commandApiSource = await readFile('functions/api/commands.js','utf8');
+const wranglerSource = await readFile('wrangler.toml','utf8');
+
+if (!authRuntimeSource.includes('PUBLIC_DEV_MODE = true') || !authRuntimeSource.includes('publicDevelopment:true'))
+  throw new Error('Public development mode must bypass the login overlay without fabricating a JWT.');
+if (!neonBridgeSource.includes('window.EDDU_PUBLIC_DEV_MODE === true'))
+  throw new Error('Neon bridge must support public development requests without a bearer token.');
+if (!dataApiSource.includes("env.EDDU_PUBLIC_DEV_MODE === 'true'") || !commandApiSource.includes("env.EDDU_PUBLIC_DEV_MODE==='true'") || !wranglerSource.includes('EDDU_PUBLIC_DEV_MODE = "true"'))
+  throw new Error('Public development mode must be explicitly enabled for both Neon APIs and Cloudflare Pages.');
 
 if (!agendaSyncSource.includes('async function requireSession()') || !agendaSyncSource.includes('await requireSession();'))
   throw new Error('Agenda writes must refresh the Neon session instead of trusting a stale session flag.');
