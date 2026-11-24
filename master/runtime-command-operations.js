@@ -11,11 +11,13 @@
   const openStatuses=['open','awaiting_payment','payment_pending'];
   const api=async()=>{
     if(window.__EDDU_NEON_READY!==true)throw new Error(window.__EDDU_NEON_LAST_ERROR||'O serviço Neon ainda está inicializando.');
-    if(typeof window.EDDU_NEON_REFRESH_SESSION!=='function')throw new Error('O serviço de sessão do Neon não foi inicializado.');
-    const session=await window.EDDU_NEON_REFRESH_SESSION();
-    window.__EDDU_NEON_SESSION=!!session;
-    window.__EDDU_NEON_SESSION_DATA=session||null;
-    if(!session){window.__EDDU_NEON_AUTH_REQUIRED?.();throw new Error('AUTH_REQUIRED');}
+    if(window.EDDU_PUBLIC_DEV_MODE!==true){
+      if(typeof window.EDDU_NEON_REFRESH_SESSION!=='function')throw new Error('O serviço de sessão do Neon não foi inicializado.');
+      const session=await window.EDDU_NEON_REFRESH_SESSION();
+      window.__EDDU_NEON_SESSION=!!session;
+      window.__EDDU_NEON_SESSION_DATA=session||null;
+      if(!session){window.__EDDU_NEON_AUTH_REQUIRED?.();throw new Error('AUTH_REQUIRED');}
+    }
     if(!window.EDDU_NEON_API)throw new Error('A conexão de dados do Neon não foi inicializada.');
     if(window.__EDDU_NEON_CONNECTED!==true&&typeof window.EDDU_NEON_SYNC==='function')await window.EDDU_NEON_SYNC();
     if(window.__EDDU_NEON_CONNECTED!==true)throw new Error('Não foi possível sincronizar clientes, profissionais, serviços e comandas com o Neon.');
@@ -76,11 +78,11 @@
     window.toast?.('Atendimento iniciado. Confira os serviços e salve a comanda para abrir o lançamento.');
   };
   async function saveCommandTransaction(payload,draftId){
-    const session=await window.EDDU_NEON_REFRESH_SESSION?.();
+    const session=window.EDDU_PUBLIC_DEV_MODE===true?null:await window.EDDU_NEON_REFRESH_SESSION?.();
     const cached=window.__EDDU_NEON_SESSION_DATA||{};
     const token=session?.session?.token||session?.session?.access_token||session?.token||session?.accessToken||session?.session?.accessToken||cached?.session?.token||cached?.session?.access_token||cached?.data?.session?.access_token||cached?.access_token||cached?.accessToken||cached?.token;
-    if(!token)throw new Error('Sessão autenticada do Neon indisponível. Entre novamente.');
-    const response=await fetch('/api/commands',{method:draftId?'PATCH':'POST',credentials:'include',cache:'no-store',headers:{Accept:'application/json','Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({...payload,...(draftId?{id:draftId}:{})})});
+    if(!token&&window.EDDU_PUBLIC_DEV_MODE!==true)throw new Error('Sessão autenticada do Neon indisponível. Entre novamente.');
+    const response=await fetch('/api/commands',{method:draftId?'PATCH':'POST',credentials:'include',cache:'no-store',headers:{Accept:'application/json','Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify({...payload,...(draftId?{id:draftId}:{})})});
     const result=await response.json().catch(()=>({}));
     if(!response.ok||!result.ok)throw new Error(result.message||result.error||('Falha ao salvar comanda ('+response.status+').'));
     if(!result.command?.id||!Array.isArray(result.items)||result.items.length!==payload.items.length)throw new Error('O Neon não confirmou a gravação de todos os itens da comanda.');
